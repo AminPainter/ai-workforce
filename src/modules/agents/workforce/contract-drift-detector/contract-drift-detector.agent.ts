@@ -4,15 +4,12 @@ import { AiService } from '../../../ai/services/ai.service';
 import { GitHubMcpService } from '../../../ai/services/github-mcp.service';
 import { RegisteredAgent } from '../../services/agent-registry.service';
 import { CONTRACT_DRIFT_DETECTOR_SYSTEM_PROMPT } from './contract-drift-detector.prompt';
-import { CONTRACT_DRIFT_FORMATTER_SYSTEM_PROMPT } from './contract-drift-formatter.prompt';
 import { contractDriftReportSchema } from './contract-drift-detector.schema';
 
-// Two agents, because the gateway model can't tool-call and emit JSON-schema output in one
-// loop (a forced responseFormat makes it answer before it fetches). The detector keeps the
-// GitHub tools and produces free-text analysis; the formatter has no tools and structures
-// that analysis via Output.object.
+// One agent that tool-loops over the GitHub tools and emits the structured report on the
+// final step — the response format is applied only once the loop stops, so the model
+// fetches patch hunks before it answers.
 export const CONTRACT_DRIFT_DETECTOR = 'contract-drift-detector';
-export const CONTRACT_DRIFT_FORMATTER = 'contract-drift-formatter';
 
 export function createContractDriftDetector(
   aiService: AiService,
@@ -26,16 +23,6 @@ export function createContractDriftDetector(
     stopWhen: stepCountIs(
       Number(configService.get('CONTRACT_DRIFT_MAX_STEPS') ?? 30),
     ),
-  });
-}
-
-export function createContractDriftFormatter(
-  aiService: AiService,
-): RegisteredAgent {
-  return new ToolLoopAgent({
-    model: aiService.model(),
-    instructions: CONTRACT_DRIFT_FORMATTER_SYSTEM_PROMPT,
-    stopWhen: stepCountIs(2),
     output: Output.object({ schema: contractDriftReportSchema }),
   });
 }

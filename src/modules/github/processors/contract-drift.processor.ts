@@ -2,10 +2,7 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import {
-  CONTRACT_DRIFT_DETECTOR,
-  CONTRACT_DRIFT_FORMATTER,
-} from '../../agents/workforce/contract-drift-detector/contract-drift-detector.agent';
+import { CONTRACT_DRIFT_DETECTOR } from '../../agents/workforce/contract-drift-detector/contract-drift-detector.agent';
 import type { ContractDriftReport } from '../../agents/workforce/contract-drift-detector/contract-drift-detector.schema';
 import {
   CONTRACT_DRIFT_QUEUE,
@@ -31,15 +28,11 @@ export class ContractDriftProcessor extends WorkerHost {
     const shortSha = payload.after.slice(0, 7);
     this.logger.log(`analyzing push to ${fullName}@${shortSha}`);
 
-    const { text: analysis } = await this.agentRegistry
+    const { output } = await this.agentRegistry
       .get(CONTRACT_DRIFT_DETECTOR)
       .generate({
         messages: [{ role: 'user', content: buildTask(payload) }],
       });
-
-    const { output } = await this.agentRegistry
-      .get(CONTRACT_DRIFT_FORMATTER)
-      .generate({ messages: [{ role: 'user', content: analysis }] });
     const report = output as ContractDriftReport;
 
     this.logger.log(
