@@ -23,6 +23,8 @@ services:
         sync: false
       - key: GITHUB_PAT
         sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
       - key: ATLASSIAN_EMAIL
         sync: false
       - key: ATLASSIAN_API_TOKEN
@@ -38,6 +40,13 @@ services:
           type: keyvalue
           name: glomo-ai-workforce-redis
           property: connectionString
+      # BullMQ queue tunables — all have safe in-code defaults; listed for discoverability.
+      - key: QUEUE_JOB_ATTEMPTS
+        value: "3"
+      - key: QUEUE_BACKOFF_MS
+        value: "5000"
+      - key: CONTRACT_DRIFT_CONCURRENCY
+        value: "1"
       # Add SLACK_APP_TOKEN / *_MCP_URL as sync:false only if the populated .env needs them.
 
   - type: keyvalue

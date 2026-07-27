@@ -28,11 +28,14 @@
     "@ai-sdk/openai-compatible": "^3.0.14",
     "@chat-adapter/slack": "^4.34.0",
     "@chat-adapter/state-redis": "4.34.0",
+    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@octokit/webhooks": "^14.2.0",
     "ai": "^7.0.19",
+    "bullmq": "^5.80.2",
     "chat": "^4.34.0",
     "html-to-text": "^10.0.0",
     "reflect-metadata": "^0.2.2",
@@ -83,6 +86,9 @@
     "testEnvironment": "node"
   },
   "pnpm": {
-    "onlyBuiltDependencies": []
+    "onlyBuiltDependencies": [
+      "msgpackr-extract",
+      "unrs-resolver"
+    ]
   }
 }

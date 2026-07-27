@@ -18,6 +18,7 @@ export class AiService {
       name: 'ai-gateway',
       apiKey: this.config.getOrThrow<string>('AI_GATEWAY_API_KEY'),
       baseURL: this.config.getOrThrow<string>('AI_GATEWAY_BASE_URL'),
+      supportsStructuredOutputs: true,
     });
     this.defaultModel = this.config.getOrThrow<string>('AI_GATEWAY_MODEL');
   }

@@ -9,6 +9,12 @@ import {
   EMPLOYEE_ASSISTANT,
   createEmployeeAssistant,
 } from '../workforce/employee-assistant/employee-assistant.agent';
+import {
+  CONTRACT_DRIFT_DETECTOR,
+  CONTRACT_DRIFT_FORMATTER,
+  createContractDriftDetector,
+  createContractDriftFormatter,
+} from '../workforce/contract-drift-detector/contract-drift-detector.agent';
 
 @Injectable()
 export class AgentsBootstrapService implements OnApplicationBootstrap {
@@ -31,6 +37,20 @@ export class AgentsBootstrapService implements OnApplicationBootstrap {
         this.atlassianMcpService,
         this.configService,
       ),
+    );
+
+    this.agentRegistry.register(
+      CONTRACT_DRIFT_DETECTOR,
+      createContractDriftDetector(
+        this.aiService,
+        this.gitHubMcpService,
+        this.configService,
+      ),
+    );
+
+    this.agentRegistry.register(
+      CONTRACT_DRIFT_FORMATTER,
+      createContractDriftFormatter(this.aiService),
     );
   }
 }

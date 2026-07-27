@@ -1,9 +1,11 @@
 import { Agent } from 'ai';
 
-// The SDK `Agent` is generic over its tool set; the params are contravariant, so a
-// tool-typed agent is not assignable to the default empty-tools `Agent`. Widen the
-// generics so any agent — `ToolLoopAgent`, future `HarnessAgent` — fits the map.
-export type RegisteredAgent = Agent<never, any>;
+// The SDK `Agent` is generic over its tool set and its structured `output`; both are
+// invariant in the positions we touch, so a tool-typed or output-typed agent is not
+// assignable to the default empty-tools / no-output `Agent`. Widen the generics so any
+// agent — plain `ToolLoopAgent`, one with `Output.object(...)`, future `HarnessAgent` —
+// fits the map.
+export type RegisteredAgent = Agent<never, any, any, any>;
 
 export class AgentRegistry {
   constructor(
