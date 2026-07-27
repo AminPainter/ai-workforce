@@ -42,6 +42,31 @@ MCP tools (read-only integrations):
 - `ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN` (+ optional `ATLASSIAN_MCP_URL`)
 - `SENTRY_AUTH_TOKEN` (+ optional `SENTRY_MCP_URL`)
 
+Contract drift detector (GitHub push webhook → `POST /webhooks/github`):
+- `GITHUB_WEBHOOK_SECRET` (required) — the shared secret configured on the `glomopay_service`
+  repo webhook; used to verify the `X-Hub-Signature-256` HMAC. Configure the webhook for the
+  `push` event only, content type `application/json`, URL `https://<host>/webhooks/github`.
+- `GITHUB_WEBHOOK_REPOS` (optional) — comma-separated `owner/repo` allowlist. If unset, any
+  repo passing signature verification is accepted. The agent only runs on pushes to
+  `refs/heads/main` and logs a drift report to the console.
+- `CONTRACT_DRIFT_MAX_STEPS` (optional, default 30) — tool-loop step cap for the agent.
+
+The webhook does not run the agent inline. After signature verification and the
+`refs/heads/main` + repo-allowlist filters, `POST /webhooks/github` enqueues the verified
+payload onto the `contract-drift` BullMQ queue and immediately returns `200 {"ok":true}`; an
+in-process worker (same web service) runs the agent and logs the report. Jobs are keyed on
+`X-GitHub-Delivery` (`jobId`), so GitHub redeliveries are deduped while the completed job is
+retained. Retries: 3 attempts with exponential backoff.
+
+Queue infra (`src/modules/queue`, shared by any future webhook consumer):
+- `REDIS_URL` (required) — now load-bearing for the queue as well as Chat SDK state; BullMQ
+  opens its own connection to it.
+- `QUEUE_JOB_ATTEMPTS` (optional, default 3) — retry attempts per job.
+- `QUEUE_BACKOFF_MS` (optional, default 5000) — exponential backoff base delay.
+- `CONTRACT_DRIFT_CONCURRENCY` (optional, default 1) — worker concurrency for the
+  `contract-drift` queue (read from `process.env` at module load — the `@Processor`
+  concurrency option is decorator-time).
+
 SearXNG:
 - `SEARXNG_SECRET` (required) — SearXNG reads this natively and overrides `secret_key`. If it is
   unset in production, SearXNG's boot guard exits with an error rather than running with a weak
@@ -52,8 +77,9 @@ SearXNG:
 `PORT` is injected by the platform (Render) and set to `51515` locally by compose — do not
 hardcode it in code.
 
-Note: `REDIS_HOST` / `REDIS_PORT` are no longer used (Redis/BullMQ was removed). Leftover values
-in `.env` are harmless.
+Note: `REDIS_HOST` / `REDIS_PORT` are no longer used — the app connects via `REDIS_URL`
+(both the Chat SDK state and the BullMQ queue). Leftover `REDIS_HOST` / `REDIS_PORT` values in
+`.env` are harmless.
 
 ## Deploy to Render
 
