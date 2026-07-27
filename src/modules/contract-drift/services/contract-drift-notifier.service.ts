@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SlackBotService } from './slack-bot.service';
+import { SlackBotService } from '../../slack/services/slack-bot.service';
 import {
   buildContractDriftCard,
   type ContractDriftContext,
 } from '../templates/contract-drift.template';
-import type { ContractDriftReport } from '../../agents/workforce/contract-drift-detector/contract-drift-detector.schema';
+import type { ContractDriftReport } from '../agent/contract-drift-detector.schema';
 
 @Injectable()
-export class SlackNotifierService {
-  private readonly logger = new Logger(SlackNotifierService.name);
+export class ContractDriftNotifierService {
+  private readonly logger = new Logger(ContractDriftNotifierService.name);
 
   constructor(
     private readonly slackBotService: SlackBotService,

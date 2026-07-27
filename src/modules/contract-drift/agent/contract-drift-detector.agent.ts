@@ -1,8 +1,8 @@
 import { ToolLoopAgent, stepCountIs, Output } from 'ai';
 import { ConfigService } from '@nestjs/config';
-import { AiService } from '../../../ai/services/ai.service';
-import { GitHubMcpService } from '../../../ai/services/github-mcp.service';
-import { RegisteredAgent } from '../../services/agent-registry.service';
+import { AiService } from '../../ai/services/ai.service';
+import { GitHubMcpService } from '../../ai/services/github-mcp.service';
+import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { CONTRACT_DRIFT_DETECTOR_SYSTEM_PROMPT } from './contract-drift-detector.prompt';
 import { contractDriftReportSchema } from './contract-drift-detector.schema';
 
