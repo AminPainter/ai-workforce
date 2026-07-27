@@ -3,15 +3,16 @@ import type { ContractDriftReport } from '../../agents/workforce/contract-drift-
 
 export interface ContractDriftContext {
   repoFullName: string;
-  shortSha: string;
-  ref: string;
-  compareUrl: string;
+  prNumber: number;
+  mergeSha: string;
+  baseRef: string;
+  prUrl: string;
 }
 
 const MAX_RENDERED_CHANGES = 8;
 
 const INTRO =
-  'This commit may change an API response contract the frontend depends on. ' +
+  'This merged PR may change an API response contract the frontend depends on. ' +
   'Please review the drift below and confirm with the frontend team before deploying.';
 
 export async function buildContractDriftCard(
@@ -29,27 +30,29 @@ export async function buildContractDriftCard(
   ];
 
   children.push(Divider());
-  for (const change of rendered) {
-    children.push(
-      Section([CardText(`*${change.file}*\n${change.change}\n${change.reason}`)]),
-    );
-  }
-
-  if (overflow > 0) {
+  for (const change of rendered)
     children.push(
       Section([
-        CardText(`+${overflow} more change${overflow === 1 ? '' : 's'} — see the diff.`),
+        CardText(`*${change.file}*\n${change.change}\n${change.reason}`),
       ]),
     );
-  }
+
+  if (overflow > 0)
+    children.push(
+      Section([
+        CardText(
+          `+${overflow} more change${overflow === 1 ? '' : 's'} — see the diff.`,
+        ),
+      ]),
+    );
 
   // Plain link, not an interactive button — a URL button fires a block_actions
   // interaction the app doesn't ack, which Slack surfaces as "cannot handle payload".
-  children.push(CardLink({ url: context.compareUrl, label: 'View diff' }));
+  children.push(CardLink({ url: context.prUrl, label: 'View PR' }));
 
   return Card({
     title: 'Contract drift detected',
-    subtitle: `${context.repoFullName}@${context.shortSha}`,
+    subtitle: `${context.repoFullName}#${context.prNumber} (merged ${context.mergeSha})`,
     children,
   });
 }

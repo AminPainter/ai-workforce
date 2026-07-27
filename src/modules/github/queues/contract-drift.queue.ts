@@ -2,8 +2,8 @@ import type { EmitterWebhookEvent } from '@octokit/webhooks';
 
 export const CONTRACT_DRIFT_QUEUE = 'contract-drift';
 
-export type PushPayload = EmitterWebhookEvent<'push'>['payload'];
+export type PullRequestPayload = EmitterWebhookEvent<'pull_request'>['payload'];
 
 export interface ContractDriftJob {
-  payload: PushPayload;
+  payload: PullRequestPayload;
 }

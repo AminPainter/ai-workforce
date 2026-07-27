@@ -5,7 +5,7 @@ import { Queue } from 'bullmq';
 import { Webhooks } from '@octokit/webhooks';
 import {
   CONTRACT_DRIFT_QUEUE,
-  type PushPayload,
+  type PullRequestPayload,
 } from '../queues/contract-drift.queue';
 
 @Injectable()
@@ -29,10 +29,12 @@ export class GitHubWebhookService {
         .filter(Boolean),
     );
 
-    this.webhooks.on('push', ({ id, payload }) => this.onPush(id, payload));
+    this.webhooks.on('pull_request', ({ id, payload }) =>
+      this.onPullRequest(id, payload),
+    );
   }
 
-  handlePush(
+  handleWebhook(
     rawBody: Buffer | undefined,
     signature: string | undefined,
     event: string | undefined,
@@ -55,9 +57,22 @@ export class GitHubWebhookService {
       );
   }
 
-  private onPush(id: string, payload: PushPayload): void {
-    if (payload.ref !== 'refs/heads/main') {
-      this.logger.debug(`ignored ref: ${payload.ref}`);
+  private onPullRequest(id: string, payload: PullRequestPayload): void {
+    if (payload.action !== 'closed') {
+      this.logger.debug(`ignored PR action: ${payload.action}`);
+      return;
+    }
+
+    const pullRequest = payload.pull_request;
+    if (!pullRequest.merged) {
+      this.logger.debug(
+        `ignored closed-without-merge PR #${pullRequest.number}`,
+      );
+      return;
+    }
+
+    if (pullRequest.base.ref !== 'main') {
+      this.logger.debug(`ignored PR base ref: ${pullRequest.base.ref}`);
       return;
     }
 

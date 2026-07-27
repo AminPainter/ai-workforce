@@ -8,7 +8,7 @@ import type { ContractDriftReport } from '../../agents/workforce/contract-drift-
 import {
   CONTRACT_DRIFT_QUEUE,
   type ContractDriftJob,
-  type PushPayload,
+  type PullRequestPayload,
 } from '../queues/contract-drift.queue';
 
 const CONTRACT_DRIFT_CONCURRENCY = Number(
@@ -28,9 +28,11 @@ export class ContractDriftProcessor extends WorkerHost {
 
   async process(job: Job<ContractDriftJob>): Promise<void> {
     const { payload } = job.data;
+    const pullRequest = payload.pull_request;
     const fullName = payload.repository.full_name;
-    const shortSha = payload.after.slice(0, 7);
-    this.logger.log(`analyzing push to ${fullName}@${shortSha}`);
+    const prNumber = pullRequest.number;
+    const mergeSha = pullRequest.merge_commit_sha ?? '';
+    this.logger.log(`analyzing PR ${fullName}#${prNumber}`);
 
     const { output } = await this.agentRegistry
       .get(CONTRACT_DRIFT_DETECTOR)
@@ -40,17 +42,17 @@ export class ContractDriftProcessor extends WorkerHost {
     const report = output as ContractDriftReport;
 
     this.logger.log(
-      `Contract drift report for ${fullName}@${shortSha} — hasContractDrift=${report.hasContractDrift}, ${report.driftingChanges.length} change(s):\n${JSON.stringify(report, null, 2)}`,
+      `Contract drift report for ${fullName}#${prNumber} — hasContractDrift=${report.hasContractDrift}, ${report.driftingChanges.length} change(s):\n${JSON.stringify(report, null, 2)}`,
     );
 
-    if (report.hasContractDrift) {
+    if (report.hasContractDrift)
       await this.slackNotifierService.notifyContractDrift(report, {
         repoFullName: fullName,
-        shortSha,
-        ref: payload.ref,
-        compareUrl: payload.compare,
+        prNumber,
+        mergeSha: mergeSha.slice(0, 7),
+        baseRef: pullRequest.base.ref,
+        prUrl: pullRequest.html_url,
       });
-    }
   }
 
   @OnWorkerEvent('completed')
@@ -64,28 +66,21 @@ export class ContractDriftProcessor extends WorkerHost {
   }
 }
 
-function buildTask(payload: PushPayload): string {
-  const commits = payload.commits
-    .map((c) => {
-      const files = [
-        ...(c.added ?? []).map((f) => `+ ${f}`),
-        ...(c.modified ?? []).map((f) => `~ ${f}`),
-        ...(c.removed ?? []).map((f) => `- ${f}`),
-      ].join('\n    ');
-      return `- ${c.id}\n  message: ${c.message}\n  files:\n    ${files || '(none listed)'}`;
-    })
-    .join('\n');
+function buildTask(payload: PullRequestPayload): string {
+  const pullRequest = payload.pull_request;
 
   return [
-    `A push landed on ${payload.repository.full_name}.`,
-    `ref: ${payload.ref}`,
-    `before: ${payload.before}`,
-    `after: ${payload.after}`,
-    `compare: ${payload.compare}`,
+    `A pull request was merged into ${pullRequest.base.ref} on ${payload.repository.full_name}.`,
+    `PR: #${pullRequest.number} — ${pullRequest.title}`,
+    `base: ${pullRequest.base.ref}`,
+    `head: ${pullRequest.head.ref}`,
+    `merge commit: ${pullRequest.merge_commit_sha ?? '(unknown)'}`,
+    `url: ${pullRequest.html_url}`,
+    `changed files: ${pullRequest.changed_files}, +${pullRequest.additions}/-${pullRequest.deletions}`,
     ``,
-    `Commits (${payload.commits.length}):`,
-    commits || '(no commit details in payload)',
+    `Description:`,
+    pullRequest.body?.trim() || '(no description)',
     ``,
-    `Analyze these changes for contract drift and produce your report.`,
+    `Fetch this PR's diff via get_pull_request_files / get_pull_request_diff (PR #${pullRequest.number}), analyze the changes for contract drift, and produce your report.`,
   ].join('\n');
 }

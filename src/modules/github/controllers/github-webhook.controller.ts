@@ -15,7 +15,7 @@ export class GitHubWebhookController {
     @Headers('x-github-event') event: string | undefined,
     @Headers('x-github-delivery') deliveryId: string | undefined,
   ): { ok: boolean } {
-    this.gitHubWebhookService.handlePush(
+    this.gitHubWebhookService.handleWebhook(
       req.rawBody,
       signature,
       event,
