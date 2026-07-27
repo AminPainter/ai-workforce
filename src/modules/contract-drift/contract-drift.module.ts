@@ -5,7 +5,7 @@ import { AgentsModule } from '../agents/agents.module';
 import { SlackModule } from '../slack/slack.module';
 import { ContractDriftListener } from './contract-drift.listener';
 import { ContractDriftProcessor } from './processors/contract-drift.processor';
-import { ContractDriftRegistrarService } from './services/contract-drift-registrar.service';
+import { ContractDriftAgentRegistrationService } from './services/contract-drift-agent-registration.service';
 import { ContractDriftNotifierService } from './services/contract-drift-notifier.service';
 import { CONTRACT_DRIFT_QUEUE } from './queues/contract-drift.queue';
 
@@ -19,7 +19,7 @@ import { CONTRACT_DRIFT_QUEUE } from './queues/contract-drift.queue';
   providers: [
     ContractDriftListener,
     ContractDriftProcessor,
-    ContractDriftRegistrarService,
+    ContractDriftAgentRegistrationService,
     ContractDriftNotifierService,
   ],
 })
