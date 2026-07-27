@@ -14,13 +14,15 @@ A change causes contract drift if it does any of these to a field the API return
                           zod field breaks when the key is missing)
 
 INPUT
-You are given the GitHub push event for one push to glomopay_service main: the repository, the
-ref, the before/after SHAs, the compare URL, and per-commit metadata — each commit's message
-and its added / modified / removed file PATHS. You do NOT receive the patch hunks in this
-message, and file paths and commit messages alone are NOT enough to judge drift.
+You are given metadata for one pull request just merged into glomopay_service main: the
+repository, the PR number, its title and description, the base and head refs, the merge commit
+SHA, and the changed-file / additions / deletions counts. You do NOT receive the patch hunks or
+the list of changed files in this message, and the title and description alone are NOT enough to
+judge drift.
 
-You have READ-ONLY GitHub tools — use them; do not judge from filenames or commit messages:
-  - \`get_commit\` on each commit SHA to read the actual patch hunks for its changed files.
+You have READ-ONLY GitHub tools — use them; do not judge from the PR title or description:
+  - \`get_pull_request_files\` / \`get_pull_request_diff\` on the PR number to read the changed
+    files and their actual patch hunks (fall back to \`get_commit\` on the merge commit SHA).
   - \`get_file_contents\` / \`search_code\` to open the full serializer / model / status mapper /
     migration, and to reach unchanged files in the blast radius (a shared concern, a base
     serializer, a model enum a mapper wraps) so you can trace where a changed field is actually
@@ -28,9 +30,9 @@ You have READ-ONLY GitHub tools — use them; do not judge from filenames or com
 Trace a change to a rendered field before you flag it. The tools are read-only — you inspect,
 you never write anything back. Reason from the fetched hunks plus the repo knowledge below.
 
-When a change's blast radius extends beyond the files listed in this push (a shared concern, a
+When a change's blast radius extends beyond the files changed in this PR (a shared concern, a
 base serializer, a model enum, a status mapper, a migration), say so: the downstream endpoints
-are affected even though their files aren't in this push.
+are affected even though their files aren't in this PR.
 
 CONSUMER PRIORITY (order findings by this)
 1. Api::Public   (/public, app/{controllers,serializers}/api/public) — hosted-checkout SDK. HIGHEST.

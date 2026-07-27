@@ -34,7 +34,7 @@ export class SlackNotifierService {
       const card = await buildContractDriftCard(report, context);
       await this.slackBotService.postToChannel(channel, card);
       this.logger.log(
-        `posted contract drift alert for ${context.repoFullName}@${context.shortSha} to ${channel}`,
+        `posted contract drift alert for ${context.repoFullName}#${context.prNumber} to ${channel}`,
       );
     } catch (error) {
       this.logger.error(
