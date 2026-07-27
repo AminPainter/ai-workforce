@@ -2,6 +2,7 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
+import { SlackNotifierService } from '../../slack/services/slack-notifier.service';
 import { CONTRACT_DRIFT_DETECTOR } from '../../agents/workforce/contract-drift-detector/contract-drift-detector.agent';
 import type { ContractDriftReport } from '../../agents/workforce/contract-drift-detector/contract-drift-detector.schema';
 import {
@@ -18,7 +19,10 @@ const CONTRACT_DRIFT_CONCURRENCY = Number(
 export class ContractDriftProcessor extends WorkerHost {
   private readonly logger = new Logger(ContractDriftProcessor.name);
 
-  constructor(private readonly agentRegistry: AgentRegistry) {
+  constructor(
+    private readonly agentRegistry: AgentRegistry,
+    private readonly slackNotifierService: SlackNotifierService,
+  ) {
     super();
   }
 
@@ -38,6 +42,15 @@ export class ContractDriftProcessor extends WorkerHost {
     this.logger.log(
       `Contract drift report for ${fullName}@${shortSha} — hasContractDrift=${report.hasContractDrift}, ${report.driftingChanges.length} change(s):\n${JSON.stringify(report, null, 2)}`,
     );
+
+    if (report.hasContractDrift) {
+      await this.slackNotifierService.notifyContractDrift(report, {
+        repoFullName: fullName,
+        shortSha,
+        ref: payload.ref,
+        compareUrl: payload.compare,
+      });
+    }
   }
 
   @OnWorkerEvent('completed')

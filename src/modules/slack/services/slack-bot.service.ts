@@ -65,6 +65,16 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     return this.bot.webhooks.slack;
   }
 
+  async postToChannel(
+    channelId: string,
+    message: string | import('chat').ChatElement,
+  ): Promise<void> {
+    const qualifiedChannelId = channelId.includes(':')
+      ? channelId
+      : `slack:${channelId}`;
+    await this.bot.channel(qualifiedChannelId).post(message);
+  }
+
   private async answer(thread: import('chat').Thread): Promise<void> {
     const history = await this.readThreadHistory(thread);
     const messages = await this.buildModelMessages(history);

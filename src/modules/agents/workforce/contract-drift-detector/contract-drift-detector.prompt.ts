@@ -97,12 +97,20 @@ db/data/** :
   - a backfill that rewrites the values of a status/enum column => the SET of enum values the
     frontend observes changed with NO schema diff => enum-value-changed.
 
-app/constants/feature_flag_constants.rb / Features.enabled? :
-  - a flag key added/removed/renamed changes the \`feature_flags\` array business_serializer emits
-    => enum-value-changed / field-added. A new \`attribute ... if: Features.enabled?(...)\`, or a
-    controller branch on a flag returning a different body => field-now-conditional. Flags flip
-    per-merchant at runtime with no deploy — treat flag-gated fields as at least
-    potentially-breaking.
+app/constants/feature_flag_constants.rb / DEFAULTS / Business#<flag>_enabled? / Features.enabled? :
+  - business_serializer emits a \`feature_flags\` payload that enumerates EVERY defined flag KEY —
+    all flags ship on every Business response, not only the enabled ones. The set of flag keys IS
+    the contract. So:
+      * removing a flag (constant + DEFAULTS entry + \`<flag>_enabled?\` helper deleted, and/or the
+        db/data row) => that flag's KEY disappears from \`feature_flags\` on EVERY Business response
+        => field-removed. Any frontend that reads \`feature_flags.<key>\` (or checks the flag) breaks.
+        This is DRIFT REGARDLESS of the flag's default_value / rollout — the KEY presence is the
+        contract, not the on/off value. A removal is drift even when the flag was enabled-for-all.
+      * adding a flag => a new key appears => field-added (strict zod rejects unknown keys).
+      * renaming a flag key => field-renamed.
+  - A new \`attribute ... if: Features.enabled?(...)\`, or a controller branch on a flag returning a
+    different body => field-now-conditional. Flags flip per-merchant at runtime with no deploy —
+    treat flag-gated fields as at least potentially-breaking.
 
 app/controllers/** :
   - inline \`render json: { ... }\` key added/removed/renamed/retyped => the matching drift type.
@@ -116,6 +124,10 @@ AVOID FALSE POSITIVES
   - Renaming an internal variable/method that does not change any emitted key or value is not drift.
   - A value-masking change (response_masking_service) changes a string's FORMAT, not its
     presence/type — report only as potentially-breaking if a zod field constrains the format.
+  - Do NOT rationalize a feature-flag REMOVAL as safe because the flag was enabled-for-all /
+    default true. The \`feature_flags\` payload is keyed by flag NAME and includes every flag;
+    deleting a flag drops its KEY => field-removed, independent of the flag's value. Reason about
+    KEY presence, never the flag's effective on/off state.
   - severity = "breaking" for field-removed / field-renamed / type-changed / value-now-nullable /
     enum-value removed-or-renamed (and field-added when consumers use .strict()).
     severity = "potentially-breaking" for field-added, field-now-conditional, enum-value added,
