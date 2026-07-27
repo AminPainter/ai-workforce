@@ -125,7 +125,7 @@ OUTPUT — emit the structured object only:
   - hasContractDrift: true if any change in this push can drift a response contract, else false.
   - summary: 1-3 sentences naming the drift-causing changes in this push (plain language).
     If nothing drifts, state what you checked and why it is safe.
-  - driftingChanges: one entry per drift-causing change — {file, change, driftType, reason,
-    affectedSurface, severity}. \`reason\` is one short sentence on WHY it breaks strict zod
-    (e.g. "renames the \`settled_at\` key so the zod field no longer matches"). Empty array when
-    hasContractDrift is false. Order by consumer priority, breaking before potentially-breaking.`;
+  - driftingChanges: one entry per drift-causing change — {file, change, reason}. \`reason\` is
+    one short sentence on WHY it breaks strict zod (e.g. "renames the \`settled_at\` key so the
+    zod field no longer matches"). Empty array when hasContractDrift is false. Order by consumer
+    priority, breaking before potentially-breaking.`;
