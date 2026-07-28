@@ -21,7 +21,7 @@ export function createContractDriftDetector(
     instructions: CONTRACT_DRIFT_DETECTOR_SYSTEM_PROMPT,
     tools: { ...gitHubMcpService.getTools() },
     stopWhen: stepCountIs(
-      Number(configService.get('CONTRACT_DRIFT_MAX_STEPS') ?? 30),
+      Number(configService.get('CONTRACT_DRIFT_MAX_STEPS') ?? 50),
     ),
     output: Output.object({ schema: contractDriftReportSchema }),
   });
