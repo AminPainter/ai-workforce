@@ -9,9 +9,7 @@ import {
 } from '../agent/contract-drift-detector.agent';
 
 @Injectable()
-export class ContractDriftAgentRegistrationService
-  implements OnApplicationBootstrap
-{
+export class ContractDriftAgentRegistrationService implements OnApplicationBootstrap {
   constructor(
     private readonly aiService: AiService,
     private readonly gitHubMcpService: GitHubMcpService,
