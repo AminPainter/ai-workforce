@@ -1,5 +1,5 @@
 import type { CardChild, ChatElement } from 'chat';
-import type { ContractDriftReport } from '../../agents/workforce/contract-drift-detector/contract-drift-detector.schema';
+import type { ContractDriftReport } from '../agent/contract-drift-detector.schema';
 
 export interface ContractDriftContext {
   repoFullName: string;
