@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Webhooks } from '@octokit/webhooks';
 import {
-  GITHUB_PULL_REQUEST_EVENT,
-  type GitHubPullRequestEvent,
+  GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT,
+  type GitHubPullRequestMergedToMainEvent,
 } from '../github.events';
 
 @Injectable()
@@ -20,9 +20,17 @@ export class GitHubWebhookService {
       secret: this.configService.getOrThrow<string>('GITHUB_WEBHOOK_SECRET'),
     });
 
-    this.webhooks.on('pull_request', ({ id, payload }) => {
-      const event: GitHubPullRequestEvent = { id, payload };
-      this.eventEmitter.emit(GITHUB_PULL_REQUEST_EVENT, event);
+    this.webhooks.on('pull_request.closed', ({ id, payload }) => {
+      const pullRequest = payload.pull_request;
+      if (!pullRequest.merged || pullRequest.base.ref !== 'main') {
+        this.logger.debug(
+          `ignored closed PR #${pullRequest.number} (merged=${pullRequest.merged}, base=${pullRequest.base.ref})`,
+        );
+        return;
+      }
+
+      const event: GitHubPullRequestMergedToMainEvent = { id, payload };
+      this.eventEmitter.emit(GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT, event);
     });
   }
 

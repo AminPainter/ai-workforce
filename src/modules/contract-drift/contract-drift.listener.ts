@@ -3,8 +3,8 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import {
-  GITHUB_PULL_REQUEST_EVENT,
-  type GitHubPullRequestEvent,
+  GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT,
+  type GitHubPullRequestMergedToMainEvent,
 } from '../github/github.events';
 import { CONTRACT_DRIFT_QUEUE } from './queues/contract-drift.queue';
 
@@ -17,27 +17,12 @@ export class ContractDriftListener {
     private readonly contractDriftQueue: Queue,
   ) {}
 
-  @OnEvent(GITHUB_PULL_REQUEST_EVENT)
-  async onPullRequest({ id, payload }: GitHubPullRequestEvent): Promise<void> {
+  @OnEvent(GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT)
+  async onPullRequestMergedToMain({
+    id,
+    payload,
+  }: GitHubPullRequestMergedToMainEvent): Promise<void> {
     try {
-      if (payload.action !== 'closed') {
-        this.logger.debug(`ignored PR action: ${payload.action}`);
-        return;
-      }
-
-      const pullRequest = payload.pull_request;
-      if (!pullRequest.merged) {
-        this.logger.debug(
-          `ignored closed-without-merge PR #${pullRequest.number}`,
-        );
-        return;
-      }
-
-      if (pullRequest.base.ref !== 'main') {
-        this.logger.debug(`ignored PR base ref: ${pullRequest.base.ref}`);
-        return;
-      }
-
       await this.contractDriftQueue.add('analyze', { payload }, { jobId: id });
     } catch (error) {
       this.logger.error(error);

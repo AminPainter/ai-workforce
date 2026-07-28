@@ -5,7 +5,7 @@ import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { ContractDriftNotifierService } from '../services/contract-drift-notifier.service';
 import { CONTRACT_DRIFT_DETECTOR } from '../agent/contract-drift-detector.agent';
 import type { ContractDriftReport } from '../agent/contract-drift-detector.schema';
-import type { PullRequestPayload } from '../../github/github.events';
+import type { PullRequestMergedPayload } from '../../github/github.events';
 import {
   CONTRACT_DRIFT_QUEUE,
   type ContractDriftJob,
@@ -66,7 +66,7 @@ export class ContractDriftProcessor extends WorkerHost {
   }
 }
 
-function buildTask(payload: PullRequestPayload): string {
+function buildTask(payload: PullRequestMergedPayload): string {
   const pullRequest = payload.pull_request;
 
   return [
