@@ -22,6 +22,8 @@ const UNAUTHORIZED_MESSAGE =
 export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SlackBotService.name);
   private bot!: import('chat').Chat;
+  private slackAdapter!: import('chat').Adapter;
+  private emoji!: typeof import('chat').emoji;
   private readonly maxContextMessages: number;
 
   constructor(
@@ -34,13 +36,16 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit(): Promise<void> {
-    const { Chat } = await import('chat');
+    const { Chat, emoji } = await import('chat');
     const { createSlackAdapter } = await import('@chat-adapter/slack');
     const { createRedisState } = await import('@chat-adapter/state-redis');
 
+    this.emoji = emoji;
+    this.slackAdapter = createSlackAdapter();
+
     this.bot = new Chat({
       userName: 'glomopay-bot',
-      adapters: { slack: createSlackAdapter() },
+      adapters: { slack: this.slackAdapter },
       state: createRedisState({
         url: this.configService.getOrThrow<string>('REDIS_URL'),
       }),
@@ -53,6 +58,7 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
         return;
       }
       this.logger.log(`mention: ${message.text}`);
+      await this.addSeenReaction(message);
       await this.answer(thread);
     });
   }
@@ -73,6 +79,20 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       ? channelId
       : `slack:${channelId}`;
     await this.bot.channel(qualifiedChannelId).post(message);
+  }
+
+  private async addSeenReaction(
+    message: import('chat').Message,
+  ): Promise<void> {
+    try {
+      await this.slackAdapter.addReaction(
+        message.threadId,
+        message.id,
+        this.emoji.eyes,
+      );
+    } catch (error) {
+      this.logger.warn(`failed to add eyes reaction: ${error}`);
+    }
   }
 
   private async answer(thread: import('chat').Thread): Promise<void> {
