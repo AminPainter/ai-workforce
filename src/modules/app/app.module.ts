@@ -8,6 +8,7 @@ import { AgentsModule } from '../agents/agents.module';
 import { SlackModule } from '../slack/slack.module';
 import { GitHubModule } from '../github/github.module';
 import { ContractDriftModule } from '../contract-drift/contract-drift.module';
+import { ChatwootModule } from '../chatwoot/chatwoot.module';
 import { QueueModule } from '../queue/queue.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { QueueModule } from '../queue/queue.module';
     SlackModule,
     GitHubModule,
     ContractDriftModule,
+    ChatwootModule,
   ],
   controllers: [AppController],
   providers: [AppService],
