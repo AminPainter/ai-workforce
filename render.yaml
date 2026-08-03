@@ -40,6 +40,26 @@ services:
           type: keyvalue
           name: glomo-ai-workforce-redis
           property: connectionString
+      # RAG / legal-assistant. DATABASE_URL wired from the managed Postgres below.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: glomo-ai-workforce-pg
+          property: connectionString
+      - key: AI_GATEWAY_EMBEDDING_MODEL
+        sync: false
+      # Must equal the embedding model's output dimension (from the Step 0 probe). Set once;
+      # changing it requires a re-index + re-ingest.
+      - key: RAG_EMBEDDING_DIMENSIONS
+        sync: false
+      # RAG tunables — safe in-code defaults; listed for discoverability.
+      - key: RAG_RETRIEVAL_TOP_K
+        value: "5"
+      - key: RAG_CHUNK_CHARS
+        value: "1800"
+      - key: RAG_CHUNK_OVERLAP
+        value: "300"
+      - key: LEGAL_ASSISTANT_MAX_STEPS
+        value: "20"
       # BullMQ queue tunables — all have safe in-code defaults; listed for discoverability.
       - key: QUEUE_JOB_ATTEMPTS
         value: "3"
@@ -54,4 +74,11 @@ services:
     region: singapore # match the web service region
     plan: starter # 'free' is non-persistent + tiny; 'starter'+ persists
     maxmemoryPolicy: noeviction # protect BullMQ jobs / Chat locks from eviction
+    ipAllowList: [] # empty = private (internal Render network only)
+
+databases:
+  - name: glomo-ai-workforce-pg
+    region: singapore # match the web service region
+    plan: basic-256mb # smallest paid tier that persists; scale up as the corpus grows
+    postgresMajorVersion: "16" # pgvector's `vector` extension is available on managed Postgres
     ipAllowList: [] # empty = private (internal Render network only)

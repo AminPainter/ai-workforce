@@ -67,6 +67,22 @@ Queue infra (`src/modules/queue`, shared by any future webhook consumer):
   `contract-drift` queue (read from `process.env` at module load — the `@Processor`
   concurrency option is decorator-time).
 
+RAG / Legal Assistant (Postgres + pgvector — grounds the `legal-assistant` agent):
+- `DATABASE_URL` (required) — Postgres connection string. Local: `postgres://rag:rag@localhost:5432/rag`
+  (the `postgres` service in `docker-compose.yml`). Render: wired from the managed Postgres in
+  `render.yaml`. The DB needs the `vector` extension — the migration runs `CREATE EXTENSION vector`.
+- `AI_GATEWAY_EMBEDDING_MODEL` (required for RAG) — embedding model id on the AI gateway. Only
+  loaded when embeddings are actually used (ingest / retrieval), so the rest of the app boots
+  without it.
+- `RAG_EMBEDDING_DIMENSIONS` (required for RAG) — the embedding vector length. Must equal the
+  model's output dimension; it fixes the pgvector column and cannot change without a re-index +
+  re-ingest. Get it once from the Step 0 probe (see "Legal knowledge base" below).
+- `RAG_RETRIEVAL_TOP_K` (optional, default 5) — excerpts returned per search.
+- `RAG_MIN_SIMILARITY` (optional) — drop excerpts below this cosine similarity (0–1). Unset = keep top-k.
+- `RAG_CHUNK_CHARS` (optional, default 1800) / `RAG_CHUNK_OVERLAP` (optional, default 300) — ingest chunking.
+- `RAG_EMBEDDING_BATCH_SIZE` (optional, default 96) — inputs per `embedMany` call during ingest.
+- `LEGAL_ASSISTANT_MAX_STEPS` (optional, default 20) — tool-loop step cap for the agent.
+
 SearXNG:
 - `SEARXNG_SECRET` (required) — SearXNG reads this natively and overrides `secret_key`. If it is
   unset in production, SearXNG's boot guard exits with an error rather than running with a weak
@@ -91,6 +107,36 @@ The repo ships a `render.yaml` blueprint: one public Docker web service in Singa
 3. At first sync, fill every `sync: false` secret — including `SEARXNG_SECRET`.
 4. Deploy. Confirm `/` health passes, then mention the bot in Slack and verify a
    web-search-backed answer (proves the in-container SearXNG on `127.0.0.1:8080` works).
+
+## Legal knowledge base (RAG)
+
+The `legal-assistant` agent answers only from ingested legal PDFs, retrieved from Postgres/pgvector
+and cited by source + page. The `employee-assistant` delegates legal-document questions to it via the
+`askLegalAssistant` tool. Ingestion is a manual CLI; the store is collection-partitioned
+(`legal` today, e.g. `sales` later with no schema change).
+
+Step 0 — confirm the embedding path and capture the dimension (do this first):
+
+```bash
+pnpm repl
+# in the REPL:
+const ai = await get(AiService)
+const { embed } = await import('ai')
+const { embedding } = await embed({ model: ai.embeddingModel(), value: 'ping' })
+embedding.length   // → set RAG_EMBEDDING_DIMENSIONS to this
+```
+
+If the gateway serves no embeddings endpoint, add `@ai-sdk/openai` and point `AiService.embeddingModel()`
+at `openai.textEmbedding('text-embedding-3-small')` (1536-dim, needs `OPENAI_API_KEY`); nothing else changes.
+
+Then migrate and ingest (both read `.env` via `--env-file-if-exists`):
+
+```bash
+pnpm db:migrate                                              # creates rag_document / rag_chunk + HNSW index
+pnpm ingest -- --collection legal --dir ./knowledge/legal    # parse → chunk → embed → upsert (idempotent)
+```
+
+Re-running `ingest` is idempotent (skips unchanged files by sha256 checksum, re-chunks changed ones).
 
 ## Non-Docker dev
 

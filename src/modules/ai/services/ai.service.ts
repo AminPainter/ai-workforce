@@ -4,7 +4,7 @@ import {
   createOpenAICompatible,
   type OpenAICompatibleProvider,
 } from '@ai-sdk/openai-compatible';
-import { type LanguageModel } from 'ai';
+import { type LanguageModel, type EmbeddingModel } from 'ai';
 import { createWebSearchTool } from '../tools/web-search.tool';
 import { createWebFetchTool } from '../tools/web-fetch.tool';
 
@@ -25,6 +25,12 @@ export class AiService {
 
   model(modelId?: string): LanguageModel {
     return this.provider(modelId ?? this.defaultModel);
+  }
+
+  embeddingModel(modelId?: string): EmbeddingModel {
+    return this.provider.textEmbeddingModel(
+      modelId ?? this.config.getOrThrow<string>('AI_GATEWAY_EMBEDDING_MODEL'),
+    );
   }
 
   webTools() {

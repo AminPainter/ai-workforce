@@ -36,6 +36,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
         this.glomopayMcpService,
         this.skillsService,
         this.configService,
+        this.agentRegistry,
       ),
     );
   }
