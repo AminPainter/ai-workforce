@@ -12,6 +12,9 @@ import {
 
 const CHATWOOT_CONCURRENCY = Number(process.env.CHATWOOT_CONCURRENCY ?? 3);
 const DRAFT_PREFIX = '[AI draft — review before sending]\n\n';
+const NEEDS_HUMAN_PREFIX = '[AI escalation — needs human/compliance review]\n\n';
+const NEEDS_HUMAN_SENTINEL = 'NEEDS HUMAN:';
+const NO_DRAFT_PATTERN = /^no draft\.?$/i;
 
 type ConversationMessage = {
   content?: string | null;
@@ -39,38 +42,53 @@ export class ChatwootProcessor extends WorkerHost {
   async process(job: Job<ChatwootDraftJob>): Promise<void> {
     const { conversationId, status, payload } = job.data;
 
-    const conversation = await this.chatwootApiClient
-      .getConversation(conversationId)
-      .catch((error: Error) => {
-        this.logger.warn(
-          `could not fetch conversation #${conversationId}, falling back to webhook history: ${error.message}`,
-        );
-        return undefined;
-      });
+    const [history, conversation] = await Promise.all([
+      this.chatwootApiClient
+        .getConversationMessages(conversationId)
+        .catch((error: Error) => {
+          this.logger.warn(
+            `could not fetch messages for conversation #${conversationId}, falling back to webhook history: ${error.message}`,
+          );
+          return undefined;
+        }),
+      this.chatwootApiClient
+        .getConversation(conversationId)
+        .catch(() => undefined),
+    ]);
 
-    const history =
-      conversation?.messages ?? payload.conversation.messages ?? [];
-    const messages = this.buildModelMessages(history, payload.content ?? '');
+    const messages = this.buildModelMessages(
+      history ?? payload.conversation.messages ?? [],
+      payload.content ?? '',
+    );
 
     const { text } = await this.agentRegistry
       .get(CUSTOMER_SUPPORT_AGENT)
       .generate({ messages });
 
-    const draft = text.trim();
-    if (!draft) {
+    const output = text.trim();
+    if (!output) {
       this.logger.warn(`empty draft for conversation #${conversationId}`);
       return;
     }
 
+    if (NO_DRAFT_PATTERN.test(output)) {
+      this.logger.log(
+        `no substantive reply needed for conversation #${conversationId}, skipping note`,
+      );
+      return;
+    }
+
+    const needsHuman = output.startsWith(NEEDS_HUMAN_SENTINEL);
+
     await this.chatwootApiClient.sendPrivateNote(
       conversationId,
-      DRAFT_PREFIX + draft,
+      (needsHuman ? NEEDS_HUMAN_PREFIX : DRAFT_PREFIX) + output,
     );
     this.logger.log(
-      `posted draft note to conversation #${conversationId} (${draft.length} chars)`,
+      `posted ${needsHuman ? 'escalation' : 'draft'} note to conversation #${conversationId} (${output.length} chars)`,
     );
 
-    if ((conversation?.status ?? status) === 'pending')
+    if (needsHuman || (conversation?.status ?? status) === 'pending')
       await this.chatwootApiClient.handoffToHuman(conversationId);
   }
 
