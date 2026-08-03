@@ -4,11 +4,12 @@ import { ConfigService } from '@nestjs/config';
 export interface ChatwootConversation {
   id: number;
   status: string;
-  messages: Array<{
-    content?: string | null;
-    message_type: string | number;
-    private?: boolean;
-  }>;
+}
+
+export interface ChatwootApiMessage {
+  content?: string | null;
+  message_type: string | number;
+  private?: boolean;
 }
 
 @Injectable()
@@ -32,6 +33,16 @@ export class ChatwootApiClient {
       `/conversations/${conversationId}`,
       'GET',
     );
+  }
+
+  async getConversationMessages(
+    conversationId: number,
+  ): Promise<ChatwootApiMessage[]> {
+    const response = await this.request<{ payload?: ChatwootApiMessage[] }>(
+      `/conversations/${conversationId}/messages`,
+      'GET',
+    );
+    return response.payload ?? [];
   }
 
   async sendPrivateNote(

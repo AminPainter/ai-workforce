@@ -63,8 +63,6 @@ export class ChatwootWebhookService {
     const event: ChatwootMessageCreatedEvent = {
       deliveryId: deliveryId ?? '',
       conversationId: payload.conversation.id,
-      accountId: payload.account?.id,
-      inboxId: payload.inbox?.id,
       status: payload.conversation.status,
       payload,
     };
