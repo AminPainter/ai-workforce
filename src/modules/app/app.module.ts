@@ -8,6 +8,7 @@ import { AgentsModule } from '../agents/agents.module';
 import { SlackModule } from '../slack/slack.module';
 import { GitHubModule } from '../github/github.module';
 import { ContractDriftModule } from '../contract-drift/contract-drift.module';
+import { EmployeeAssistantModule } from '../employee-assistant/employee-assistant.module';
 import { ChatwootModule } from '../chatwoot/chatwoot.module';
 import { QueueModule } from '../queue/queue.module';
 
@@ -21,6 +22,7 @@ import { QueueModule } from '../queue/queue.module';
     SlackModule,
     GitHubModule,
     ContractDriftModule,
+    EmployeeAssistantModule,
     ChatwootModule,
   ],
   controllers: [AppController],
