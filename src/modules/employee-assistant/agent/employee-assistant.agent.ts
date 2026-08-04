@@ -1,10 +1,10 @@
 import { ToolLoopAgent, stepCountIs } from 'ai';
 import { ConfigService } from '@nestjs/config';
-import { AiService } from '../../../ai/services/ai.service';
-import { SentryMcpService } from '../../../ai/services/sentry-mcp.service';
-import { GitHubMcpService } from '../../../ai/services/github-mcp.service';
-import { AtlassianMcpService } from '../../../ai/services/atlassian-mcp.service';
-import { RegisteredAgent } from '../../services/agent-registry.service';
+import { AiService } from '../../ai/services/ai.service';
+import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
+import { GitHubMcpService } from '../../ai/services/github-mcp.service';
+import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
+import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
 export const EMPLOYEE_ASSISTANT = 'employee-assistant';

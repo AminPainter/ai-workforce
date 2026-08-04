@@ -4,14 +4,14 @@ import { AiService } from '../../ai/services/ai.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
-import { AgentRegistry } from './agent-registry.service';
+import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import {
   EMPLOYEE_ASSISTANT,
   createEmployeeAssistant,
-} from '../workforce/employee-assistant/employee-assistant.agent';
+} from '../agent/employee-assistant.agent';
 
 @Injectable()
-export class AgentsBootstrapService implements OnApplicationBootstrap {
+export class EmployeeAssistantAgentRegistrationService implements OnApplicationBootstrap {
   constructor(
     private readonly aiService: AiService,
     private readonly sentryMcpService: SentryMcpService,

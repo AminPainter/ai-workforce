@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { EMPLOYEE_ASSISTANT } from '../../agents/workforce/employee-assistant/employee-assistant.agent';
+import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
 
 const ALLOWED_SLACK_USER_IDS = new Set<string>([
   'U0857R1RB9Q', // Amin
