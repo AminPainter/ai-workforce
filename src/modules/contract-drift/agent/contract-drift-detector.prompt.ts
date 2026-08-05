@@ -196,8 +196,17 @@ AVOID FALSE POSITIVES
     presence/type — report only as potentially-breaking if a zod field constrains the format.
   - Do NOT flag field-added as breaking without a VERIFIED \`.strict()\`/\`.catchall()\` consumer —
     a bare z.object strips unknown keys, and that is the only pattern in glomopay-checkout.
+  - Do NOT keep a field-added alive as \`unverifiable-external\` (or \`unverified\`) just because you
+    could not find the consumer schema on a FIRST-PARTY surface — apps/admin-panel included.
+    Additions are non-breaking under every schema kind that exists in the monorepo, so a first-party
+    field-added is \`none\`/ruledOut regardless of the lookup. \`unverifiable-external\` is only for
+    consumers OUTSIDE glomopay-checkout (partner S2S / webhook). admin-panel is INSIDE it.
   - Do NOT flag an endpoint the frontend fetches WITHOUT a zod schema (raw + \`as\` cast) as a parse
-    break — at most it is \`silent\`.
+    break — at most it is \`silent\`, and only if a read site exists (next bullet).
+  - A renamed/removed field that the frontend parses loosely (z.string() / optional / no schema) or
+    only DECLARES in a type but never READS is not drift — its absence under the new key is
+    unobserved. Classify \`none\` (ruledOut), not \`silent\`. Silent requires a LOCATED read site whose
+    logic mis-behaves on the changed value; presence in a schema/type is parsing, not consumption.
   - Do NOT flag a new/renamed enum value as breaking when the consuming field is \`z.string()\` —
     that is \`silent\`, not a parse throw.
   - Feature-flag add/remove: surface the wire-set change, but do NOT assert it breaks the frontend.
@@ -231,8 +240,12 @@ ref \`main\`. Do NOT rely on the FRONTEND GROUND TRUTH generalities alone — co
        - a schema variable => \`get_file_contents\` on the schema (follow the import; unwrap a
          { data } / list data[] to the entity object) and read the EXACT zod for that key.
   4. Decide frontendImpact from the exact zod + the drift type:
-       - field-removed / field-renamed : key required (bare) => breaking; key .optional()/.nullish()
-         => none (it just goes missing).
+       - field-removed / field-renamed : key required (bare) => it would throw on the absent key =>
+         breaking. key .optional()/.nullish(), z.string(), or no schema => no throw, so NOW locate a
+         READ SITE: search the camelCase field as a READ (data.reviewStatus, {reviewStatus} destructure,
+         spread into the consuming component, .find on it). A read that branches/renders on it => silent;
+         declared in a schema/type with NO read site => none (renaming/removing a field nothing reads
+         is a no-op).
        - type-changed : specific type (z.number/z.boolean/z.object/nested schema) => breaking;
          z.string()/z.any()/z.unknown() => none.
        - value-now-nullable : field NOT .nullable()/.nullish() (bare, or .optional()-only) => breaking;
@@ -242,20 +255,45 @@ ref \`main\`. Do NOT rely on the FRONTEND GROUND TRUTH generalities alone — co
        - enum-value added/renamed : field is z.enum/z.nativeEnum/z.literal/discriminatedUnion lacking
          the value => breaking; z.string() => silent (mis-branch); has \`.catch(default)\` => none/silent.
        - field-added : object is bare z.object() or .passthrough() (the only kinds present) => none;
-         only .strict()/.catchall() => breaking (does not occur in this repo — say so).
-  5. Evidence rule: only downgrade to \`none\` with POSITIVE evidence — you located the consumer and
-     confirmed it strips / omits / tolerates the field. A failed search is \`unverified\`, NOT \`none\`
-     (a field can be read via spread / ConvertKeysToCamelCase without a literal mention); state
-     exactly what you searched and keep the finding at its backend-hypothesized severity.
-Surfaces you CANNOT verify here: Api::External (partner S2S) and the webhook builders have no
-consumer in glomopay-checkout — keep the backend-only judgment and label frontendImpact
-\`unverifiable-external\`. (Api::Admin lives in apps/admin-panel; verify it the same way if you flag
-it, but keep the priority /public then /api/int.)
+         only .strict()/.catchall() => breaking (does not occur in this repo — say so). On a
+         FIRST-PARTY surface (public/int/admin, incl. apps/admin-panel) this is \`none\`/ruledOut EVEN
+         IF you cannot find the schema — zero-strict is a whole-monorepo invariant, so a not-found
+         schema is not evidence of breakage. A field-added is \`unverifiable-external\` ONLY on
+         external/webhook.
+  5. Evidence rule, by candidate severity:
+       - BREAKING candidates (a wired closed schema that WOULD throw): only downgrade to \`none\` with
+         POSITIVE evidence that the consumer strips / omits / tolerates the field. A failed search is
+         \`unverified\`, NOT \`none\` (a field can be read via spread / ConvertKeysToCamelCase without a
+         literal mention); keep the finding at its backend-hypothesized severity.
+       - SILENT candidates (loose consumer that CANNOT throw — z.string() / optional / no schema, or a
+         rename/removal that just goes missing): real ONLY if the value is READ. Run a thorough
+         read-site search (camelCase field, {field} destructure, spread into the consuming component,
+         .find / comparison). A read that mis-behaves => silent; thorough-but-failed read-site search
+         => \`none\` (ruledOut), NOT silent/unverified. In BOTH cases state exactly what you searched.
+Surfaces you CANNOT verify here are ONLY those with no consumer INSIDE the glomopay-checkout
+monorepo: Api::External (partner S2S) and the webhook builders. For those, keep the backend-only
+judgment and label frontendImpact \`unverifiable-external\`. EVERYTHING else is FIRST-PARTY and
+verifiable: apps/admin-panel (Api::Admin), apps/checkout, apps/lrs-checkout-page,
+apps/merchant-dashboard, apps/payment-session-handler and apps/utilities all live in
+glomopay-checkout and are covered by the ground truth above (zero \`.strict()\` across the WHOLE
+monorepo, admin-panel included). So:
+  - Api::Admin is NEVER \`unverifiable-external\` — verify it in apps/admin-panel the same way (keep
+    priority /public then /api/int then admin). If you cannot find its schema the label is
+    \`unverified\`, NOT unverifiable-external.
+  - A field-added to ANY first-party surface (public/int/admin) is non-breaking by construction (a
+    bare z.object strips the key) => \`none\`/ruledOut whether or not you locate the schema — a
+    not-found admin/merchant schema does NOT turn an addition into a surviving finding. Never carry a
+    first-party field-added forward as breaking, silent, unverified, OR unverifiable-external.
+  - \`unverifiable-external\` is reserved for RENAME / REMOVAL / TYPE / ENUM / NULLABILITY changes on
+    external/webhook surfaces, plus field-added on external/webhook where a strict partner parser is
+    genuinely unknowable.
 
 OUTPUT — emit the structured object only:
   - hasContractDrift: true iff \`driftingChanges\` is non-empty AFTER verification — i.e. at least one
-    finding survives as breaking / silent / unverified / unverifiable-external. Additive-only,
-    not-consumed, and tolerant-schema findings move to \`ruledOut\` and do NOT set this true.
+    finding survives as breaking / silent (with a located read site) / unverified / unverifiable-
+    external. Additive-only (ANY first-party field-added, apps/admin-panel included), not-consumed,
+    declared-but-never-read, and tolerant-schema findings move to \`ruledOut\` and do NOT set this true.
+    The ONLY field-added that may survive is on an external/webhook surface (unverifiable-external).
   - summary: 1-3 sentences naming the surviving drift-causing changes and, for /public and /api/int,
     the frontend evidence (which glomopay-checkout schema/type confirms or clears each one). If
     nothing survives, state what you checked in BOTH repos and why it is safe.
@@ -265,13 +303,16 @@ OUTPUT — emit the structured object only:
       * consumer: the top surface (/public, /api/int, /admin, external).
       * frontendImpact: breaking | silent | unverified | unverifiable-external.
           breaking = a wired zod field will throw (safeParse -> ApiError(500) / .parse -> ZodError).
-          silent = reaches the frontend via a loose consumer (no schema / z.string() / TS cast) so
-            no parse throw, but logic can mishandle it (enum branch, poller terminal, flag .find).
+          silent = parse does NOT throw AND you located a READ SITE — a place that reads the field's
+            value (property access data.fooBar, {fooBar} destructure, branch, render, prop pass,
+            .find / comparison) — where the changed value mis-behaves (enum branch, poller terminal,
+            flag .find). A field only DECLARED in a schema/type with NO read site is NOT silent => none.
           unverified = could not locate the consumer; kept at backend-hypothesized severity.
           unverifiable-external = consumer not in glomopay-checkout (S2S / webhook).
       * frontendEvidence: glomopay-checkout path (+ line / zod snippet) that decided it, OR
         "no schema wired (TS cast)", OR "not found; searched <terms>". For breaking, cite the exact
-        schema line.
+        schema line. For silent, cite the READ SITE (file:line where the value is consumed); a silent
+        finding with no read site is not silent — move it to ruledOut as frontendImpact "none".
       * reason: one short sentence tying the backend change to the frontend evidence (e.g. "renames
         \`settled_at\` -> \`finalized_at\`; merchant-dashboard order.schema.ts:41 requires \`settledAt\`
         so safeParse throws").
