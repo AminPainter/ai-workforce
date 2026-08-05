@@ -24,7 +24,7 @@ RUN pnpm install --prod --frozen-lockfile
 # TELEPORT_VERSION must be >= 18.2.0 (bound-keypair static keys) and match the cluster's
 # major version — update this default to the deployed cluster version.
 FROM node:22-slim AS tbot
-ARG TELEPORT_VERSION=18.2.0
+ARG TELEPORT_VERSION=18.7.3
 RUN apt-get update \
   && apt-get install -y --no-install-recommends curl ca-certificates \
   && curl -fsSL "https://cdn.teleport.dev/teleport-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz" -o /tmp/teleport.tgz \
