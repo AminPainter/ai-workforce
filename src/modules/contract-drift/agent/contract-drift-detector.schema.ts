@@ -7,23 +7,10 @@ export const driftingChangeSchema = z.object({
     .describe(
       'What changed on the response contract (the renamed key, removed attribute, new enum value, retyped field, etc.).',
     ),
-  consumer: z
-    .string()
-    .describe('Top consuming surface: /public, /api/int, /admin, or external.'),
-  frontendImpact: z
-    .enum(['breaking', 'silent', 'unverified', 'unverifiable-external'])
-    .describe(
-      'Verified severity. breaking = a wired zod field throws. silent = no throw AND a located read site mis-behaves on the value. unverified = consumer not found; kept at backend hypothesis. unverifiable-external = S2S/webhook, no glomopay-checkout consumer. A loose/renamed field with no located read site is NOT a drifting change — omit it (it belongs in ruledOut), never emit it as silent.',
-    ),
-  frontendEvidence: z
-    .string()
-    .describe(
-      'glomopay-checkout evidence that decided it: the schema path+line for breaking, the READ SITE file:line for silent, "no schema wired (TS cast)", or "not found; searched <terms>" for unverified.',
-    ),
   reason: z
     .string()
     .describe(
-      'One short sentence tying the backend change to the frontend evidence (e.g. "renames `settled_at` -> `finalized_at`; order.schema.ts:41 requires `settledAt` so safeParse throws").',
+      'One short sentence on WHY it breaks strict zod (e.g. "renames the `settled_at` key so the zod field no longer matches").',
     ),
 });
 
@@ -31,7 +18,7 @@ export const contractDriftReportSchema = z.object({
   hasContractDrift: z
     .boolean()
     .describe(
-      'true iff driftingChanges is non-empty after verification — at least one finding survives as breaking, silent (with a located read site), unverified, or unverifiable-external. Additive-only, not-consumed, and declared-but-never-read findings do NOT set this true.',
+      'true if any change in the diff can drift a response contract, else false.',
     ),
   summary: z
     .string()

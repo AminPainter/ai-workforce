@@ -33,9 +33,7 @@ export async function buildContractDriftCard(
   for (const change of rendered)
     children.push(
       Section([
-        CardText(
-          `*${change.file}* — ${change.frontendImpact}\n${change.change}\n${change.reason}`,
-        ),
+        CardText(`*${change.file}*\n${change.change}\n${change.reason}`),
       ]),
     );
 

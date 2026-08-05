@@ -304,28 +304,31 @@ OUTPUT — emit the structured object only:
   - summary: 1-3 sentences naming the surviving drift-causing changes and, for /public and /api/int,
     the frontend evidence (which glomopay-checkout schema/type confirms or clears each one). If
     nothing survives, state what you checked in BOTH repos and why it is safe.
-  - driftingChanges: one entry per SURVIVING change — {file, change, consumer, frontendImpact,
-    frontendEvidence, reason}.
+  - driftingChanges: emit ONE entry per SURVIVING change only — {file, change, reason}. A change
+    SURVIVES only after you classify its impact and that impact is one of: breaking / silent (with a
+    LOCATED read site) / unverified / unverifiable-external. Classify the impact as an INTERNAL step
+    (it is NOT an emitted field) using these definitions, then decide survival:
+      * breaking = a wired zod field will throw (safeParse -> ApiError(500) / .parse -> ZodError).
+      * silent = parse does NOT throw AND you located a READ SITE — a place that reads the field's
+        value (property access data.fooBar, {fooBar} destructure, branch, render, prop pass,
+        .find / comparison) — where the changed value mis-behaves (enum branch, poller terminal,
+        flag .find). A field only DECLARED in a schema/type with NO read site is NOT silent => none.
+      * unverified = could not locate the consumer; kept at backend-hypothesized severity.
+      * unverifiable-external = a RENAME/REMOVE/TYPE/ENUM/NULLABILITY change on a consumer not in
+        glomopay-checkout (partner S2S / webhook), whose parse we cannot verify. NOT for additions.
+      * none => DROP the change; it does NOT go in driftingChanges. In particular ANY field-added
+        (every surface), a declared-but-never-read rename/removal, and a tolerant-schema change are
+        \`none\` and MUST be dropped.
+    For each surviving entry:
       * change: the drift type from the list at the top.
-      * consumer: the top surface (/public, /api/int, /admin, external).
-      * frontendImpact: breaking | silent | unverified | unverifiable-external.
-          breaking = a wired zod field will throw (safeParse -> ApiError(500) / .parse -> ZodError).
-          silent = parse does NOT throw AND you located a READ SITE — a place that reads the field's
-            value (property access data.fooBar, {fooBar} destructure, branch, render, prop pass,
-            .find / comparison) — where the changed value mis-behaves (enum branch, poller terminal,
-            flag .find). A field only DECLARED in a schema/type with NO read site is NOT silent => none.
-          unverified = could not locate the consumer; kept at backend-hypothesized severity.
-          unverifiable-external = a RENAME/REMOVE/TYPE/ENUM/NULLABILITY change on a consumer not in
-            glomopay-checkout (partner S2S / webhook), whose parse we cannot verify. NOT for additions.
-      * frontendEvidence: glomopay-checkout path (+ line / zod snippet) that decided it, OR
-        "no schema wired (TS cast)", OR "not found; searched <terms>". For breaking, cite the exact
-        schema line. For silent, cite the READ SITE (file:line where the value is consumed); a silent
-        finding with no read site is not silent — move it to ruledOut as frontendImpact "none".
-      * reason: one short sentence tying the backend change to the frontend evidence (e.g. "renames
-        \`settled_at\` -> \`finalized_at\`; merchant-dashboard order.schema.ts:41 requires \`settledAt\`
-        so safeParse throws").
-      Order by consumer priority, then breaking > silent > unverified > unverifiable-external.
-  - ruledOut: changes that looked like drift from the backend diff but the frontend proves safe —
-    {file, change, frontendImpact: "none", frontendEvidence}. Show your work here so the reviewer
-    sees what was checked and cleared (e.g. "field-added; checkout preferences is fetched with no
-    schema and its bare-z.object peers strip unknown keys -> stripped").`;
+      * reason: one short sentence that names the top consumer surface, the impact (breaking/silent/
+        unverified/unverifiable-external), and the deciding glomopay-checkout evidence — the exact
+        schema path+line for breaking, the READ SITE file:line for silent, "no schema wired (TS cast)"
+        or "not found; searched <terms>" otherwise (e.g. "/api/int renames \`settled_at\` -> \`finalized_at\`;
+        breaking — merchant-dashboard order.schema.ts:41 requires \`settledAt\` so safeParse throws").
+      Order by consumer priority (/public > /api/int > /admin > external), then breaking > silent >
+      unverified > unverifiable-external.
+  - Do NOT emit changes you ruled out (any field-added, declared-but-never-read renames,
+    tolerant-schema changes). Account for what you checked and cleared in \`summary\`, not as entries
+    (e.g. "field-added compliance_status to the admin serializer — ruled out; additions are
+    backward-compatible and never break a consumer").`;
