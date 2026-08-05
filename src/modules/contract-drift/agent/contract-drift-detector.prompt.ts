@@ -10,11 +10,13 @@ A change causes contract drift if it does any of these to a field the API return
   - enum-value-changed  : a value added to / removed from / renamed in an enum or status set
   - field-removed       : a response key no longer emitted
   - field-renamed       : a response key emitted under a new name
-  - field-added         : a new response key. ONLY breaks a consumer whose object schema is
-                          .strict() / z.strictObject() / .catchall() — a bare z.object() silently
-                          STRIPS unknown keys and does NOT throw. Strict objects are effectively
-                          absent in glomopay-checkout, so treat field-added as non-breaking until
-                          verification finds a strict consumer (it will not).
+  - field-added         : a new response key. Backward-compatible on EVERY surface, so NOT drift.
+                          First-party: only .strict()/z.strictObject()/.catchall() would break, and
+                          those are effectively absent in glomopay-checkout — a bare z.object() strips
+                          unknown keys. External/webhook: partner contracts tolerate additions by
+                          convention. Always treat field-added as non-breaking (ruledOut), never
+                          unverifiable-external. (An added compliance/PII value newly exposed to a
+                          partner is a data-governance concern for humans, not a parse-break.)
   - type-changed        : a field's JSON type changes (e.g. int -> string, object -> array)
   - value-now-nullable  : a field that was always populated can now be null (breaks a zod field
                           that is not .nullable()/.nullish())
@@ -196,11 +198,13 @@ AVOID FALSE POSITIVES
     presence/type — report only as potentially-breaking if a zod field constrains the format.
   - Do NOT flag field-added as breaking without a VERIFIED \`.strict()\`/\`.catchall()\` consumer —
     a bare z.object strips unknown keys, and that is the only pattern in glomopay-checkout.
-  - Do NOT keep a field-added alive as \`unverifiable-external\` (or \`unverified\`) just because you
-    could not find the consumer schema on a FIRST-PARTY surface — apps/admin-panel included.
-    Additions are non-breaking under every schema kind that exists in the monorepo, so a first-party
-    field-added is \`none\`/ruledOut regardless of the lookup. \`unverifiable-external\` is only for
-    consumers OUTSIDE glomopay-checkout (partner S2S / webhook). admin-panel is INSIDE it.
+  - Do NOT keep a field-added alive as \`breaking\`, \`silent\`, \`unverified\`, OR \`unverifiable-external\`
+    on ANY surface just because you could not find the consumer schema. Adding a response key is
+    backward-compatible everywhere: first-party bare z.object strips it, and external/webhook partner
+    contracts tolerate additions by convention. A field-added is ALWAYS \`none\`/ruledOut regardless of
+    the lookup or the surface. \`unverifiable-external\` is for RENAME/REMOVE/TYPE/ENUM/NULLABILITY on
+    partner S2S or webhook — never for additions. (admin-panel is INSIDE glomopay-checkout, so it is
+    first-party and verifiable, not external.)
   - Do NOT flag an endpoint the frontend fetches WITHOUT a zod schema (raw + \`as\` cast) as a parse
     break — at most it is \`silent\`, and only if a read site exists (next bullet).
   - A renamed/removed field that the frontend parses loosely (z.string() / optional / no schema) or
@@ -255,11 +259,14 @@ ref \`main\`. Do NOT rely on the FRONTEND GROUND TRUTH generalities alone — co
        - enum-value added/renamed : field is z.enum/z.nativeEnum/z.literal/discriminatedUnion lacking
          the value => breaking; z.string() => silent (mis-branch); has \`.catch(default)\` => none/silent.
        - field-added : object is bare z.object() or .passthrough() (the only kinds present) => none;
-         only .strict()/.catchall() => breaking (does not occur in this repo — say so). On a
-         FIRST-PARTY surface (public/int/admin, incl. apps/admin-panel) this is \`none\`/ruledOut EVEN
-         IF you cannot find the schema — zero-strict is a whole-monorepo invariant, so a not-found
-         schema is not evidence of breakage. A field-added is \`unverifiable-external\` ONLY on
-         external/webhook.
+         only .strict()/.catchall() => breaking (does not occur in this repo — say so). This is
+         \`none\`/ruledOut on EVERY surface — first-party (public/int/admin, incl. apps/admin-panel) AND
+         external/webhook — even if you cannot find the schema. Adding a response key is backward-
+         compatible by convention: tolerant readers ignore unknown keys, JSON defaults to
+         additionalProperties=true, and partner/webhook contracts explicitly reserve the right to add
+         fields. A field-added is therefore NEVER contract drift and is never \`unverifiable-external\`.
+         (If the ADDED value is compliance/PII newly exposed to a partner, that is a data-governance
+         concern for human review, NOT a parse-break — do not surface it here as drift.)
   5. Evidence rule, by candidate severity:
        - BREAKING candidates (a wired closed schema that WOULD throw): only downgrade to \`none\` with
          POSITIVE evidence that the consumer strips / omits / tolerates the field. A failed search is
@@ -280,20 +287,20 @@ monorepo, admin-panel included). So:
   - Api::Admin is NEVER \`unverifiable-external\` — verify it in apps/admin-panel the same way (keep
     priority /public then /api/int then admin). If you cannot find its schema the label is
     \`unverified\`, NOT unverifiable-external.
-  - A field-added to ANY first-party surface (public/int/admin) is non-breaking by construction (a
-    bare z.object strips the key) => \`none\`/ruledOut whether or not you locate the schema — a
-    not-found admin/merchant schema does NOT turn an addition into a surviving finding. Never carry a
-    first-party field-added forward as breaking, silent, unverified, OR unverifiable-external.
+  - A field-added is non-breaking by construction on EVERY surface — first-party (bare z.object
+    strips the key) and external/webhook (additions are backward-compatible by convention) => always
+    \`none\`/ruledOut whether or not you locate the schema. Never carry a field-added forward as
+    breaking, silent, unverified, OR unverifiable-external, on any surface.
   - \`unverifiable-external\` is reserved for RENAME / REMOVAL / TYPE / ENUM / NULLABILITY changes on
-    external/webhook surfaces, plus field-added on external/webhook where a strict partner parser is
-    genuinely unknowable.
+    external/webhook surfaces — the changes that can actually break a partner's parse and that we
+    cannot verify against glomopay-checkout. Field additions are excluded.
 
 OUTPUT — emit the structured object only:
   - hasContractDrift: true iff \`driftingChanges\` is non-empty AFTER verification — i.e. at least one
     finding survives as breaking / silent (with a located read site) / unverified / unverifiable-
-    external. Additive-only (ANY first-party field-added, apps/admin-panel included), not-consumed,
+    external. Additive-only (ANY field-added on ANY surface, external/webhook included), not-consumed,
     declared-but-never-read, and tolerant-schema findings move to \`ruledOut\` and do NOT set this true.
-    The ONLY field-added that may survive is on an external/webhook surface (unverifiable-external).
+    No field-added ever survives — additions are backward-compatible on every surface.
   - summary: 1-3 sentences naming the surviving drift-causing changes and, for /public and /api/int,
     the frontend evidence (which glomopay-checkout schema/type confirms or clears each one). If
     nothing survives, state what you checked in BOTH repos and why it is safe.
@@ -308,7 +315,8 @@ OUTPUT — emit the structured object only:
             .find / comparison) — where the changed value mis-behaves (enum branch, poller terminal,
             flag .find). A field only DECLARED in a schema/type with NO read site is NOT silent => none.
           unverified = could not locate the consumer; kept at backend-hypothesized severity.
-          unverifiable-external = consumer not in glomopay-checkout (S2S / webhook).
+          unverifiable-external = a RENAME/REMOVE/TYPE/ENUM/NULLABILITY change on a consumer not in
+            glomopay-checkout (partner S2S / webhook), whose parse we cannot verify. NOT for additions.
       * frontendEvidence: glomopay-checkout path (+ line / zod snippet) that decided it, OR
         "no schema wired (TS cast)", OR "not found; searched <terms>". For breaking, cite the exact
         schema line. For silent, cite the READ SITE (file:line where the value is consumed); a silent
