@@ -13,7 +13,8 @@ import {
 const CHATWOOT_CONCURRENCY = Number(process.env.CHATWOOT_CONCURRENCY ?? 3);
 const DRAFT_PREFIX =
   '[AI support note — internal issue summary + a suggested reply. Send only the SUGGESTED REPLY to the customer, after review.]\n\n';
-const NEEDS_HUMAN_PREFIX = '[AI escalation — needs human/compliance review]\n\n';
+const NEEDS_HUMAN_PREFIX =
+  '[AI escalation — needs human/compliance review]\n\n';
 const NEEDS_HUMAN_SENTINEL = 'NEEDS HUMAN:';
 const NO_DRAFT_PATTERN = /^no draft\.?$/i;
 
