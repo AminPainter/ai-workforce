@@ -4,11 +4,15 @@ import { EmbeddingService } from './embedding.service';
 import { VectorStoreService } from './vector-store.service';
 
 const DEFAULT_TOP_K = 5;
+// Conservative floor: drops clearly-unrelated chunks while staying well below
+// the point where legitimate matches get filtered. Tune RAG_MIN_SIMILARITY per
+// embedding model — raise it once calibrated against the ingested collection.
+const DEFAULT_MIN_SIMILARITY = 0.2;
 
 @Injectable()
 export class RagRetrievalService {
   private readonly topK: number;
-  private readonly minSimilarity?: number;
+  private readonly minSimilarity: number;
 
   constructor(
     private readonly embeddingService: EmbeddingService,
@@ -18,9 +22,9 @@ export class RagRetrievalService {
     this.topK = Number(
       this.configService.get('RAG_RETRIEVAL_TOP_K') ?? DEFAULT_TOP_K,
     );
-    const minSimilarity = this.configService.get<string>('RAG_MIN_SIMILARITY');
-    this.minSimilarity =
-      minSimilarity === undefined ? undefined : Number(minSimilarity);
+    this.minSimilarity = Number(
+      this.configService.get('RAG_MIN_SIMILARITY') ?? DEFAULT_MIN_SIMILARITY,
+    );
   }
 
   async search(collection: string, query: string): Promise<string> {
@@ -30,10 +34,9 @@ export class RagRetrievalService {
       embedding,
       this.topK,
     );
-    const relevant =
-      this.minSimilarity === undefined
-        ? results
-        : results.filter((result) => result.similarity >= this.minSimilarity!);
+    const relevant = results.filter(
+      (result) => result.similarity >= this.minSimilarity,
+    );
 
     if (relevant.length === 0)
       return 'No matching passages found in the knowledge base.';
