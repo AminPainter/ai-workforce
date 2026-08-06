@@ -5,11 +5,8 @@ import { basename, resolve, sep } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { tool, type ToolSet } from 'ai';
 import { z } from 'zod';
-import {
-  skillFrontmatterSchema,
-  type AgentSkillBundle,
-  type LoadedSkill,
-} from '../skill.types';
+import { skillFrontmatterSchema } from '../skill.schema';
+import { type AgentSkillBundle, type LoadedSkill } from '../skill.types';
 
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
