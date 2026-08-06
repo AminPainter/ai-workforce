@@ -1,11 +1,11 @@
 import { readFile } from 'fs/promises';
 import { tool } from 'ai';
 import { z } from 'zod';
-import { type LoadedSkill } from '../skill.types';
-import { resolveReferencePath } from './skill-reference-path';
+import { type LoadedSkill } from '../types/skill.types';
+import { resolveReferencePath } from '../utils/skill-reference-path';
 
 export function createReadSkillReferenceTool(
-  registry: ReadonlyMap<string, LoadedSkill>,
+  skillsRegistry: ReadonlyMap<string, LoadedSkill>,
 ) {
   return tool({
     description:
@@ -19,9 +19,9 @@ export function createReadSkillReferenceTool(
         ),
     }),
     execute: async ({ name, path: relativePath }) => {
-      const skill = registry.get(name);
+      const skill = skillsRegistry.get(name);
       if (!skill)
-        return `No skill named "${name}". Available skills: ${[...registry.keys()].join(', ')}.`;
+        return `No skill named "${name}". Available skills: ${[...skillsRegistry.keys()].join(', ')}.`;
       try {
         const resolvedPath = await resolveReferencePath(
           skill.dir,

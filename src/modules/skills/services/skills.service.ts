@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { type ToolSet } from 'ai';
-import { type AgentSkillBundle, type LoadedSkill } from '../skill.types';
-import { buildSkillsPromptSection } from '../skills.prompt';
+import { type AgentSkillBundle, type LoadedSkill } from '../types/skill.types';
+import { buildSkillsPromptSection } from '../prompts/skills.prompt';
 import { createLoadSkillTool } from '../tools/load-skill.tool';
 import { createReadSkillReferenceTool } from '../tools/read-skill-reference.tool';
 import { SkillLoaderService } from './skill-loader.service';
@@ -25,10 +25,10 @@ export class SkillsService {
     };
   }
 
-  private buildTools(registry: ReadonlyMap<string, LoadedSkill>): ToolSet {
+  private buildTools(skillsRegistry: ReadonlyMap<string, LoadedSkill>): ToolSet {
     return {
-      loadSkill: createLoadSkillTool(registry),
-      readSkillReference: createReadSkillReferenceTool(registry),
+      loadSkill: createLoadSkillTool(skillsRegistry),
+      readSkillReference: createReadSkillReferenceTool(skillsRegistry),
     };
   }
 }

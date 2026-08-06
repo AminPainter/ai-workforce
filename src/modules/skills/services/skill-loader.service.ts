@@ -2,15 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { basename, resolve } from 'path';
 import { parse as parseYaml } from 'yaml';
-import { skillFrontmatterSchema } from '../skill.schema';
-import { type LoadedSkill } from '../skill.types';
+import { skillFrontmatterSchema } from '../schema/skill.schema';
+import { type LoadedSkill } from '../types/skill.types';
 
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 @Injectable()
 export class SkillLoaderService {
-  // Throws on a missing/malformed SKILL.md. Skills load at bootstrap, so a bad
-  // skill fails app startup by design rather than silently disappearing.
   load(dir: string): LoadedSkill {
     const skillMdPath = resolve(dir, 'SKILL.md');
     const content = readFileSync(skillMdPath, 'utf8');

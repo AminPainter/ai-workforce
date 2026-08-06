@@ -1,9 +1,9 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { type LoadedSkill } from '../skill.types';
+import { type LoadedSkill } from '../types/skill.types';
 
 export function createLoadSkillTool(
-  registry: ReadonlyMap<string, LoadedSkill>,
+  skillsRegistry: ReadonlyMap<string, LoadedSkill>,
 ) {
   return tool({
     description:
@@ -14,9 +14,9 @@ export function createLoadSkillTool(
         .describe('The skill name, as listed in your instructions.'),
     }),
     execute: ({ name }) => {
-      const skill = registry.get(name);
+      const skill = skillsRegistry.get(name);
       if (!skill)
-        return `No skill named "${name}". Available skills: ${[...registry.keys()].join(', ')}.`;
+        return `No skill named "${name}". Available skills: ${[...skillsRegistry.keys()].join(', ')}.`;
       return skill.body;
     },
   });
