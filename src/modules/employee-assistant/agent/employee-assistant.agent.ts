@@ -1,9 +1,11 @@
 import { ToolLoopAgent, stepCountIs } from 'ai';
 import { ConfigService } from '@nestjs/config';
+import { resolve } from 'path';
 import { AiService } from '../../ai/services/ai.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
+import { SkillsService } from '../../skills/services/skills.service';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
@@ -14,16 +16,22 @@ export function createEmployeeAssistant(
   sentryMcpService: SentryMcpService,
   gitHubMcpService: GitHubMcpService,
   atlassianMcpService: AtlassianMcpService,
+  skillsService: SkillsService,
   configService: ConfigService,
 ): RegisteredAgent {
+  const skills = skillsService.buildAgentSkills([
+    resolve(__dirname, '../skills/sentry-root-cause'),
+  ]);
+
   return new ToolLoopAgent({
     model: aiService.model(),
-    instructions: EMPLOYEE_ASSISTANT_SYSTEM_PROMPT,
+    instructions: `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`,
     tools: {
       ...aiService.webTools(),
       ...sentryMcpService.getTools(),
       ...gitHubMcpService.getTools(),
       ...atlassianMcpService.getTools(),
+      ...skills.tools,
     },
     stopWhen: stepCountIs(
       Number(configService.get('EMPLOYEE_ASSISTANT_MAX_STEPS') ?? 40),
