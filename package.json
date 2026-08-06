@@ -41,6 +41,7 @@
     "html-to-text": "^10.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "yaml": "^2.9.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

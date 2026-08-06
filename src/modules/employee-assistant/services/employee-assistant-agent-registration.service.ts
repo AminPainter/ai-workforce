@@ -4,6 +4,7 @@ import { AiService } from '../../ai/services/ai.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
+import { SkillsService } from '../../skills/services/skills.service';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import {
   EMPLOYEE_ASSISTANT,
@@ -17,6 +18,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
     private readonly sentryMcpService: SentryMcpService,
     private readonly gitHubMcpService: GitHubMcpService,
     private readonly atlassianMcpService: AtlassianMcpService,
+    private readonly skillsService: SkillsService,
     private readonly configService: ConfigService,
     private readonly agentRegistry: AgentRegistry,
   ) {}
@@ -29,6 +31,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
         this.sentryMcpService,
         this.gitHubMcpService,
         this.atlassianMcpService,
+        this.skillsService,
         this.configService,
       ),
     );
