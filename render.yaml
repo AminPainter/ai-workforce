@@ -35,6 +35,18 @@ services:
         sync: false
       - key: SLACK_SIGNING_SECRET
         sync: false
+      # Chatwoot API — routed through the local Teleport Machine ID tunnel (see docker/tbot.yaml).
+      - key: CHATWOOT_BASE_URL
+        value: http://127.0.0.1:8081 # tbot application-tunnel listener, not the public host
+      - key: CHATWOOT_ACCOUNT_ID
+        sync: false
+      - key: CHATWOOT_BOT_TOKEN
+        sync: false
+      - key: CHATWOOT_WEBHOOK_SECRET
+        sync: false
+      # Bot private key for tbot bound-keypair join (base64-encoded, static-key mode).
+      - key: TBOT_BOUND_KEYPAIR_STATIC_KEY
+        sync: false
       - key: REDIS_URL
         fromService:
           type: keyvalue
