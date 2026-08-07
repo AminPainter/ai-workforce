@@ -1,5 +1,8 @@
 import type { CardChild, ChatElement } from 'chat';
-import type { ContractDriftReport } from '../agent/contract-drift-detector.schema';
+import type {
+  ContractDriftReport,
+  BreakingChange,
+} from '../agent/contract-drift-detector.schema';
 
 export interface ContractDriftContext {
   repoFullName: string;
@@ -12,8 +15,17 @@ export interface ContractDriftContext {
 const MAX_RENDERED_CHANGES = 8;
 
 const INTRO =
-  'This merged PR may change an API response contract the frontend depends on. ' +
-  'Please review the drift below and confirm with the frontend team before deploying.';
+  'This merged PR ships a breaking change to an API response contract the frontend depends on. ' +
+  'Each change below was confirmed against glomopay-checkout — the evidence is inline.';
+
+function renderChange(change: BreakingChange): string {
+  return [
+    `*${change.file}*`,
+    change.change,
+    change.reason,
+    `↳ ${change.evidence}`,
+  ].join('\n');
+}
 
 export async function buildContractDriftCard(
   report: ContractDriftReport,
@@ -21,8 +33,8 @@ export async function buildContractDriftCard(
 ): Promise<ChatElement> {
   const { Card, Section, CardText, Divider, CardLink } = await import('chat');
 
-  const rendered = report.driftingChanges.slice(0, MAX_RENDERED_CHANGES);
-  const overflow = report.driftingChanges.length - rendered.length;
+  const rendered = report.breakingChanges.slice(0, MAX_RENDERED_CHANGES);
+  const overflow = report.breakingChanges.length - rendered.length;
 
   const children: CardChild[] = [
     Section([CardText(INTRO)]),
@@ -31,11 +43,7 @@ export async function buildContractDriftCard(
 
   children.push(Divider());
   for (const change of rendered)
-    children.push(
-      Section([
-        CardText(`*${change.file}*\n${change.change}\n${change.reason}`),
-      ]),
-    );
+    children.push(Section([CardText(renderChange(change))]));
 
   if (overflow > 0)
     children.push(
@@ -51,7 +59,7 @@ export async function buildContractDriftCard(
   children.push(CardLink({ url: context.prUrl, label: 'View PR' }));
 
   return Card({
-    title: 'Contract drift detected',
+    title: 'Breaking API contract change',
     subtitle: `${context.repoFullName}#${context.prNumber} (merged ${context.mergeSha})`,
     children,
   });
