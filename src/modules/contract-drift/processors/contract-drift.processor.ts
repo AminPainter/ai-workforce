@@ -42,10 +42,10 @@ export class ContractDriftProcessor extends WorkerHost {
     const report = output as ContractDriftReport;
 
     this.logger.log(
-      `Contract drift report for ${fullName}#${prNumber} — hasContractDrift=${report.hasContractDrift}, ${report.driftingChanges.length} change(s):\n${JSON.stringify(report, null, 2)}`,
+      `Contract drift report for ${fullName}#${prNumber} — hasBreakingChange=${report.hasBreakingChange}, ${report.breakingChanges.length} breaking change(s):\n${JSON.stringify(report, null, 2)}`,
     );
 
-    if (report.hasContractDrift)
+    if (report.breakingChanges.length > 0)
       await this.contractDriftNotifierService.notifyContractDrift(report, {
         repoFullName: fullName,
         prNumber,
