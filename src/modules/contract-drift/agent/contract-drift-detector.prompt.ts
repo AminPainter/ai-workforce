@@ -244,8 +244,12 @@ OUTPUT — emit the structured object only:
   - summary: 1-3 sentences. If breaking, name each confirmed break and the glomopay-checkout evidence.
     If nothing breaks, state what you fetched in BOTH repos (name the queries and files) and why it is
     safe — including changes you looked at and cleared.
-  - breakingChanges: ONE entry per CONFIRMED breaking change — {file, change, evidence, reason}:
+  - breakingChanges: ONE entry per CONFIRMED breaking change — {file, driftType, change, evidence, reason}:
       * file: the changed glomopay_service path.
+      * driftType: the DRIFT TYPES enum value for this change. NEVER "field-added": a field-added is
+        definitionally not breaking here, and any entry carrying it is DROPPED before Slack is paged, so
+        emitting one is wasted work — put it in \`summary\` instead. If the honest driftType for a change
+        is field-added, the change does not belong in \`breakingChanges\` at all.
       * change: the drift type + what changed (e.g. "field-renamed: settled_at -> finalized_at").
       * evidence: the concrete glomopay-checkout artifact you FETCHED that proves the break — the schema
         file:line whose zod field throws, or the read-site file:line that mis-behaves. It MUST reference
