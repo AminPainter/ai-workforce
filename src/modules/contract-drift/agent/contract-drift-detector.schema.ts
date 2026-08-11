@@ -1,9 +1,24 @@
 import { z } from 'zod';
 
+export const DRIFT_TYPES = [
+  'enum-value-changed',
+  'field-removed',
+  'field-renamed',
+  'field-added',
+  'type-changed',
+  'value-now-nullable',
+  'field-now-conditional',
+] as const;
+
 export const breakingChangeSchema = z.object({
   file: z
     .string()
     .describe('Repo-relative path of the changed glomopay_service file.'),
+  driftType: z
+    .enum(DRIFT_TYPES)
+    .describe(
+      'The drift class of this change. NEVER emit an entry with driftType "field-added" — a field-added is definitionally not breaking in glomopay-checkout (zero .strict()/.catchall()) and such entries are dropped before paging.',
+    ),
   change: z
     .string()
     .describe(

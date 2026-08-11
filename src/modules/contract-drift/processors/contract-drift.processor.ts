@@ -39,10 +39,20 @@ export class ContractDriftProcessor extends WorkerHost {
       .generate({
         messages: [{ role: 'user', content: buildTask(payload) }],
       });
-    const report = output as ContractDriftReport;
+    const rawReport = output as ContractDriftReport;
 
+    const breakingChanges = rawReport.breakingChanges.filter(
+      (change) => change.driftType !== 'field-added',
+    );
+    const report: ContractDriftReport = {
+      ...rawReport,
+      breakingChanges,
+      hasBreakingChange: breakingChanges.length > 0,
+    };
+
+    const dropped = rawReport.breakingChanges.length - breakingChanges.length;
     this.logger.log(
-      `Contract drift report for ${fullName}#${prNumber} — hasBreakingChange=${report.hasBreakingChange}, ${report.breakingChanges.length} breaking change(s):\n${JSON.stringify(report, null, 2)}`,
+      `Contract drift report for ${fullName}#${prNumber} — hasBreakingChange=${report.hasBreakingChange}, ${breakingChanges.length} breaking change(s), ${dropped} field-added entr${dropped === 1 ? 'y' : 'ies'} dropped:\n${JSON.stringify(rawReport, null, 2)}`,
     );
 
     if (report.breakingChanges.length > 0)
