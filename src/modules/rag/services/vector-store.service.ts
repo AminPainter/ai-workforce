@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { Pool } from 'pg';
-import pgvector from 'pgvector/pg';
-import { RAG_DB } from '../constants';
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import pgvector from 'pgvector';
+import { PrismaService } from '../../prisma/prisma.service';
 
 const INSERT_BATCH_ROWS = 200;
 
@@ -37,41 +37,47 @@ export interface SearchResult {
 
 @Injectable()
 export class VectorStoreService {
-  constructor(@Inject(RAG_DB) private readonly ragDb: Pool) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async upsertDocument(
     params: UpsertDocumentParams,
   ): Promise<UpsertDocumentResult> {
-    const existing = await this.ragDb.query<{ id: string; checksum: string }>(
-      'SELECT id, checksum FROM rag_document WHERE collection = $1 AND source_uri = $2',
-      [params.collection, params.sourceUri],
-    );
-    if (existing.rows[0]?.checksum === params.checksum)
-      return { id: existing.rows[0].id, changed: false };
+    const where = {
+      collection_sourceUri: {
+        collection: params.collection,
+        sourceUri: params.sourceUri,
+      },
+    };
+    const metadata = (params.metadata ?? {}) as Prisma.InputJsonValue;
 
-    const upserted = await this.ragDb.query<{ id: string }>(
-      `INSERT INTO rag_document (collection, source_uri, title, checksum, metadata)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (collection, source_uri) DO UPDATE
-         SET checksum = EXCLUDED.checksum,
-             title = EXCLUDED.title,
-             metadata = EXCLUDED.metadata
-       RETURNING id`,
-      [
-        params.collection,
-        params.sourceUri,
-        params.title,
-        params.checksum,
-        params.metadata ?? {},
-      ],
-    );
-    return { id: upserted.rows[0].id, changed: true };
+    const existing = await this.prismaService.ragDocument.findUnique({
+      where,
+      select: { id: true, checksum: true },
+    });
+    if (existing?.checksum === params.checksum)
+      return { id: existing.id, changed: false };
+
+    const upserted = await this.prismaService.ragDocument.upsert({
+      where,
+      create: {
+        collection: params.collection,
+        sourceUri: params.sourceUri,
+        title: params.title,
+        checksum: params.checksum,
+        metadata,
+      },
+      update: {
+        title: params.title,
+        checksum: params.checksum,
+        metadata,
+      },
+      select: { id: true },
+    });
+    return { id: upserted.id, changed: true };
   }
 
   async deleteChunks(documentId: string): Promise<void> {
-    await this.ragDb.query('DELETE FROM rag_chunk WHERE document_id = $1', [
-      documentId,
-    ]);
+    await this.prismaService.ragChunk.deleteMany({ where: { documentId } });
   }
 
   async insertChunks(
@@ -90,16 +96,16 @@ export class VectorStoreService {
           chunk.chunkIndex,
           chunk.content,
           chunk.page,
-          chunk.metadata ?? {},
+          JSON.stringify(chunk.metadata ?? {}),
           pgvector.toSql(chunk.embedding),
         );
-        return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
+        return `($${base + 1}::uuid, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}::jsonb, $${base + 7}::vector)`;
       });
-      await this.ragDb.query(
+      await this.prismaService.$executeRawUnsafe(
         `INSERT INTO rag_chunk
            (document_id, collection, chunk_index, content, page, metadata, embedding)
          VALUES ${rows.join(', ')}`,
-        values,
+        ...values,
       );
     }
   }
@@ -109,24 +115,28 @@ export class VectorStoreService {
     queryEmbedding: number[],
     limit: number,
   ): Promise<SearchResult[]> {
-    const result = await this.ragDb.query<{
-      content: string;
-      page: number | null;
-      document_id: string;
-      source_uri: string;
-      title: string | null;
-      similarity: string;
-    }>(
+    const rows = await this.prismaService.$queryRawUnsafe<
+      Array<{
+        content: string;
+        page: number | null;
+        document_id: string;
+        source_uri: string;
+        title: string | null;
+        similarity: number;
+      }>
+    >(
       `SELECT c.content, c.page, c.document_id, d.source_uri, d.title,
-              1 - (c.embedding <=> $2::vector) AS similarity
+              1 - (c.embedding <=> $1::vector) AS similarity
        FROM rag_chunk c
        JOIN rag_document d ON d.id = c.document_id
-       WHERE c.collection = $1
-       ORDER BY c.embedding <=> $2::vector
+       WHERE c.collection = $2
+       ORDER BY c.embedding <=> $1::vector
        LIMIT $3`,
-      [collection, pgvector.toSql(queryEmbedding), limit],
+      pgvector.toSql(queryEmbedding),
+      collection,
+      limit,
     );
-    return result.rows.map((row) => ({
+    return rows.map((row) => ({
       content: row.content,
       page: row.page,
       documentId: row.document_id,

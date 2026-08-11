@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AiModule } from '../ai/ai.module';
-import { ragDbProvider } from './db/rag-db.provider';
+import { PrismaModule } from '../prisma/prisma.module';
 import { EmbeddingService } from './services/embedding.service';
 import { PdfParserService } from './services/pdf-parser.service';
 import { ChunkerService } from './services/chunker.service';
@@ -9,9 +9,8 @@ import { RagRetrievalService } from './services/rag-retrieval.service';
 import { RagIngestService } from './ingest/rag-ingest.service';
 
 @Module({
-  imports: [AiModule],
+  imports: [AiModule, PrismaModule],
   providers: [
-    ragDbProvider,
     EmbeddingService,
     PdfParserService,
     ChunkerService,

@@ -13,6 +13,8 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
     "db:migrate": "node --env-file-if-exists=.env -r ts-node/register src/modules/rag/db/migrate.ts",
     "ingest": "node --env-file-if-exists=.env -r ts-node/register src/modules/rag/ingest/ingest.cli.ts",
     "repl": "nest start --entryFile repl",
@@ -37,12 +39,13 @@
     "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "^11.0.1",
     "@octokit/webhooks": "^14.2.0",
+    "@prisma/client": "^6.13.0",
     "ai": "^7.0.19",
     "bullmq": "^5.80.2",
     "chat": "^4.34.0",
     "html-to-text": "^10.0.0",
-    "pg": "^8.22.0",
     "pgvector": "^0.3.0",
+    "prisma": "^6.13.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "unpdf": "^1.8.0",
@@ -59,7 +62,6 @@
     "@types/html-to-text": "^9.0.4",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
-    "@types/pg": "^8.20.3",
     "@types/supertest": "^7.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
@@ -95,7 +97,10 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
       "msgpackr-extract",
+      "prisma",
       "unrs-resolver"
     ]
   }

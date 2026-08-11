@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client';
 
 const MIGRATIONS_DIR = join(__dirname, 'migrations');
 
@@ -10,15 +10,25 @@ function requireEnv(name: string): string {
   return value;
 }
 
+// Prisma's raw executor runs one statement per call (extended protocol), so
+// split each migration file into its individual statements. The migration SQL
+// is trusted, single-line-comment-free DDL — a plain `;` split is sufficient.
+function splitStatements(sql: string): string[] {
+  return sql
+    .split(';')
+    .map((statement) => statement.trim())
+    .filter((statement) => statement.length > 0);
+}
+
 async function main(): Promise<void> {
-  const connectionString = requireEnv('DATABASE_URL');
+  requireEnv('DATABASE_URL');
   const dimensions = requireEnv('RAG_EMBEDDING_DIMENSIONS');
   if (!/^\d+$/.test(dimensions))
     throw new Error(
       `RAG_EMBEDDING_DIMENSIONS must be a positive integer, got "${dimensions}"`,
     );
 
-  const pool = new Pool({ connectionString });
+  const prisma = new PrismaClient();
   try {
     const files = readdirSync(MIGRATIONS_DIR)
       .filter((file) => file.endsWith('.sql'))
@@ -30,11 +40,12 @@ async function main(): Promise<void> {
         dimensions,
       );
       console.log(`applying ${file}`);
-      await pool.query(sql);
+      for (const statement of splitStatements(sql))
+        await prisma.$executeRawUnsafe(statement);
     }
     console.log(`migrations complete (${files.length} applied)`);
   } finally {
-    await pool.end();
+    await prisma.$disconnect();
   }
 }
 

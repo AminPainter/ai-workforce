@@ -68,6 +68,10 @@ Queue infra (`src/modules/queue`, shared by any future webhook consumer):
   concurrency option is decorator-time).
 
 RAG / Legal Assistant (Postgres + pgvector — grounds the `legal-assistant` agent):
+- DB access is via **Prisma Client** (`PrismaService`, `src/modules/prisma`). The schema lives in
+  `prisma/schema.prisma`; the client is generated on install (`postinstall: prisma generate`). The
+  `embedding` column is modelled as `Unsupported("vector")` — its dimension (`RAG_EMBEDDING_DIMENSIONS`)
+  and HNSW index stay in the raw migration, and vector insert/search run through Prisma raw SQL.
 - `DATABASE_URL` (required) — Postgres connection string. Local: `postgres://rag:rag@localhost:5432/rag`
   (the `postgres` service in `docker-compose.yml`). Render: wired from the managed Postgres in
   `render.yaml`. The DB needs the `vector` extension — the migration runs `CREATE EXTENSION vector`.

@@ -1,5 +1,3 @@
-export const RAG_DB = 'RAG_DB';
-
 export const RagCollection = {
   LEGAL: 'legal',
 } as const;
