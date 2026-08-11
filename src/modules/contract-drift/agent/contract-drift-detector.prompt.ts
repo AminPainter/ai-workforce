@@ -33,7 +33,8 @@ new value is unobserved.
 
 DRIFT TYPES (the shapes a break takes)
   - enum-value-changed  : a value added to / removed from / renamed in an enum or status set
-  - field-removed       : a response key no longer emitted
+  - field-removed       : a response KEY/attribute no longer emitted on the object shape
+                          (NOT fewer elements in a list — that is data content, not drift)
   - field-renamed       : a response key emitted under a new name
   - field-added         : a new response key. NEVER breaking — every glomopay-checkout schema is a
                           bare z.object() (strips unknown keys) or .passthrough() (keeps them); there
@@ -193,6 +194,12 @@ AVOID FALSE POSITIVES
     only DECLARES in a type but never READS is not a break — do not report it.
   - A new/renamed enum value against a \`z.string()\` field does not throw; report it only if you find a
     read site that mis-branches on it.
+  - RECORD-SET / ROW-FILTERING CHANGES ARE NOT CONTRACT DRIFT. A change to WHICH rows a list or
+    collection endpoint returns — a new/changed scope, a changed default relation, an added WHERE/filter,
+    a soft-delete, a new default exclusion — changes the response CONTENT (fewer or more array elements),
+    never its SHAPE. Every element keeps the same keys, types, enum values, and nullability. This is NEVER
+    breaking and is NEVER field-removed; field-removed means an attribute disappears from the serialized
+    object, not that the array got shorter. Do not report it — account for it in summary.
 
 FRONTEND VERIFICATION — RUN BEFORE YOU DECIDE, for every candidate change
 GitHub code search indexes the DEFAULT branch (latest main) — exactly what you want; for
@@ -247,4 +254,12 @@ OUTPUT — emit the structured object only:
         detail; merchant-dashboard order.schema.ts:41 requires \`settledAt\` so safeParse throws").
       Order by consumer priority (public > api-int > admin).
   - Emit NOTHING for changes that are not breaking, field-added, or out of scope (external / webhook)
-    — account for them in \`summary\`, not as entries.`;
+    — account for them in \`summary\`, not as entries.
+  - SELF-CHECK EACH ENTRY BEFORE EMITTING IT: an entry belongs in \`breakingChanges\` ONLY if its own
+    \`evidence\` names a glomopay-checkout artifact that BREAKS and its \`reason\` asserts the break. If the
+    \`evidence\` or \`reason\` you wrote describes the ABSENCE of a breaking consumer — "found no schema/read
+    site", "does not branch on", "no read site mis-behaves", "not a contract-shape change", "data-content
+    change", "staying silent" — the change is CLEARED, not breaking: drop the entry and describe it in
+    \`summary\` instead. An entry whose own \`reason\` explains why the change is safe is a contradiction and
+    MUST NOT be emitted. \`breakingChanges\` is confirmed-breaks-only; when in doubt, leave it out and use
+    \`summary\`.`;
