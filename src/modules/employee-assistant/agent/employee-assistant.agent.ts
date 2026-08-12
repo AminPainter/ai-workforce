@@ -5,6 +5,7 @@ import { AiService } from '../../ai/services/ai.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
+import { GlomopayMcpService } from '../../ai/services/glomopay-mcp.service';
 import { SkillsService } from '../../skills/services/skills.service';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
@@ -16,6 +17,7 @@ export function createEmployeeAssistant(
   sentryMcpService: SentryMcpService,
   gitHubMcpService: GitHubMcpService,
   atlassianMcpService: AtlassianMcpService,
+  glomopayMcpService: GlomopayMcpService,
   skillsService: SkillsService,
   configService: ConfigService,
 ): RegisteredAgent {
@@ -31,6 +33,7 @@ export function createEmployeeAssistant(
       ...sentryMcpService.getTools(),
       ...gitHubMcpService.getTools(),
       ...atlassianMcpService.getTools(),
+      ...glomopayMcpService.getTools(),
       ...skills.tools,
     },
     stopWhen: stepCountIs(

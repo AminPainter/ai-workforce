@@ -3,6 +3,7 @@ import { AiService } from './services/ai.service';
 import { SentryMcpService } from './services/sentry-mcp.service';
 import { GitHubMcpService } from './services/github-mcp.service';
 import { AtlassianMcpService } from './services/atlassian-mcp.service';
+import { GlomopayMcpService } from './services/glomopay-mcp.service';
 
 @Module({
   providers: [
@@ -10,7 +11,14 @@ import { AtlassianMcpService } from './services/atlassian-mcp.service';
     SentryMcpService,
     GitHubMcpService,
     AtlassianMcpService,
+    GlomopayMcpService,
   ],
-  exports: [AiService, SentryMcpService, GitHubMcpService, AtlassianMcpService],
+  exports: [
+    AiService,
+    SentryMcpService,
+    GitHubMcpService,
+    AtlassianMcpService,
+    GlomopayMcpService,
+  ],
 })
 export class AiModule {}
