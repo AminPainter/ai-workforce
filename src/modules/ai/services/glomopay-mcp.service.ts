@@ -10,8 +10,6 @@ import { type ToolSet } from 'ai';
 
 const DEFAULT_GLOMOPAY_MCP_URL = 'https://glomopay-mcp.onrender.com/mcp';
 
-const ALLOWED_TOOLS = new Set<string>([]);
-
 @Injectable()
 export class GlomopayMcpService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(GlomopayMcpService.name);
@@ -29,7 +27,10 @@ export class GlomopayMcpService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     try {
       await this.connect();
-      this.tools = this.filterAllowedTools(await this.client!.tools());
+      this.tools = (await this.client!.tools()) as ToolSet;
+      this.logger.log(
+        `Glomopay MCP connected. Loaded ${Object.keys(this.tools).length} tools: ${Object.keys(this.tools).join(', ')}`,
+      );
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       this.logger.warn(
@@ -50,31 +51,6 @@ export class GlomopayMcpService implements OnModuleInit, OnModuleDestroy {
         headers: { Authorization: `Bearer ${this.glomopayToken}` },
       },
     });
-  }
-
-  private filterAllowedTools(
-    all: Awaited<ReturnType<MCPClient['tools']>>,
-  ): ToolSet {
-    if (ALLOWED_TOOLS.size === 0) {
-      const discovered = Object.keys(all);
-      this.logger.warn(
-        `Glomopay MCP ALLOWED_TOOLS is empty; passing through all ${discovered.length} discovered tools until it is populated: ${discovered.join(', ')}`,
-      );
-      return all as ToolSet;
-    }
-
-    const allowed = Object.fromEntries(
-      Object.entries(all).filter(([name]) => ALLOWED_TOOLS.has(name)),
-    );
-
-    const kept = Object.keys(allowed);
-    const dropped = Object.keys(all).filter((name) => !ALLOWED_TOOLS.has(name));
-    this.logger.log(
-      `Glomopay MCP connected. Loaded ${kept.length} tools: ${kept.join(', ')}`,
-    );
-    this.logger.debug(`Glomopay MCP tools dropped: ${dropped.join(', ')}`);
-
-    return allowed as ToolSet;
   }
 
   async onModuleDestroy(): Promise<void> {
