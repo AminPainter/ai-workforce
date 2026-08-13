@@ -13,6 +13,8 @@ const ALLOWED_SLACK_USER_IDS = new Set<string>([
   'U072S2RLD4G', // Shreyas
   'U07BD5PE4DQ', // Prabhat
   'U066TUAMKND', // Sahil
+  'U09R63QP27J', // Arjun
+  'U097N9HA2LF', // Yash
 ]);
 
 const UNAUTHORIZED_MESSAGE =
