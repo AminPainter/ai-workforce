@@ -6,8 +6,6 @@ import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { CONTRACT_DRIFT_TRIAGE_SYSTEM_PROMPT } from './contract-drift-triage.prompt';
 import { triageResultSchema } from './contract-drift-triage.schema';
 
-// Stage 1 of the contract-drift pipeline: one fresh-context call per PR that enumerates every
-// in-scope wire-contract candidate. It does NOT decide breaking — the verifier stage does.
 export const CONTRACT_DRIFT_TRIAGE = 'contract-drift-triage';
 
 export function createContractDriftTriage(

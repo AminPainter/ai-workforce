@@ -6,8 +6,6 @@ import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { CONTRACT_DRIFT_VERIFIER_SYSTEM_PROMPT } from './contract-drift-verifier.prompt';
 import { verifierVerdictSchema } from './contract-drift-verifier.schema';
 
-// Stage 2 of the contract-drift pipeline: one fresh-context call per candidate that confirms or
-// clears it against glomopay-checkout. The processor fans these out with bounded concurrency.
 export const CONTRACT_DRIFT_VERIFIER = 'contract-drift-verifier';
 
 export function createContractDriftVerifier(

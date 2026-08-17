@@ -6,9 +6,6 @@ import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { CONTRACT_DRIFT_SKEPTIC_SYSTEM_PROMPT } from './contract-drift-skeptic.prompt';
 import { skepticVerdictSchema } from './contract-drift-skeptic.schema';
 
-// Stage 3 of the contract-drift pipeline: an adversarial reviewer that independently tries to refute
-// a confirmed-breaking candidate. The processor runs N votes per candidate and keeps it only if a
-// majority did not refute.
 export const CONTRACT_DRIFT_SKEPTIC = 'contract-drift-skeptic';
 
 export function createContractDriftSkeptic(

@@ -52,7 +52,6 @@ export class ContractDriftProcessor extends WorkerHost {
     const prRef = `${fullName}#${prNumber}`;
     this.logger.log(`analyzing PR ${prRef}`);
 
-    // Stage 1: triage enumerates candidates in a fresh context with the full step budget.
     const { output: triage } = (await this.agentRegistry
       .get(CONTRACT_DRIFT_TRIAGE)
       .generate({
@@ -67,8 +66,7 @@ export class ContractDriftProcessor extends WorkerHost {
       `Triage for ${prRef} — ${triage.candidates.length} candidate(s), ${fieldAddedDropped} field-added dropped, ${candidates.length} to verify:\n${JSON.stringify(triage, null, 2)}`,
     );
 
-    // Stage 2: verify each surviving candidate in its own fresh context, bounded concurrency
-    // (GitHub MCP is shared and rate-limited).
+    // Bounded concurrency: GitHub MCP is shared and rate-limited.
     const verified = await mapWithConcurrency(
       candidates,
       CONTRACT_DRIFT_VERIFY_CONCURRENCY,
@@ -98,8 +96,6 @@ export class ContractDriftProcessor extends WorkerHost {
       )}`,
     );
 
-    // Stage 3: an adversarial skeptic tries to refute each confirmed break; keep it only if a
-    // majority of votes did NOT refute.
     const survivors = await mapWithConcurrency(
       breakingVerified,
       CONTRACT_DRIFT_VERIFY_CONCURRENCY,
