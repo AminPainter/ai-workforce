@@ -28,6 +28,7 @@
     "@ai-sdk/openai-compatible": "^3.0.14",
     "@chat-adapter/slack": "^4.34.0",
     "@chat-adapter/state-redis": "4.34.0",
+    "@earendil-works/pi-coding-agent": "0.84.2",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",

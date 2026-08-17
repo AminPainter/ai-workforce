@@ -25,6 +25,15 @@ services:
         sync: false
       - key: GITHUB_WEBHOOK_SECRET
         sync: false
+      # Write-scoped GitHub credential for the autonomous coding agent (Contents +
+      # Pull requests: read/write on the target repo). Separate from read-only GITHUB_PAT.
+      - key: GITHUB_CODING_AGENT_TOKEN
+        sync: false
+      # Optional coding-agent overrides — safe in-code defaults exist.
+      - key: CODING_AGENT_REPO
+        sync: false
+      - key: CODING_AGENT_BASE_BRANCH
+        sync: false
       - key: ATLASSIAN_EMAIL
         sync: false
       - key: ATLASSIAN_API_TOKEN
