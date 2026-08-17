@@ -4,9 +4,17 @@ import { AiService } from '../../ai/services/ai.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import {
-  CONTRACT_DRIFT_DETECTOR,
-  createContractDriftDetector,
-} from '../agent/contract-drift-detector.agent';
+  CONTRACT_DRIFT_TRIAGE,
+  createContractDriftTriage,
+} from '../agent/contract-drift-triage.agent';
+import {
+  CONTRACT_DRIFT_VERIFIER,
+  createContractDriftVerifier,
+} from '../agent/contract-drift-verifier.agent';
+import {
+  CONTRACT_DRIFT_SKEPTIC,
+  createContractDriftSkeptic,
+} from '../agent/contract-drift-skeptic.agent';
 
 @Injectable()
 export class ContractDriftAgentRegistrationService implements OnApplicationBootstrap {
@@ -19,8 +27,24 @@ export class ContractDriftAgentRegistrationService implements OnApplicationBoots
 
   onApplicationBootstrap(): void {
     this.agentRegistry.register(
-      CONTRACT_DRIFT_DETECTOR,
-      createContractDriftDetector(
+      CONTRACT_DRIFT_TRIAGE,
+      createContractDriftTriage(
+        this.aiService,
+        this.gitHubMcpService,
+        this.configService,
+      ),
+    );
+    this.agentRegistry.register(
+      CONTRACT_DRIFT_VERIFIER,
+      createContractDriftVerifier(
+        this.aiService,
+        this.gitHubMcpService,
+        this.configService,
+      ),
+    );
+    this.agentRegistry.register(
+      CONTRACT_DRIFT_SKEPTIC,
+      createContractDriftSkeptic(
         this.aiService,
         this.gitHubMcpService,
         this.configService,
