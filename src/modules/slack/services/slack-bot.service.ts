@@ -22,7 +22,7 @@ const UNAUTHORIZED_MESSAGE =
   'I respond only to Master Amin and his product manager Shreyas';
 
 const GENERATION_FAILED_MESSAGE =
-  "I couldn't generate a response just now — the model backend is unreachable. Please try again in a bit.";
+  'Having a bad headache. Not able to respond right now. [INTERNAL_SERVER_ERROR]';
 
 @Injectable()
 export class SlackBotService implements OnModuleInit, OnModuleDestroy {
