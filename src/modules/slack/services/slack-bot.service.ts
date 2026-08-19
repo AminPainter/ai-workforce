@@ -21,6 +21,9 @@ const ALLOWED_SLACK_USER_IDS = new Set<string>([
 const UNAUTHORIZED_MESSAGE =
   'I respond only to Master Amin and his product manager Shreyas';
 
+const GENERATION_FAILED_MESSAGE =
+  "I couldn't generate a response just now — the model backend is unreachable. Please try again in a bit.";
+
 @Injectable()
 export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SlackBotService.name);
@@ -104,7 +107,6 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     const text = await this.streamReply(thread, messages);
     if (text.trim().length > 0)
       this.logger.log(`answered: ${text.length} chars`);
-    else this.logger.warn('agent produced an empty response');
   }
 
   private async readThreadHistory(
@@ -131,11 +133,25 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     thread: import('chat').Thread,
     messages: import('chat/ai').AiMessage[],
   ): Promise<string> {
-    const result = await this.agentRegistry
-      .get(EMPLOYEE_ASSISTANT)
-      .stream({ messages });
-    await thread.post(result.stream);
-    return result.text;
+    let sentMessage: import('chat').SentMessage | undefined;
+    try {
+      const result = await this.agentRegistry
+        .get(EMPLOYEE_ASSISTANT)
+        .stream({ messages });
+      sentMessage = await thread.post(result.stream);
+      const text = await result.text;
+      if (text.trim().length === 0) {
+        this.logger.warn('agent produced an empty response');
+        await sentMessage.edit(GENERATION_FAILED_MESSAGE);
+        return '';
+      }
+      return text;
+    } catch (error) {
+      this.logger.error(`agent reply failed: ${error}`);
+      if (sentMessage) await sentMessage.edit(GENERATION_FAILED_MESSAGE);
+      else await thread.post(GENERATION_FAILED_MESSAGE);
+      return '';
+    }
   }
 
   private isMessageAuthorAllowedToInteract(
