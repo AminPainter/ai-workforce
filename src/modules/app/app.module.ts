@@ -10,6 +10,8 @@ import { GitHubModule } from '../github/github.module';
 import { ContractDriftModule } from '../contract-drift/contract-drift.module';
 import { EmployeeAssistantModule } from '../employee-assistant/employee-assistant.module';
 import { ChatwootModule } from '../chatwoot/chatwoot.module';
+import { RagModule } from '../rag/rag.module';
+import { LegalAssistantModule } from '../legal-assistant/legal-assistant.module';
 import { QueueModule } from '../queue/queue.module';
 
 @Module({
@@ -24,6 +26,8 @@ import { QueueModule } from '../queue/queue.module';
     ContractDriftModule,
     EmployeeAssistantModule,
     ChatwootModule,
+    RagModule,
+    LegalAssistantModule,
   ],
   controllers: [AppController],
   providers: [AppService],

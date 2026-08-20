@@ -8,6 +8,8 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
+# schema must be present for the `postinstall` prisma generate to find it
+COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build
@@ -17,6 +19,9 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
+# schema present so the postinstall `prisma generate` writes the Client + query
+# engine into this prod-only tree (prisma is a prod dependency for exactly this).
+COPY prisma ./prisma
 RUN pnpm install --prod --frozen-lockfile
 
 FROM searxng/searxng:latest AS runtime

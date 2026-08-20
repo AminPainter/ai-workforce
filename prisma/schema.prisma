@@ -1,0 +1,45 @@
+// pgvector lives in raw SQL, not the Prisma schema: the embedding column's
+// dimension is deploy-configurable (RAG_EMBEDDING_DIMENSIONS) and the HNSW index
+// can't be expressed on an Unsupported column, so both are owned by the migration
+// runner (src/modules/rag/db/migrate.ts). Prisma manages everything else and the
+// Client drives all queries. See https://www.prisma.io/docs/postgres/database/postgres-extensions
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model RagDocument {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  collection String
+  sourceUri  String     @map("source_uri")
+  title      String?
+  checksum   String
+  metadata   Json       @default("{}")
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  chunks     RagChunk[]
+
+  @@unique([collection, sourceUri])
+  @@map("rag_document")
+}
+
+model RagChunk {
+  id         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId String                 @map("document_id") @db.Uuid
+  collection String
+  chunkIndex Int                    @map("chunk_index")
+  content    String
+  page       Int?
+  metadata   Json                   @default("{}")
+  embedding  Unsupported("vector")?
+  document   RagDocument            @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([collection])
+  @@map("rag_chunk")
+}
