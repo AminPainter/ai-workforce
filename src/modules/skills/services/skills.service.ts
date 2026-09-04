@@ -25,7 +25,9 @@ export class SkillsService {
     };
   }
 
-  private buildTools(skillsRegistry: ReadonlyMap<string, LoadedSkill>): ToolSet {
+  private buildTools(
+    skillsRegistry: ReadonlyMap<string, LoadedSkill>,
+  ): ToolSet {
     return {
       loadSkill: createLoadSkillTool(skillsRegistry),
       readSkillReference: createReadSkillReferenceTool(skillsRegistry),

@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
+import { SnackTrackerService } from '../../snack-tracker/services/snack-tracker.service';
 
 const ALLOWED_SLACK_USER_IDS = new Set<string>([
   'U0857R1RB9Q', // Amin
@@ -31,14 +32,18 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   private slackAdapter!: import('chat').Adapter;
   private emoji!: typeof import('chat').emoji;
   private readonly maxContextMessages: number;
+  private readonly bakarChannelId: string;
 
   constructor(
     private readonly agentRegistry: AgentRegistry,
     private readonly configService: ConfigService,
+    private readonly snackTrackerService: SnackTrackerService,
   ) {
     this.maxContextMessages = Number(
       this.configService.get('EMPLOYEE_ASSISTANT_MAX_CONTEXT_MESSAGES') ?? 50,
     );
+    this.bakarChannelId =
+      this.configService.getOrThrow<string>('BAKAR_SLACK_CHANNEL');
   }
 
   async onModuleInit(): Promise<void> {
@@ -58,6 +63,10 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.bot.onNewMention(async (thread, message) => {
+      if (thread.channelId === this.bakarChannelId) {
+        await this.snackTrackerService.handleCommand(thread, message);
+        return;
+      }
       if (!this.isMessageAuthorAllowedToInteract(message)) {
         this.logger.warn(`ignored mention from ${message.author.userId}`);
         await thread.post(UNAUTHORIZED_MESSAGE);
@@ -66,6 +75,14 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`mention: ${message.text}`);
       await this.addSeenReaction(message);
       await this.answer(thread);
+    });
+
+    this.bot.onNewMessage(/[\s\S]/, async (thread, message) => {
+      if (thread.channelId !== this.bakarChannelId) return;
+      await this.snackTrackerService.handlePotentialSnacksPledge(
+        thread,
+        message,
+      );
     });
   }
 
