@@ -32,7 +32,7 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   private slackAdapter!: import('chat').Adapter;
   private emoji!: typeof import('chat').emoji;
   private readonly maxContextMessages: number;
-  private readonly bakarChannelId?: string;
+  private readonly bakarChannelId: string;
 
   constructor(
     private readonly agentRegistry: AgentRegistry,
@@ -43,7 +43,7 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       this.configService.get('EMPLOYEE_ASSISTANT_MAX_CONTEXT_MESSAGES') ?? 50,
     );
     this.bakarChannelId =
-      this.configService.get<string>('BAKAR_SLACK_CHANNEL');
+      this.configService.getOrThrow<string>('BAKAR_SLACK_CHANNEL');
   }
 
   async onModuleInit(): Promise<void> {
@@ -63,7 +63,7 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.bot.onNewMention(async (thread, message) => {
-      if (this.bakarChannelId && thread.channelId === this.bakarChannelId) {
+      if (thread.channelId === this.bakarChannelId) {
         await this.snackTrackerService.handleCommand(thread, message);
         return;
       }
@@ -77,19 +77,13 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       await this.answer(thread);
     });
 
-    if (this.bakarChannelId) {
-      const bakarChannelId = this.bakarChannelId;
-      this.bot.onNewMessage(/[\s\S]/, async (thread, message) => {
-        if (thread.channelId !== bakarChannelId) return;
-        await this.snackTrackerService.handlePotentialSnacksPledge(
-          thread,
-          message,
-        );
-      });
-    } else
-      this.logger.warn(
-        'BAKAR_SLACK_CHANNEL not set — snack tracker is disabled',
+    this.bot.onNewMessage(/[\s\S]/, async (thread, message) => {
+      if (thread.channelId !== this.bakarChannelId) return;
+      await this.snackTrackerService.handlePotentialSnacksPledge(
+        thread,
+        message,
       );
+    });
   }
 
   async onModuleDestroy(): Promise<void> {
