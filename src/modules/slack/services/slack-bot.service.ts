@@ -42,12 +42,8 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     this.maxContextMessages = Number(
       this.configService.get('EMPLOYEE_ASSISTANT_MAX_CONTEXT_MESSAGES') ?? 50,
     );
-    const bakarChannel = this.configService.get<string>('BAKAR_SLACK_CHANNEL');
-    this.bakarChannelId = bakarChannel
-      ? bakarChannel.includes(':')
-        ? bakarChannel
-        : `slack:${bakarChannel}`
-      : undefined;
+    this.bakarChannelId =
+      this.configService.get<string>('BAKAR_SLACK_CHANNEL');
   }
 
   async onModuleInit(): Promise<void> {
