@@ -36,7 +36,7 @@ export class SnackTrackerProcessor extends WorkerHost {
     };
     if (!classification.isSnacksPledge) return;
 
-    const { freshlyRecorded } =
+    const { isFreshlyRecorded } =
       await this.snacksLedgerService.recordSnacksPledge({
         messageId,
         userId,
@@ -45,7 +45,7 @@ export class SnackTrackerProcessor extends WorkerHost {
         text,
         pledgedAt: new Date().toISOString(),
       });
-    if (!freshlyRecorded) return;
+    if (!isFreshlyRecorded) return;
 
     this.logger.log(`snacks pledge recorded for ${fullName}`);
     await this.slackBotService.postToThread(threadId, CONFIRMATION_MESSAGE);
