@@ -5,9 +5,14 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
-import { SnackTrackerService } from '../../snack-tracker/services/snack-tracker.service';
+import {
+  SLACK_BAKAR_MENTION_EVENT,
+  SLACK_BAKAR_MESSAGE_EVENT,
+  type SlackBakarEvent,
+} from '../slack.events';
 
 const ALLOWED_SLACK_USER_IDS = new Set<string>([
   'U0857R1RB9Q', // Amin
@@ -37,7 +42,7 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly agentRegistry: AgentRegistry,
     private readonly configService: ConfigService,
-    private readonly snackTrackerService: SnackTrackerService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.maxContextMessages = Number(
       this.configService.get('EMPLOYEE_ASSISTANT_MAX_CONTEXT_MESSAGES') ?? 50,
@@ -65,7 +70,10 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
 
     this.bot.onNewMention(async (thread, message) => {
       if (thread.channelId === this.bakarChannelId) {
-        await this.snackTrackerService.handleCommand(thread, message);
+        this.eventEmitter.emit(SLACK_BAKAR_MENTION_EVENT, {
+          thread,
+          message,
+        } satisfies SlackBakarEvent);
         return;
       }
       if (!this.isMessageAuthorAllowedToInteract(message)) {
@@ -78,12 +86,12 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       await this.answer(thread);
     });
 
-    this.bot.onNewMessage(/[\s\S]/, async (thread, message) => {
+    this.bot.onNewMessage(/[\s\S]/, (thread, message) => {
       if (thread.channelId !== this.bakarChannelId) return;
-      await this.snackTrackerService.handlePotentialSnacksPledge(
+      this.eventEmitter.emit(SLACK_BAKAR_MESSAGE_EVENT, {
         thread,
         message,
-      );
+      } satisfies SlackBakarEvent);
     });
   }
 
