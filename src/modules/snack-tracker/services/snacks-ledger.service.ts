@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+const ONE_YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000;
 const PLEDGES_KEY = 'bakar:snacksPledges';
 
 export interface SnacksPledgeRecord {
@@ -11,6 +11,11 @@ export interface SnacksPledgeRecord {
   fullName: string;
   text: string;
   pledgedAt: string;
+}
+
+export interface RecordSnacksPledgeResult {
+  /** true if this pledge was freshly recorded, false if it was a duplicate. */
+  recorded: boolean;
 }
 
 @Injectable()
@@ -28,20 +33,26 @@ export class SnacksLedgerService implements OnModuleInit {
     await this.store.connect();
   }
 
-  async recordSnacksPledge(record: SnacksPledgeRecord): Promise<boolean> {
+  async recordSnacksPledge(
+    record: SnacksPledgeRecord,
+  ): Promise<RecordSnacksPledgeResult> {
     const seenKey = `bakar:seen:${record.messageId}`;
-    const isNew = await this.store.setIfNotExists(seenKey, '1', ONE_YEAR_MS);
-    if (!isNew) return false;
+    const isNew = await this.store.setIfNotExists(
+      seenKey,
+      '1',
+      ONE_YEAR_IN_MS,
+    );
+    if (!isNew) return { recorded: false };
 
     try {
       await this.store.appendToList(PLEDGES_KEY, record, {
-        ttlMs: ONE_YEAR_MS,
+        ttlMs: ONE_YEAR_IN_MS,
       });
     } catch (error) {
       // Roll back the gate so a retry can re-append this pledge.
       await this.store.delete(seenKey);
       throw error;
     }
-    return true;
+    return { recorded: true };
   }
 }
