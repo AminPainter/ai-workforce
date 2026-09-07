@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JiraClientService } from '../../jira/jira-client.service';
+import { RedisLockService } from '../../redis/redis-lock.service';
 import {
   buildLedgerDescription,
   parseLedgerRecords,
@@ -14,10 +15,10 @@ const DEFAULT_JIRA_ISSUE = 'KAN-8438';
 @Injectable()
 export class SnacksLedgerService {
   private readonly issueKey: string;
-  private writeChain: Promise<unknown> = Promise.resolve();
 
   constructor(
     private readonly jiraClientService: JiraClientService,
+    private readonly redisLockService: RedisLockService,
     private readonly configService: ConfigService,
   ) {
     this.issueKey =
@@ -34,9 +35,10 @@ export class SnacksLedgerService {
   }
 
   /**
-   * Serialize every read-modify-write against the Jira description so concurrent
-   * Slack messages can't clobber each other's edit. Skips the write when the
-   * mutation is a no-op to avoid empty entries in the ticket's audit history.
+   * Serialize every read-modify-write against the Jira description behind a
+   * Redis lock so concurrent Slack messages (even across app instances) can't
+   * clobber each other's edit. Skips the write when the mutation is a no-op to
+   * avoid empty entries in the ticket's audit history.
    */
   private mutate<T>(
     apply: (records: SnacksPledgeRecord[]) => {
@@ -44,21 +46,21 @@ export class SnacksLedgerService {
       result: T;
     },
   ): Promise<T> {
-    const run = async (): Promise<T> => {
-      const description = await this.jiraClientService.getIssueDescription(
-        this.issueKey,
-      );
-      const records = parseLedgerRecords(description);
-      const { next, result } = apply(records);
-      if (JSON.stringify(next) !== JSON.stringify(records))
-        await this.jiraClientService.setIssueDescription(
+    return this.redisLockService.withLock(
+      `snacks-ledger:${this.issueKey}`,
+      async () => {
+        const description = await this.jiraClientService.getIssueDescription(
           this.issueKey,
-          buildLedgerDescription(next),
         );
-      return result;
-    };
-    const chained = this.writeChain.then(run, run);
-    this.writeChain = chained.catch(() => undefined);
-    return chained;
+        const records = parseLedgerRecords(description);
+        const { next, result } = apply(records);
+        if (JSON.stringify(next) !== JSON.stringify(records))
+          await this.jiraClientService.setIssueDescription(
+            this.issueKey,
+            buildLedgerDescription(next),
+          );
+        return result;
+      },
+    );
   }
 }
