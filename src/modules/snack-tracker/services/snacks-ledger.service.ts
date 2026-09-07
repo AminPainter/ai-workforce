@@ -28,12 +28,6 @@ export class SnacksLedgerService implements OnModuleInit {
     await this.store.connect();
   }
 
-  /**
-   * Append a pledge to the ledger, kept for a year. Idempotent on messageId via
-   * an atomic SET NX gate, so Slack redelivery and BullMQ retries can't
-   * double-count. Both the gate and the list are atomic, so no lock is needed.
-   * Returns false if this message was already recorded.
-   */
   async recordSnacksPledge(record: SnacksPledgeRecord): Promise<boolean> {
     const seenKey = `bakar:seen:${record.messageId}`;
     const isNew = await this.store.setIfNotExists(seenKey, '1', ONE_YEAR_MS);
