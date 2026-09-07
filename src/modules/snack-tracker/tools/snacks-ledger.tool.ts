@@ -1,15 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
+import { formatIstDate } from '../../../common/date.util';
 import { type SnacksLedgerService } from '../services/snacks-ledger.service';
-
-function formatDate(isoTimestamp: string): string {
-  return new Intl.DateTimeFormat('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(isoTimestamp));
-}
 
 export function createSnacksLedgerTool(
   snacksLedgerService: SnacksLedgerService,
@@ -26,7 +18,7 @@ export function createSnacksLedgerTool(
       return pledges
         .map(
           (pledge) =>
-            `${pledge.fullName} — ${formatDate(pledge.pledgedAt)} IST: ${pledge.text}`,
+            `${pledge.fullName} — ${formatIstDate(pledge.pledgedAt)} IST: ${pledge.text}`,
         )
         .join('\n');
     },
