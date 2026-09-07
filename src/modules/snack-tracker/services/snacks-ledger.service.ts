@@ -1,66 +1,53 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JiraClientService } from '../../jira/jira-client.service';
-import { RedisLockService } from '../../redis/redis-lock.service';
-import {
-  buildLedgerDescription,
-  parseLedgerRecords,
-  type SnacksPledgeRecord,
-} from '../snacks-ledger-adf';
 
-export type { SnacksPledgeRecord } from '../snacks-ledger-adf';
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+const PLEDGES_KEY = 'bakar:snacksPledges';
 
-const DEFAULT_JIRA_ISSUE = 'KAN-8438';
+export interface SnacksPledgeRecord {
+  messageId: string;
+  userId: string;
+  userName: string;
+  fullName: string;
+  text: string;
+  pledgedAt: string;
+}
 
 @Injectable()
-export class SnacksLedgerService {
-  private readonly issueKey: string;
+export class SnacksLedgerService implements OnModuleInit {
+  private store!: import('@chat-adapter/state-redis').RedisStateAdapter;
 
-  constructor(
-    private readonly jiraClientService: JiraClientService,
-    private readonly redisLockService: RedisLockService,
-    private readonly configService: ConfigService,
-  ) {
-    this.issueKey =
-      this.configService.get<string>('BAKAR_SNACKS_JIRA_ISSUE') ??
-      DEFAULT_JIRA_ISSUE;
-  }
+  constructor(private readonly configService: ConfigService) {}
 
-  async recordSnacksPledge(record: SnacksPledgeRecord): Promise<boolean> {
-    return this.mutate((records) => {
-      if (records.some((existing) => existing.messageId === record.messageId))
-        return { next: records, result: false };
-      return { next: [...records, record], result: true };
+  async onModuleInit(): Promise<void> {
+    const { createRedisState } = await import('@chat-adapter/state-redis');
+    this.store = createRedisState({
+      url: this.configService.getOrThrow<string>('REDIS_URL'),
+      keyPrefix: 'snacks',
     });
+    await this.store.connect();
   }
 
   /**
-   * Serialize every read-modify-write against the Jira description behind a
-   * Redis lock so concurrent Slack messages (even across app instances) can't
-   * clobber each other's edit. Skips the write when the mutation is a no-op to
-   * avoid empty entries in the ticket's audit history.
+   * Append a pledge to the ledger, kept for a year. Idempotent on messageId via
+   * an atomic SET NX gate, so Slack redelivery and BullMQ retries can't
+   * double-count. Both the gate and the list are atomic, so no lock is needed.
+   * Returns false if this message was already recorded.
    */
-  private mutate<T>(
-    apply: (records: SnacksPledgeRecord[]) => {
-      next: SnacksPledgeRecord[];
-      result: T;
-    },
-  ): Promise<T> {
-    return this.redisLockService.withLock(
-      `snacks-ledger:${this.issueKey}`,
-      async () => {
-        const description = await this.jiraClientService.getIssueDescription(
-          this.issueKey,
-        );
-        const records = parseLedgerRecords(description);
-        const { next, result } = apply(records);
-        if (JSON.stringify(next) !== JSON.stringify(records))
-          await this.jiraClientService.setIssueDescription(
-            this.issueKey,
-            buildLedgerDescription(next),
-          );
-        return result;
-      },
-    );
+  async recordSnacksPledge(record: SnacksPledgeRecord): Promise<boolean> {
+    const seenKey = `bakar:seen:${record.messageId}`;
+    const isNew = await this.store.setIfNotExists(seenKey, '1', ONE_YEAR_MS);
+    if (!isNew) return false;
+
+    try {
+      await this.store.appendToList(PLEDGES_KEY, record, {
+        ttlMs: ONE_YEAR_MS,
+      });
+    } catch (error) {
+      // Roll back the gate so a retry can re-append this pledge.
+      await this.store.delete(seenKey);
+      throw error;
+    }
+    return true;
   }
 }

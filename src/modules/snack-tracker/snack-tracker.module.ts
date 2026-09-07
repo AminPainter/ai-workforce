@@ -3,8 +3,6 @@ import { BullModule } from '@nestjs/bullmq';
 import { AiModule } from '../ai/ai.module';
 import { AgentsModule } from '../agents/agents.module';
 import { SlackModule } from '../slack/slack.module';
-import { JiraModule } from '../jira/jira.module';
-import { RedisModule } from '../redis/redis.module';
 import { SnacksLedgerService } from './services/snacks-ledger.service';
 import { SnackTrackerAgentRegistrationService } from './services/snack-tracker-agent-registration.service';
 import { SnackTrackerListener } from './snack-tracker.listener';
@@ -16,8 +14,6 @@ import { SNACK_TRACKER_QUEUE } from './queues/snack-tracker.queue';
     AiModule,
     AgentsModule,
     SlackModule,
-    JiraModule,
-    RedisModule,
     BullModule.registerQueue({ name: SNACK_TRACKER_QUEUE }),
   ],
   providers: [
