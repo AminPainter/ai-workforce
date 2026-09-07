@@ -36,15 +36,16 @@ export class SnackTrackerProcessor extends WorkerHost {
     };
     if (!classification.isSnacksPledge) return;
 
-    const { recorded } = await this.snacksLedgerService.recordSnacksPledge({
-      messageId,
-      userId,
-      userName,
-      fullName,
-      text,
-      pledgedAt: new Date().toISOString(),
-    });
-    if (!recorded) return;
+    const { freshlyRecorded } =
+      await this.snacksLedgerService.recordSnacksPledge({
+        messageId,
+        userId,
+        userName,
+        fullName,
+        text,
+        pledgedAt: new Date().toISOString(),
+      });
+    if (!freshlyRecorded) return;
 
     this.logger.log(`snacks pledge recorded for ${fullName}`);
     await this.slackBotService.postToThread(threadId, CONFIRMATION_MESSAGE);

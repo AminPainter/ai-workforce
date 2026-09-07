@@ -14,7 +14,7 @@ export interface SnacksPledgeRecord {
 }
 
 export interface RecordSnacksPledgeResult {
-  recorded: boolean;
+  freshlyRecorded: boolean;
 }
 
 @Injectable()
@@ -36,12 +36,12 @@ export class SnacksLedgerService implements OnModuleInit {
     record: SnacksPledgeRecord,
   ): Promise<RecordSnacksPledgeResult> {
     const seenKey = `bakar:seen:${record.messageId}`;
-    const recorded = await this.store.setIfNotExists(
+    const freshlyRecorded = await this.store.setIfNotExists(
       seenKey,
       '1',
       ONE_YEAR_IN_MS,
     );
-    if (!recorded) return { recorded: false };
+    if (!freshlyRecorded) return { freshlyRecorded: false };
 
     try {
       await this.store.appendToList(PLEDGES_KEY, record, {
@@ -52,6 +52,6 @@ export class SnacksLedgerService implements OnModuleInit {
       await this.store.delete(seenKey);
       throw error;
     }
-    return { recorded: true };
+    return { freshlyRecorded: true };
   }
 }
