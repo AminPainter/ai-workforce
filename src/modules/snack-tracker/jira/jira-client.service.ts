@@ -10,10 +10,9 @@ export class JiraClientService {
   private readonly authHeader: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.baseUrl = (
+    this.baseUrl =
       this.configService.get<string>('ATLASSIAN_BASE_URL') ??
-      DEFAULT_JIRA_BASE_URL
-    ).replace(/\/+$/, '');
+      DEFAULT_JIRA_BASE_URL;
     const email = this.configService.getOrThrow<string>('ATLASSIAN_EMAIL');
     const apiToken = this.configService.getOrThrow<string>(
       'ATLASSIAN_API_TOKEN',
