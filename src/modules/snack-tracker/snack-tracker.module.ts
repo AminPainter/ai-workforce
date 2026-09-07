@@ -4,6 +4,7 @@ import { AgentsModule } from '../agents/agents.module';
 import { SnackTrackerService } from './services/snack-tracker.service';
 import { SnacksPledgeLedgerService } from './services/snacks-pledge-ledger.service';
 import { SnackTrackerAgentRegistrationService } from './services/snack-tracker-agent-registration.service';
+import { JiraClientService } from './jira/jira-client.service';
 
 @Module({
   imports: [AiModule, AgentsModule],
@@ -11,6 +12,7 @@ import { SnackTrackerAgentRegistrationService } from './services/snack-tracker-a
     SnackTrackerService,
     SnacksPledgeLedgerService,
     SnackTrackerAgentRegistrationService,
+    JiraClientService,
   ],
   exports: [SnackTrackerService],
 })

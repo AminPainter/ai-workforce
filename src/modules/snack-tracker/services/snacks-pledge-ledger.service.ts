@@ -1,109 +1,80 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JiraClientService } from '../jira/jira-client.service';
+import {
+  buildLedgerDescription,
+  netDebtors,
+  parseLedgerRecords,
+  type OpenDebtor,
+  type SnacksPledgeRecord,
+} from '../jira/snacks-ledger-adf';
 
-const SNACKS_PLEDGES_KEY = 'bakar:snacksPledges';
-const SETTLEMENTS_KEY = 'bakar:settlements';
+export type { OpenDebtor, SnacksPledgeRecord } from '../jira/snacks-ledger-adf';
 
-export interface SnacksPledgeRow {
-  messageId: string;
-  userId: string;
-  userName: string;
-  fullName: string;
-  text: string;
-  threadId: string;
-  pledgedAt: string;
-}
-
-export interface SettlementRow {
-  userId: string;
-  count: number;
-  settledByUserId: string;
-  settledAt: string;
-}
-
-export interface OpenDebtor {
-  userId: string;
-  userName: string;
-  fullName: string;
-  openCount: number;
-  lastPledgedAt: string;
-}
+const DEFAULT_JIRA_ISSUE = 'KAN-8438';
 
 @Injectable()
-export class SnacksPledgeLedgerService implements OnModuleInit {
-  private readonly logger = new Logger(SnacksPledgeLedgerService.name);
-  private store!: import('@chat-adapter/state-redis').RedisStateAdapter;
+export class SnacksPledgeLedgerService {
+  private readonly issueKey: string;
+  private writeChain: Promise<unknown> = Promise.resolve();
 
-  constructor(private readonly configService: ConfigService) {}
-
-  async onModuleInit(): Promise<void> {
-    const { createRedisState } = await import('@chat-adapter/state-redis');
-    this.store = createRedisState({
-      url: this.configService.getOrThrow<string>('REDIS_URL'),
-      keyPrefix: 'snacks',
-    });
-    await this.store.connect();
+  constructor(
+    private readonly jiraClientService: JiraClientService,
+    private readonly configService: ConfigService,
+  ) {
+    this.issueKey =
+      this.configService.get<string>('BAKAR_SNACKS_JIRA_ISSUE') ??
+      DEFAULT_JIRA_ISSUE;
   }
 
-  async recordSnacksPledge(row: SnacksPledgeRow): Promise<boolean> {
-    const existing =
-      await this.store.getList<SnacksPledgeRow>(SNACKS_PLEDGES_KEY);
-    if (existing.some((pledge) => pledge.messageId === row.messageId))
-      return false;
-    await this.store.appendToList(SNACKS_PLEDGES_KEY, row);
-    return true;
+  async recordSnacksPledge(record: SnacksPledgeRecord): Promise<boolean> {
+    return this.mutate((records) => {
+      if (records.some((existing) => existing.messageId === record.messageId))
+        return { next: records, result: false };
+      return { next: [...records, record], result: true };
+    });
+  }
+
+  async settleUser(userId: string): Promise<number> {
+    return this.mutate((records) => {
+      const next = records.filter((record) => record.userId !== userId);
+      return { next, result: records.length - next.length };
+    });
   }
 
   async listOpenDebtors(): Promise<OpenDebtor[]> {
-    const [pledges, settlements] = await Promise.all([
-      this.store.getList<SnacksPledgeRow>(SNACKS_PLEDGES_KEY),
-      this.store.getList<SettlementRow>(SETTLEMENTS_KEY),
-    ]);
-
-    const settledByUser = new Map<string, number>();
-    for (const settlement of settlements)
-      settledByUser.set(
-        settlement.userId,
-        (settledByUser.get(settlement.userId) ?? 0) + settlement.count,
-      );
-
-    const byUser = new Map<string, OpenDebtor>();
-    for (const pledge of pledges) {
-      const current = byUser.get(pledge.userId);
-      if (current) {
-        current.openCount += 1;
-        if (pledge.pledgedAt > current.lastPledgedAt)
-          current.lastPledgedAt = pledge.pledgedAt;
-      } else
-        byUser.set(pledge.userId, {
-          userId: pledge.userId,
-          userName: pledge.userName,
-          fullName: pledge.fullName,
-          openCount: 1,
-          lastPledgedAt: pledge.pledgedAt,
-        });
-    }
-
-    const debtors: OpenDebtor[] = [];
-    for (const debtor of byUser.values()) {
-      debtor.openCount -= settledByUser.get(debtor.userId) ?? 0;
-      if (debtor.openCount > 0) debtors.push(debtor);
-    }
-    return debtors.sort((a, b) => b.openCount - a.openCount);
+    const description = await this.jiraClientService.getIssueDescription(
+      this.issueKey,
+    );
+    return netDebtors(parseLedgerRecords(description));
   }
 
-  async settleUser(userId: string, settledByUserId: string): Promise<number> {
-    const debtor = (await this.listOpenDebtors()).find(
-      (candidate) => candidate.userId === userId,
-    );
-    const count = debtor?.openCount ?? 0;
-    if (count <= 0) return 0;
-    await this.store.appendToList(SETTLEMENTS_KEY, {
-      userId,
-      count,
-      settledByUserId,
-      settledAt: new Date().toISOString(),
-    } satisfies SettlementRow);
-    return count;
+  /**
+   * Serialize every read-modify-write against the Jira description so concurrent
+   * Slack messages can't clobber each other's edit. Skips the write when the
+   * mutation is a no-op to avoid empty entries in the ticket's audit history.
+   */
+  private mutate<T>(
+    apply: (records: SnacksPledgeRecord[]) => {
+      next: SnacksPledgeRecord[];
+      result: T;
+    },
+  ): Promise<T> {
+    const run = async (): Promise<T> => {
+      const description = await this.jiraClientService.getIssueDescription(
+        this.issueKey,
+      );
+      const records = parseLedgerRecords(description);
+      const { next, result } = apply(records);
+      if (JSON.stringify(next) !== JSON.stringify(records))
+        await this.jiraClientService.setIssueDescription(
+          this.issueKey,
+          buildLedgerDescription(next),
+        );
+      return result;
+    };
+    const chained = this.writeChain.then(run, run);
+    this.writeChain = chained.catch(() => undefined);
+    return chained;
   }
 }

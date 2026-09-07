@@ -48,7 +48,6 @@ export class SnackTrackerService {
       userName: message.author.userName,
       fullName: message.author.fullName,
       text,
-      threadId: message.threadId,
       pledgedAt: new Date().toISOString(),
     });
     if (!recorded) return;
@@ -103,10 +102,7 @@ export class SnackTrackerService {
 
     const cleared: string[] = [];
     for (const userId of targets) {
-      const count = await this.snacksPledgeLedgerService.settleUser(
-        userId,
-        message.author.userId,
-      );
+      const count = await this.snacksPledgeLedgerService.settleUser(userId);
       if (count > 0) cleared.push(`<@${userId}> (${count})`);
     }
 
