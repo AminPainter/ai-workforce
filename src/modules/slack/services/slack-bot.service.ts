@@ -46,9 +46,9 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     this.maxContextMessages = Number(
       this.configService.get('EMPLOYEE_ASSISTANT_MAX_CONTEXT_MESSAGES') ?? 50,
     );
-    this.bakarChannelId = this.configService.getOrThrow<string>(
+    this.bakarChannelId = `slack:${this.configService.getOrThrow<string>(
       'BAKAR_SLACK_CHANNEL',
-    );
+    )}`;
   }
 
   async onModuleInit(): Promise<void> {
