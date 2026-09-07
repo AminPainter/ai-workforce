@@ -52,10 +52,6 @@ export function createEmployeeAssistant(
     stopWhen: stepCountIs(
       Number(configService.get('EMPLOYEE_ASSISTANT_MAX_STEPS') ?? 40),
     ),
-    // markSnacksFulfilled declares a context; each stream call overrides this with the
-    // real channel and the requester's user id. The blank defaults match no channel and
-    // no user, so a call that skips the override refuses to settle — settlement is only
-    // allowed from #bakar and only by the person who owes the pledge.
     toolsContext: {
       markSnacksFulfilled: { channelId: '', requesterUserId: '' },
     },

@@ -7,10 +7,6 @@ import { Agent } from 'ai';
 // fits the map.
 type AnyRegisteredAgent = Agent<never, any, any, any>;
 
-// The SDK ties `toolsContext`'s type to the concrete tool set; erasing the tool set to
-// `any` collapses it to `never`, so a registry-held agent can't be handed a per-call tool
-// context without a cast. Re-expose stream/generate with a permissive `toolsContext`,
-// keeping every other option and the SDK return types exactly as declared.
 type WithToolsContext<OPTIONS> = Omit<OPTIONS, 'toolsContext'> & {
   toolsContext?: Record<string, Record<string, unknown>>;
 };

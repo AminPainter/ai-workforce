@@ -166,8 +166,6 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     try {
       const result = await this.agentRegistry.get(EMPLOYEE_ASSISTANT).stream({
         messages,
-        // Pass the current channel and the requester to the markSnacksFulfilled tool,
-        // which settles pledges only from #bakar and only for the person who owes them.
         toolsContext: {
           markSnacksFulfilled: {
             channelId: thread.channelId,
