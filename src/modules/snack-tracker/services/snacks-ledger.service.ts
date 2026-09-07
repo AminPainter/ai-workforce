@@ -14,7 +14,7 @@ export type { OpenDebtor, SnacksPledgeRecord } from '../snacks-ledger-adf';
 const DEFAULT_JIRA_ISSUE = 'KAN-8438';
 
 @Injectable()
-export class SnacksPledgeLedgerService {
+export class SnacksLedgerService {
   private readonly issueKey: string;
   private writeChain: Promise<unknown> = Promise.resolve();
 

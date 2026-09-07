@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { SnacksPledgeLedgerService } from './snacks-pledge-ledger.service';
+import { SnacksLedgerService } from './snacks-ledger.service';
 import { SNACKS_PLEDGE_CLASSIFIER } from '../agents/snacks-pledge-classifier.agent';
 import { SNACK_COMMAND } from '../agents/snack-command.agent';
 import type { SnacksPledgeClassification } from '../agents/snacks-pledge-classifier.schema';
@@ -16,7 +16,7 @@ export class SnackTrackerService {
 
   constructor(
     private readonly agentRegistry: AgentRegistry,
-    private readonly snacksPledgeLedgerService: SnacksPledgeLedgerService,
+    private readonly snacksLedgerService: SnacksLedgerService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -35,7 +35,7 @@ export class SnackTrackerService {
     };
     if (!classification.isSnacksPledge) return;
 
-    const recorded = await this.snacksPledgeLedgerService.recordSnacksPledge({
+    const recorded = await this.snacksLedgerService.recordSnacksPledge({
       messageId: message.id,
       userId: message.author.userId,
       userName: message.author.userName,
@@ -95,7 +95,7 @@ export class SnackTrackerService {
 
     const cleared: string[] = [];
     for (const userId of targets) {
-      const count = await this.snacksPledgeLedgerService.settleUser(userId);
+      const count = await this.snacksLedgerService.settleUser(userId);
       if (count > 0) cleared.push(`<@${userId}> (${count})`);
     }
 
@@ -127,7 +127,7 @@ export class SnackTrackerService {
   }
 
   private async buildDebtorSummary(): Promise<string> {
-    const debtors = await this.snacksPledgeLedgerService.listOpenDebtors();
+    const debtors = await this.snacksLedgerService.listOpenDebtors();
     if (debtors.length === 0)
       return 'No pending snacks. Suspiciously wholesome. 🍩';
     const lines = debtors.map(
