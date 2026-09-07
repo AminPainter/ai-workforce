@@ -1,3 +1,5 @@
+import type { AdfDoc, AdfNode } from '../jira/adf.types';
+
 export interface SnacksPledgeRecord {
   messageId: string;
   userId: string;
@@ -13,19 +15,6 @@ export interface OpenDebtor {
   fullName: string;
   openCount: number;
   lastPledgedAt: string;
-}
-
-export interface AdfNode {
-  type: string;
-  content?: AdfNode[];
-  text?: string;
-  attrs?: Record<string, unknown>;
-}
-
-export interface AdfDoc {
-  type: 'doc';
-  version: 1;
-  content: AdfNode[];
 }
 
 const LEDGER_HEADING = 'Ledger data (auto-managed — do not edit below)';

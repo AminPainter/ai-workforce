@@ -39,6 +39,7 @@
     "bullmq": "^5.80.2",
     "chat": "^4.34.0",
     "html-to-text": "^10.0.0",
+    "jira.js": "^6.2.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "yaml": "^2.9.0",

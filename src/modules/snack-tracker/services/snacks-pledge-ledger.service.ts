@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JiraClientService } from '../jira/jira-client.service';
+import { JiraClientService } from '../../jira/jira-client.service';
 import {
   buildLedgerDescription,
   netDebtors,
   parseLedgerRecords,
   type OpenDebtor,
   type SnacksPledgeRecord,
-} from '../jira/snacks-ledger-adf';
+} from '../snacks-ledger-adf';
 
-export type { OpenDebtor, SnacksPledgeRecord } from '../jira/snacks-ledger-adf';
+export type { OpenDebtor, SnacksPledgeRecord } from '../snacks-ledger-adf';
 
 const DEFAULT_JIRA_ISSUE = 'KAN-8438';
 
