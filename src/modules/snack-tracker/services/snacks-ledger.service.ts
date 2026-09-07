@@ -27,6 +27,7 @@ export interface RecordSnacksPledgeResult {
 export interface FulfillPledgeResult {
   found: boolean;
   alreadyFulfilled: boolean;
+  notOwner: boolean;
   record?: SnacksPledgeRecord;
 }
 
@@ -74,7 +75,11 @@ export class SnacksLedgerService implements OnModuleInit {
   ): Promise<FulfillPledgeResult> {
     const pledges = await this.store.getList<SnacksPledgeRecord>(PLEDGES_KEY);
     const record = pledges.find((pledge) => pledge.messageId === messageId);
-    if (!record) return { found: false, alreadyFulfilled: false };
+    if (!record)
+      return { found: false, alreadyFulfilled: false, notOwner: false };
+
+    if (fulfilledByUserId !== undefined && record.userId !== fulfilledByUserId)
+      return { found: true, alreadyFulfilled: false, notOwner: true, record };
 
     const fulfilledKey = `bakar:fulfilled:${messageId}`;
     const isFreshlyFulfilled = await this.store.setIfNotExists(
@@ -83,7 +88,7 @@ export class SnacksLedgerService implements OnModuleInit {
       ONE_YEAR_IN_MS,
     );
     if (!isFreshlyFulfilled)
-      return { found: true, alreadyFulfilled: true, record };
+      return { found: true, alreadyFulfilled: true, notOwner: false, record };
 
     try {
       await this.store.appendToList(
@@ -100,7 +105,7 @@ export class SnacksLedgerService implements OnModuleInit {
       await this.store.delete(fulfilledKey);
       throw error;
     }
-    return { found: true, alreadyFulfilled: false, record };
+    return { found: true, alreadyFulfilled: false, notOwner: false, record };
   }
 
   async listPledges(): Promise<SnacksPledgeRecord[]> {

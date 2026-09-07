@@ -5,7 +5,27 @@ import { Agent } from 'ai';
 // assignable to the default empty-tools / no-output `Agent`. Widen the generics so any
 // agent — plain `ToolLoopAgent`, one with `Output.object(...)`, future `HarnessAgent` —
 // fits the map.
-export type RegisteredAgent = Agent<never, any, any, any>;
+type AnyRegisteredAgent = Agent<never, any, any, any>;
+
+// The SDK ties `toolsContext`'s type to the concrete tool set; erasing the tool set to
+// `any` collapses it to `never`, so a registry-held agent can't be handed a per-call tool
+// context without a cast. Re-expose stream/generate with a permissive `toolsContext`,
+// keeping every other option and the SDK return types exactly as declared.
+type WithToolsContext<OPTIONS> = Omit<OPTIONS, 'toolsContext'> & {
+  toolsContext?: Record<string, Record<string, unknown>>;
+};
+
+export type RegisteredAgent = Omit<
+  AnyRegisteredAgent,
+  'stream' | 'generate'
+> & {
+  stream(
+    options: WithToolsContext<Parameters<AnyRegisteredAgent['stream']>[0]>,
+  ): ReturnType<AnyRegisteredAgent['stream']>;
+  generate(
+    options: WithToolsContext<Parameters<AnyRegisteredAgent['generate']>[0]>,
+  ): ReturnType<AnyRegisteredAgent['generate']>;
+};
 
 export class AgentRegistry {
   constructor(
