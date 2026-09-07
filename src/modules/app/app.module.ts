@@ -9,6 +9,7 @@ import { SlackModule } from '../slack/slack.module';
 import { GitHubModule } from '../github/github.module';
 import { ContractDriftModule } from '../contract-drift/contract-drift.module';
 import { EmployeeAssistantModule } from '../employee-assistant/employee-assistant.module';
+import { SnackTrackerModule } from '../snack-tracker/snack-tracker.module';
 import { QueueModule } from '../queue/queue.module';
 
 @Module({
@@ -22,6 +23,7 @@ import { QueueModule } from '../queue/queue.module';
     GitHubModule,
     ContractDriftModule,
     EmployeeAssistantModule,
+    SnackTrackerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

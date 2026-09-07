@@ -5,8 +5,13 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
+import {
+  SLACK_BAKAR_MESSAGE_EVENT,
+  type SlackBakarEvent,
+} from '../slack.events';
 
 const ALLOWED_SLACK_USER_IDS = new Set<string>([
   'U0857R1RB9Q', // Amin
@@ -31,13 +36,18 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   private slackAdapter!: import('chat').Adapter;
   private emoji!: typeof import('chat').emoji;
   private readonly maxContextMessages: number;
+  private readonly bakarChannelId: string;
 
   constructor(
     private readonly agentRegistry: AgentRegistry,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.maxContextMessages = Number(
       this.configService.get('EMPLOYEE_ASSISTANT_MAX_CONTEXT_MESSAGES') ?? 50,
+    );
+    this.bakarChannelId = this.configService.getOrThrow<string>(
+      'BAKAR_SLACK_CHANNEL',
     );
   }
 
@@ -67,6 +77,14 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       await this.addSeenReaction(message);
       await this.answer(thread);
     });
+
+    this.bot.onNewMessage(/[\s\S]/, (thread, message) => {
+      if (thread.channelId !== this.bakarChannelId) return;
+      this.eventEmitter.emit(SLACK_BAKAR_MESSAGE_EVENT, {
+        thread,
+        message,
+      } satisfies SlackBakarEvent);
+    });
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -85,6 +103,13 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       ? channelId
       : `slack:${channelId}`;
     await this.bot.channel(qualifiedChannelId).post(message);
+  }
+
+  async postToThread(
+    threadId: string,
+    message: string | import('chat').ChatElement,
+  ): Promise<void> {
+    await this.bot.thread(threadId).post(message);
   }
 
   private async addSeenReaction(
