@@ -7,6 +7,8 @@ import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
 import { GlomopayMcpService } from '../../ai/services/glomopay-mcp.service';
 import { SkillsService } from '../../skills/services/skills.service';
+import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
+import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
@@ -19,6 +21,7 @@ export function createEmployeeAssistant(
   atlassianMcpService: AtlassianMcpService,
   glomopayMcpService: GlomopayMcpService,
   skillsService: SkillsService,
+  snacksLedgerService: SnacksLedgerService,
   configService: ConfigService,
 ): RegisteredAgent {
   const skills = skillsService.buildAgentSkills([
@@ -35,6 +38,7 @@ export function createEmployeeAssistant(
       ...atlassianMcpService.getTools(),
       ...glomopayMcpService.getTools(),
       ...skills.tools,
+      snacksLedger: createSnacksLedgerTool(snacksLedgerService),
     },
     stopWhen: stepCountIs(
       Number(configService.get('EMPLOYEE_ASSISTANT_MAX_STEPS') ?? 40),

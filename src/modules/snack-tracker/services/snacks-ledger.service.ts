@@ -54,4 +54,8 @@ export class SnacksLedgerService implements OnModuleInit {
     }
     return { isFreshlyRecorded: true };
   }
+
+  async listPledges(): Promise<SnacksPledgeRecord[]> {
+    return this.store.getList<SnacksPledgeRecord>(PLEDGES_KEY);
+  }
 }

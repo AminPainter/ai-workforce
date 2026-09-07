@@ -6,6 +6,7 @@ import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
 import { GlomopayMcpService } from '../../ai/services/glomopay-mcp.service';
 import { SkillsService } from '../../skills/services/skills.service';
+import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import {
   EMPLOYEE_ASSISTANT,
@@ -21,6 +22,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
     private readonly atlassianMcpService: AtlassianMcpService,
     private readonly glomopayMcpService: GlomopayMcpService,
     private readonly skillsService: SkillsService,
+    private readonly snacksLedgerService: SnacksLedgerService,
     private readonly configService: ConfigService,
     private readonly agentRegistry: AgentRegistry,
   ) {}
@@ -35,6 +37,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
         this.atlassianMcpService,
         this.glomopayMcpService,
         this.skillsService,
+        this.snacksLedgerService,
         this.configService,
       ),
     );
