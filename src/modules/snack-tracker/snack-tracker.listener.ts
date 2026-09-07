@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SnackTrackerService } from './services/snack-tracker.service';
 import {
-  SLACK_BAKAR_MENTION_EVENT,
   SLACK_BAKAR_MESSAGE_EVENT,
   type SlackBakarEvent,
 } from '../slack/slack.events';
@@ -22,15 +21,6 @@ export class SnackTrackerListener {
       );
     } catch (error) {
       this.logger.error(`bakar message handling failed: ${error}`);
-    }
-  }
-
-  @OnEvent(SLACK_BAKAR_MENTION_EVENT)
-  async onBakarMention({ thread, message }: SlackBakarEvent): Promise<void> {
-    try {
-      await this.snackTrackerService.handleCommand(thread, message);
-    } catch (error) {
-      this.logger.error(`bakar command handling failed: ${error}`);
     }
   }
 }

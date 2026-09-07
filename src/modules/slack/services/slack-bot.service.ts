@@ -9,7 +9,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
 import {
-  SLACK_BAKAR_MENTION_EVENT,
   SLACK_BAKAR_MESSAGE_EVENT,
   type SlackBakarEvent,
 } from '../slack.events';
@@ -69,13 +68,6 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.bot.onNewMention(async (thread, message) => {
-      if (thread.channelId === this.bakarChannelId) {
-        this.eventEmitter.emit(SLACK_BAKAR_MENTION_EVENT, {
-          thread,
-          message,
-        } satisfies SlackBakarEvent);
-        return;
-      }
       if (!this.isMessageAuthorAllowedToInteract(message)) {
         this.logger.warn(`ignored mention from ${message.author.userId}`);
         await thread.post(UNAUTHORIZED_MESSAGE);

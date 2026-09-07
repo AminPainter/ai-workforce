@@ -3,13 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { JiraClientService } from '../../jira/jira-client.service';
 import {
   buildLedgerDescription,
-  netDebtors,
   parseLedgerRecords,
-  type OpenDebtor,
   type SnacksPledgeRecord,
 } from '../snacks-ledger-adf';
 
-export type { OpenDebtor, SnacksPledgeRecord } from '../snacks-ledger-adf';
+export type { SnacksPledgeRecord } from '../snacks-ledger-adf';
 
 const DEFAULT_JIRA_ISSUE = 'KAN-8438';
 
@@ -33,20 +31,6 @@ export class SnacksLedgerService {
         return { next: records, result: false };
       return { next: [...records, record], result: true };
     });
-  }
-
-  async settleUser(userId: string): Promise<number> {
-    return this.mutate((records) => {
-      const next = records.filter((record) => record.userId !== userId);
-      return { next, result: records.length - next.length };
-    });
-  }
-
-  async listOpenDebtors(): Promise<OpenDebtor[]> {
-    const description = await this.jiraClientService.getIssueDescription(
-      this.issueKey,
-    );
-    return netDebtors(parseLedgerRecords(description));
   }
 
   /**
