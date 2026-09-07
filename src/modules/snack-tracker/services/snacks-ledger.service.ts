@@ -14,7 +14,6 @@ export interface SnacksPledgeRecord {
 }
 
 export interface RecordSnacksPledgeResult {
-  /** true if this pledge was freshly recorded, false if it was a duplicate. */
   recorded: boolean;
 }
 
@@ -37,12 +36,12 @@ export class SnacksLedgerService implements OnModuleInit {
     record: SnacksPledgeRecord,
   ): Promise<RecordSnacksPledgeResult> {
     const seenKey = `bakar:seen:${record.messageId}`;
-    const isNew = await this.store.setIfNotExists(
+    const recorded = await this.store.setIfNotExists(
       seenKey,
       '1',
       ONE_YEAR_IN_MS,
     );
-    if (!isNew) return { recorded: false };
+    if (!recorded) return { recorded: false };
 
     try {
       await this.store.appendToList(PLEDGES_KEY, record, {
