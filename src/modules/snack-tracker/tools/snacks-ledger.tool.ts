@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { formatIstDate } from '../../../common/date.util';
+import { formatIstDate } from '../../../common/utils/date.util';
 import { type SnacksLedgerService } from '../services/snacks-ledger.service';
 
 export function createSnacksLedgerTool(
