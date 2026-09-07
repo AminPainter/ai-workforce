@@ -75,7 +75,7 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       }
       this.logger.log(`mention: ${message.text}`);
       await this.addSeenReaction(message);
-      await this.answer(thread);
+      await this.answer(thread, message.author.userId);
     });
 
     this.bot.onNewMessage(/[\s\S]/, (thread, message) => {
@@ -126,10 +126,13 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async answer(thread: import('chat').Thread): Promise<void> {
+  private async answer(
+    thread: import('chat').Thread,
+    requesterUserId: string,
+  ): Promise<void> {
     const history = await this.readThreadHistory(thread);
     const messages = await this.buildModelMessages(history);
-    const text = await this.streamReply(thread, messages);
+    const text = await this.streamReply(thread, messages, requesterUserId);
     if (text.trim().length > 0)
       this.logger.log(`answered: ${text.length} chars`);
   }
@@ -157,12 +160,19 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   private async streamReply(
     thread: import('chat').Thread,
     messages: import('chat/ai').AiMessage[],
+    requesterUserId: string,
   ): Promise<string> {
     let sentMessage: import('chat').SentMessage | undefined;
     try {
-      const result = await this.agentRegistry
-        .get(EMPLOYEE_ASSISTANT)
-        .stream({ messages });
+      const result = await this.agentRegistry.get(EMPLOYEE_ASSISTANT).stream({
+        messages,
+        toolsContext: {
+          markSnacksFulfilled: {
+            channelId: thread.channelId,
+            requesterUserId,
+          },
+        },
+      });
       sentMessage = await thread.post(result.stream);
       const text = await result.text;
       if (text.trim().length === 0) {

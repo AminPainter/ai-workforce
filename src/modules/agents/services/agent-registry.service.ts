@@ -5,7 +5,23 @@ import { Agent } from 'ai';
 // assignable to the default empty-tools / no-output `Agent`. Widen the generics so any
 // agent — plain `ToolLoopAgent`, one with `Output.object(...)`, future `HarnessAgent` —
 // fits the map.
-export type RegisteredAgent = Agent<never, any, any, any>;
+type AnyRegisteredAgent = Agent<never, any, any, any>;
+
+type WithToolsContext<OPTIONS> = Omit<OPTIONS, 'toolsContext'> & {
+  toolsContext?: Record<string, Record<string, unknown>>;
+};
+
+export type RegisteredAgent = Omit<
+  AnyRegisteredAgent,
+  'stream' | 'generate'
+> & {
+  stream(
+    options: WithToolsContext<Parameters<AnyRegisteredAgent['stream']>[0]>,
+  ): ReturnType<AnyRegisteredAgent['stream']>;
+  generate(
+    options: WithToolsContext<Parameters<AnyRegisteredAgent['generate']>[0]>,
+  ): ReturnType<AnyRegisteredAgent['generate']>;
+};
 
 export class AgentRegistry {
   constructor(

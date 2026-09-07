@@ -9,6 +9,7 @@ import { GlomopayMcpService } from '../../ai/services/glomopay-mcp.service';
 import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
+import { createMarkSnacksFulfilledTool } from '../../snack-tracker/tools/mark-snacks-fulfilled.tool';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
@@ -28,6 +29,10 @@ export function createEmployeeAssistant(
     resolve(__dirname, '../skills/sentry-root-cause'),
   ]);
 
+  const bakarChannelId = `slack:${configService.getOrThrow<string>(
+    'BAKAR_SLACK_CHANNEL',
+  )}`;
+
   return new ToolLoopAgent({
     model: aiService.model(),
     instructions: `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`,
@@ -39,9 +44,16 @@ export function createEmployeeAssistant(
       ...glomopayMcpService.getTools(),
       ...skills.tools,
       snacksLedger: createSnacksLedgerTool(snacksLedgerService),
+      markSnacksFulfilled: createMarkSnacksFulfilledTool(
+        snacksLedgerService,
+        bakarChannelId,
+      ),
     },
     stopWhen: stepCountIs(
       Number(configService.get('EMPLOYEE_ASSISTANT_MAX_STEPS') ?? 40),
     ),
+    toolsContext: {
+      markSnacksFulfilled: { channelId: '', requesterUserId: '' },
+    },
   });
 }
