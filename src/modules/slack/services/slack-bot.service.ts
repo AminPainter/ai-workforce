@@ -105,6 +105,13 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     await this.bot.channel(qualifiedChannelId).post(message);
   }
 
+  async postToThread(
+    threadId: string,
+    message: string | import('chat').ChatElement,
+  ): Promise<void> {
+    await this.bot.thread(threadId).post(message);
+  }
+
   private async addSeenReaction(
     message: import('chat').Message,
   ): Promise<void> {
