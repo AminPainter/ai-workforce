@@ -28,18 +28,11 @@ export class SnackTrackerService {
     const text = message.text?.trim();
     if (!text) return;
 
-    let classification: SnacksPledgeClassification;
-    try {
-      const { output } = (await this.agentRegistry
-        .get(SNACKS_PLEDGE_CLASSIFIER)
-        .generate({ messages: [{ role: 'user', content: text }] })) as {
-        output: SnacksPledgeClassification;
-      };
-      classification = output;
-    } catch (error) {
-      this.logger.error(`snacks-pledge classifier failed: ${error}`);
-      return;
-    }
+    const { output: classification } = (await this.agentRegistry
+      .get(SNACKS_PLEDGE_CLASSIFIER)
+      .generate({ messages: [{ role: 'user', content: text }] })) as {
+      output: SnacksPledgeClassification;
+    };
     if (!classification.isSnacksPledge) return;
 
     const recorded = await this.snacksPledgeLedgerService.recordSnacksPledge({
