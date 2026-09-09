@@ -35,7 +35,7 @@ export class CustomerSupportProcessor extends WorkerHost {
       .get(CUSTOMER_SUPPORT)
       .generate({
         messages: [
-          { role: 'user', content: buildDraftTask(ticket, conversation) },
+          { role: 'user', content: this.buildDraftTask(ticket, conversation) },
         ],
       })) as { output: CustomerSupportDraft };
 
@@ -44,7 +44,7 @@ export class CustomerSupportProcessor extends WorkerHost {
         `ticket ${ticketId} is not a legitimate support request, skipping draft`,
       );
       await this.zohoDeskService.addPrivateComment(ticketId, {
-        content: buildTriageNote(
+        content: this.buildDisqualifiedTicketNote(
           draft.reasonForDisqualifyingTicketAsLegitCustomerQuery,
         ),
       });
@@ -65,35 +65,35 @@ export class CustomerSupportProcessor extends WorkerHost {
   onFailed(job: Job, err: Error): void {
     this.logger.error(`job ${job.id} failed: ${err.message}`);
   }
-}
 
-function buildTriageNote(reason: string): string {
-  const detail = reason.trim() || 'no reason given';
-  return `This is not a legitimate customer-support email. No reply was drafted.
+  private buildDisqualifiedTicketNote(reason: string): string {
+    const detail = reason.trim() || 'no reason given';
+    return `This is not a legitimate customer-support email. No reply was drafted.
 Reason: ${detail}
 Please review and close or ignore this ticket if appropriate.`;
-}
+  }
 
-function buildDraftTask(
-  ticket: ZohoTicket,
-  conversation: ZohoConversationEntry[],
-): string {
-  const transcript = conversation
-    .map((entry) => {
-      const who =
-        entry.direction === 'incoming'
-          ? 'Customer'
-          : entry.direction === 'outgoing'
-            ? 'Support'
-            : (entry.author ?? entry.type);
-      return `${who}: ${entry.content}`;
-    })
-    .join('\n\n');
+  private buildDraftTask(
+    ticket: ZohoTicket,
+    conversation: ZohoConversationEntry[],
+  ): string {
+    const transcript = conversation
+      .map((entry) => {
+        const who =
+          entry.direction === 'incoming'
+            ? 'Customer'
+            : entry.direction === 'outgoing'
+              ? 'Support'
+              : (entry.author ?? entry.type);
+        return `${who}: ${entry.content}`;
+      })
+      .join('\n\n');
 
-  return `Ticket subject: ${ticket.subject}
+    return `Ticket subject: ${ticket.subject}
 
 Conversation (oldest to newest):
 ${transcript || '(no conversation content available)'}
 
 Write a draft reply to the newest customer message. Research with your tools first, then draft.`;
+  }
 }
