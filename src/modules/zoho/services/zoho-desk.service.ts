@@ -134,9 +134,12 @@ export class ZohoDeskService {
     const { data: token } = await axios.post<{
       access_token?: string;
       expires_in?: number;
+      error?: string;
     }>(`${ACCOUNTS_URL}/oauth/v2/token?${params.toString()}`);
     if (!token.access_token)
-      throw new Error('Zoho OAuth token refresh returned no access_token');
+      throw new Error(
+        `Zoho OAuth token refresh failed: ${token.error ?? 'no access_token in response'}`,
+      );
 
     this.cachedToken = {
       accessToken: token.access_token,
