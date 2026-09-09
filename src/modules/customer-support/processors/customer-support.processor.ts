@@ -44,7 +44,9 @@ export class CustomerSupportProcessor extends WorkerHost {
         `ticket ${ticketId} is not a legitimate support request, skipping draft`,
       );
       await this.zohoDeskService.addPrivateComment(ticketId, {
-        content: buildTriageNote(draft.triageReason),
+        content: buildTriageNote(
+          draft.reasonForDisqualifyingTicketAsLegitCustomerQuery,
+        ),
       });
       return;
     }
