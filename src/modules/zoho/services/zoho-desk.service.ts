@@ -23,6 +23,7 @@ interface ZohoThreadResponse {
   content?: string;
   summary?: string;
   author?: { name?: string };
+  createdTime?: string;
 }
 
 @Injectable()
@@ -93,8 +94,13 @@ export class ZohoDeskService {
     const { data: response } = await this.deskClient.get<{
       data?: ZohoThreadResponse[];
     }>(`/tickets/${ticketId}/conversations`);
-    const entries = response.data ?? [];
-    return entries.map((entry) => ({
+    const threads = (response.data ?? []).filter(
+      (entry) => entry.type === 'thread',
+    );
+    threads.sort((a, b) =>
+      (a.createdTime ?? '').localeCompare(b.createdTime ?? ''),
+    );
+    return threads.map((entry) => ({
       type: entry.type ?? 'thread',
       direction: entry.direction,
       author: entry.author?.name,
