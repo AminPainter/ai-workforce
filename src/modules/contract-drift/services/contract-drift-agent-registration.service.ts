@@ -1,5 +1,4 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { AiService } from '../../ai/services/ai.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
@@ -21,7 +20,6 @@ export class ContractDriftAgentRegistrationService implements OnApplicationBoots
   constructor(
     private readonly aiService: AiService,
     private readonly gitHubMcpService: GitHubMcpService,
-    private readonly configService: ConfigService,
     private readonly agentRegistry: AgentRegistry,
   ) {}
 
@@ -31,7 +29,6 @@ export class ContractDriftAgentRegistrationService implements OnApplicationBoots
       createContractDriftTriage(
         this.aiService,
         this.gitHubMcpService,
-        this.configService,
       ),
     );
     this.agentRegistry.register(
@@ -39,7 +36,6 @@ export class ContractDriftAgentRegistrationService implements OnApplicationBoots
       createContractDriftVerifier(
         this.aiService,
         this.gitHubMcpService,
-        this.configService,
       ),
     );
     this.agentRegistry.register(
@@ -47,7 +43,6 @@ export class ContractDriftAgentRegistrationService implements OnApplicationBoots
       createContractDriftSkeptic(
         this.aiService,
         this.gitHubMcpService,
-        this.configService,
       ),
     );
   }

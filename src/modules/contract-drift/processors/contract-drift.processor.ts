@@ -22,17 +22,12 @@ import {
   type ContractDriftJob,
 } from '../queues/contract-drift.queue';
 
-const CONTRACT_DRIFT_CONCURRENCY = Number(
-  process.env.CONTRACT_DRIFT_CONCURRENCY ?? 1,
-);
-const CONTRACT_DRIFT_VERIFY_CONCURRENCY = Number(
-  process.env.CONTRACT_DRIFT_VERIFY_CONCURRENCY ?? 4,
-);
+const CONTRACT_DRIFT_VERIFY_CONCURRENCY = 4;
 const CONTRACT_DRIFT_SKEPTIC_VOTES = Number(
   process.env.CONTRACT_DRIFT_SKEPTIC_VOTES ?? 1,
 );
 
-@Processor(CONTRACT_DRIFT_QUEUE, { concurrency: CONTRACT_DRIFT_CONCURRENCY })
+@Processor(CONTRACT_DRIFT_QUEUE, { concurrency: 1 })
 export class ContractDriftProcessor extends WorkerHost {
   private readonly logger = new Logger(ContractDriftProcessor.name);
 
