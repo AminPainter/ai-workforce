@@ -12,10 +12,17 @@ const ACCOUNTS_URL = 'https://accounts.zoho.in';
 const DESK_BASE_URL = 'https://desk.zoho.in';
 const TOKEN_EXPIRY_SKEW_MS = 60_000;
 
-function optString(value: unknown): string | undefined {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number') return String(value);
-  return undefined;
+interface ZohoTicketResponse {
+  id?: string;
+  subject?: string;
+}
+
+interface ZohoThreadResponse {
+  type?: string;
+  direction?: string;
+  content?: string;
+  summary?: string;
+  author?: { name?: string };
 }
 
 @Injectable()
@@ -73,30 +80,26 @@ export class ZohoDeskService {
   }
 
   async getTicket(ticketId: string): Promise<ZohoTicket> {
-    const { data: ticket } = await this.deskClient.get<Record<string, unknown>>(
+    const { data: ticket } = await this.deskClient.get<ZohoTicketResponse>(
       `/tickets/${ticketId}`,
     );
     return {
-      id: optString(ticket.id) ?? ticketId,
-      subject: optString(ticket.subject) ?? '',
+      id: ticket.id ?? ticketId,
+      subject: ticket.subject ?? '',
     };
   }
 
   async getConversations(ticketId: string): Promise<ZohoConversationEntry[]> {
-    const { data: response } = await this.deskClient.get<{ data?: unknown[] }>(
-      `/tickets/${ticketId}/conversations`,
-    );
-    const entries = Array.isArray(response.data) ? response.data : [];
-    return entries.map((raw) => {
-      const entry = raw as Record<string, unknown>;
-      const author = entry.author as Record<string, unknown> | undefined;
-      return {
-        type: optString(entry.type) ?? 'thread',
-        direction: optString(entry.direction),
-        author: optString(author?.name),
-        content: optString(entry.content) ?? optString(entry.summary) ?? '',
-      };
-    });
+    const { data: response } = await this.deskClient.get<{
+      data?: ZohoThreadResponse[];
+    }>(`/tickets/${ticketId}/conversations`);
+    const entries = response.data ?? [];
+    return entries.map((entry) => ({
+      type: entry.type ?? 'thread',
+      direction: entry.direction,
+      author: entry.author?.name,
+      content: entry.content ?? entry.summary ?? '',
+    }));
   }
 
   async addPrivateComment(
