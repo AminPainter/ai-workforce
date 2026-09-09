@@ -1,5 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type {
+  CachedToken,
+  ZohoCommentInput,
+  ZohoConversationEntry,
+  ZohoTicket,
+} from '../zoho.types';
 
 const ACCOUNTS_URL = 'https://accounts.zoho.in';
 const DESK_BASE_URL = 'https://desk.zoho.in';
@@ -9,28 +15,6 @@ function optString(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
   if (typeof value === 'number') return String(value);
   return undefined;
-}
-
-export interface ZohoTicket {
-  id: string;
-  subject: string;
-}
-
-export interface ZohoConversationEntry {
-  type: string;
-  direction?: string;
-  author?: string;
-  content: string;
-}
-
-export interface ZohoCommentInput {
-  content: string;
-  contentType: 'html' | 'plainText';
-}
-
-interface CachedToken {
-  accessToken: string;
-  expiresAt: number;
 }
 
 @Injectable()
@@ -116,7 +100,11 @@ export class ZohoDeskService {
     }
 
     if (response.status === 204) return undefined as T;
-    return (await response.json()) as T;
+    const data = (await response.json()) as T;
+    this.logger.log(
+      `Zoho Desk ${method} ${path} raw response: ${JSON.stringify(data)}`,
+    );
+    return data;
   }
 
   private async getAccessToken(): Promise<CachedToken> {

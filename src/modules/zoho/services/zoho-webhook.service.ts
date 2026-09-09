@@ -2,23 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { createHmac, timingSafeEqual } from 'crypto';
-import {
-  ZOHO_TICKET_THREAD_ADDED,
-  type ZohoTicketThreadAddedEvent,
-} from '../zoho.events';
+import { ZOHO_TICKET_THREAD_ADDED } from '../zoho.events';
+import type {
+  ZohoTicketThreadAddedEvent,
+  ZohoWebhookEvent,
+} from '../zoho.types';
 
 const TICKET_THREAD_ADD = 'Ticket_Thread_Add';
-
-interface ZohoWebhookEvent {
-  eventType?: string;
-  orgId?: string;
-  payload?: {
-    id?: string;
-    threadId?: string;
-    ticketId?: string;
-    direction?: string;
-  };
-}
 
 @Injectable()
 export class ZohoWebhookService {

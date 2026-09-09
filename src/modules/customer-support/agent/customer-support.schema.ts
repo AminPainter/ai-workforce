@@ -9,21 +9,9 @@ export const customerSupportDraftSchema = z.object({
   contentType: z
     .enum(['html', 'plainText'])
     .describe('Format of customerReply. Use plainText unless HTML is needed.'),
-  escalate: z
-    .boolean()
-    .describe(
-      'true when a human must handle this before any reply goes out — the request needs an action you cannot verify, touches money movement, KYC, or a regulator matter, or the intent is unclear.',
-    ),
-  escalateReason: z
-    .string()
-    .describe(
-      'One short sentence for the human support agent explaining why you escalated. Internal only — never sent to the customer. Use "" when escalate is false.',
-    ),
   internalNotes: z
     .string()
     .describe(
       'Optional short context for the support agent (what you checked, what you are unsure about). Internal only — never sent to the customer. Use "" if none.',
     ),
 });
-
-export type CustomerSupportDraft = z.infer<typeof customerSupportDraftSchema>;

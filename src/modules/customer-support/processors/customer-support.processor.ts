@@ -2,17 +2,14 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import {
-  ZohoDeskService,
-  type ZohoConversationEntry,
-  type ZohoTicket,
-} from '../../zoho/services/zoho-desk.service';
+import { ZohoDeskService } from '../../zoho/services/zoho-desk.service';
+import type { ZohoConversationEntry, ZohoTicket } from '../../zoho/zoho.types';
 import { CUSTOMER_SUPPORT } from '../agent/customer-support.agent';
-import type { CustomerSupportDraft } from '../agent/customer-support.schema';
-import {
-  CUSTOMER_SUPPORT_QUEUE,
-  type CustomerSupportJob,
-} from '../queues/customer-support.queue';
+import { CUSTOMER_SUPPORT_QUEUE } from '../queues/customer-support.queue';
+import type {
+  CustomerSupportDraft,
+  CustomerSupportJob,
+} from '../customer-support.types';
 
 const CUSTOMER_SUPPORT_CONCURRENCY = Number(
   process.env.CUSTOMER_SUPPORT_CONCURRENCY ?? 1,
@@ -45,11 +42,6 @@ export class CustomerSupportProcessor extends WorkerHost {
           { role: 'user', content: buildDraftTask(ticket, conversation) },
         ],
       })) as { output: CustomerSupportDraft };
-
-    if (draft.escalate)
-      this.logger.warn(
-        `ticket ${ticketId}: agent escalated — ${draft.escalateReason}`,
-      );
 
     await this.zohoDeskService.addPrivateComment(ticketId, {
       content: draft.customerReply,
