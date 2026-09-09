@@ -5,12 +5,15 @@ import { AiService } from '../../ai/services/ai.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
-import { GlomopayMcpService } from '../../ai/services/glomopay-mcp.service';
 import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
 import { createMarkSnacksFulfilledTool } from '../../snack-tracker/tools/mark-snacks-fulfilled.tool';
-import { RegisteredAgent } from '../../agents/services/agent-registry.service';
+import {
+  AgentRegistry,
+  RegisteredAgent,
+} from '../../agents/services/agent-registry.service';
+import { createGlomopayAgentTool } from '../../glomopay-agent/tools/glomopay-agent.tool';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
 export const EMPLOYEE_ASSISTANT = 'employee-assistant';
@@ -20,10 +23,10 @@ export function createEmployeeAssistant(
   sentryMcpService: SentryMcpService,
   gitHubMcpService: GitHubMcpService,
   atlassianMcpService: AtlassianMcpService,
-  glomopayMcpService: GlomopayMcpService,
   skillsService: SkillsService,
   snacksLedgerService: SnacksLedgerService,
   configService: ConfigService,
+  agentRegistry: AgentRegistry,
 ): RegisteredAgent {
   const skills = skillsService.buildAgentSkills([
     resolve(__dirname, '../skills/sentry-root-cause'),
@@ -41,8 +44,8 @@ export function createEmployeeAssistant(
       ...sentryMcpService.getTools(),
       ...gitHubMcpService.getTools(),
       ...atlassianMcpService.getTools(),
-      ...glomopayMcpService.getTools(),
       ...skills.tools,
+      glomopayAgent: createGlomopayAgentTool(agentRegistry),
       snacksLedger: createSnacksLedgerTool(snacksLedgerService),
       markSnacksFulfilled: createMarkSnacksFulfilledTool(
         snacksLedgerService,
