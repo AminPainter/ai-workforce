@@ -6,25 +6,13 @@ import type {
   ZohoCommentInput,
   ZohoConversationEntry,
   ZohoTicket,
+  ZohoTicketResponse,
+  ZohoThreadResponse,
 } from '../zoho.types';
 
 const ACCOUNTS_URL = 'https://accounts.zoho.in';
 const DESK_BASE_URL = 'https://desk.zoho.in';
 const TOKEN_EXPIRY_SKEW_MS = 60_000;
-
-interface ZohoTicketResponse {
-  id?: string;
-  subject?: string;
-}
-
-interface ZohoThreadResponse {
-  type?: string;
-  direction?: string;
-  content?: string;
-  summary?: string;
-  author?: { name?: string };
-  createdTime?: string;
-}
 
 @Injectable()
 export class ZohoDeskService {

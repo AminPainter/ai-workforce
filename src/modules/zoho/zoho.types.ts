@@ -4,6 +4,20 @@ export interface ZohoTicketThreadAddedEvent {
   orgId: string;
 }
 
+export interface ZohoTicketResponse {
+  id?: string;
+  subject?: string;
+}
+
+export interface ZohoThreadResponse {
+  type?: string;
+  direction?: string;
+  content?: string;
+  summary?: string;
+  author?: { name?: string };
+  createdTime?: string;
+}
+
 export interface ZohoTicket {
   id: string;
   subject: string;
