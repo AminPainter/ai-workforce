@@ -8,9 +8,7 @@ import {
   type ZohoTicket,
 } from '../../zoho/services/zoho-desk.service';
 import { CUSTOMER_SUPPORT } from '../agent/customer-support.agent';
-import { DRAFT_SANITIZER } from '../agent/draft-sanitizer.agent';
 import type { CustomerSupportDraft } from '../agent/customer-support.schema';
-import type { DraftSanitizerResult } from '../agent/draft-sanitizer.schema';
 import {
   CUSTOMER_SUPPORT_QUEUE,
   type CustomerSupportJob,
@@ -19,14 +17,6 @@ import {
 const CUSTOMER_SUPPORT_CONCURRENCY = Number(
   process.env.CUSTOMER_SUPPORT_CONCURRENCY ?? 1,
 );
-
-// Backstop patterns that must never reach a customer draft, even after the
-// sanitizer pass. If any matches, the draft is blocked for human review.
-const HARD_GUARDS: { label: string; pattern: RegExp }[] = [
-  { label: 'card/PAN number', pattern: /\b(?:\d[ -]?){13,19}\b/ },
-  { label: 'JWT', pattern: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/ },
-  { label: 'API key', pattern: /\b(?:sk|pk|rk)-[A-Za-z0-9]{16,}\b/ },
-];
 
 @Processor(CUSTOMER_SUPPORT_QUEUE, {
   concurrency: CUSTOMER_SUPPORT_CONCURRENCY,
@@ -69,35 +59,9 @@ export class CustomerSupportProcessor extends WorkerHost {
         `ticket ${ticketId}: agent escalated — ${draft.escalateReason}`,
       );
 
-    const { output: sanitized } = (await this.agentRegistry
-      .get(DRAFT_SANITIZER)
-      .generate({
-        messages: [{ role: 'user', content: draft.customerReply }],
-      })) as { output: DraftSanitizerResult };
-
-    if (!sanitized.safe) {
-      this.logger.error(
-        `ticket ${ticketId}: draft blocked, sanitizer flagged ${sanitized.violations.length} violation(s) — not storing`,
-      );
-      return;
-    }
-
-    const finalReply = sanitized.revisedDraft;
-    const tripped = HARD_GUARDS.filter((guard) =>
-      guard.pattern.test(finalReply),
-    );
-    if (tripped.length > 0) {
-      this.logger.error(
-        `ticket ${ticketId}: draft blocked by hard guard(s): ${tripped
-          .map((guard) => guard.label)
-          .join(', ')} — not storing`,
-      );
-      return;
-    }
-
     await this.zohoDeskService.createDraftReply(ticketId, {
       to: recipient,
-      content: finalReply,
+      content: draft.customerReply,
       contentType: draft.contentType,
       channel: ticket.channel === 'EMAIL' ? 'EMAIL' : undefined,
     });

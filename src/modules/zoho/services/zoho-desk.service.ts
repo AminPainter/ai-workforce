@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-const DEFAULT_ACCOUNTS_URL = 'https://accounts.zoho.in';
-const DEFAULT_DESK_BASE_URL = 'https://desk.zoho.in';
+const ACCOUNTS_URL = 'https://accounts.zoho.in';
+const DESK_BASE_URL = 'https://desk.zoho.in';
 const TOKEN_EXPIRY_SKEW_MS = 60_000;
 
 function optString(value: unknown): string | undefined {
@@ -35,7 +35,6 @@ export interface ZohoDraftReplyInput {
 
 interface CachedToken {
   accessToken: string;
-  deskBaseUrl: string;
   expiresAt: number;
 }
 
@@ -46,8 +45,6 @@ export class ZohoDeskService {
   private readonly clientSecret: string;
   private readonly refreshToken: string;
   private readonly orgId: string;
-  private readonly accountsUrl: string;
-  private readonly baseUrlOverride?: string;
   private readonly fromEmailAddress: string;
   private cachedToken?: CachedToken;
 
@@ -60,10 +57,6 @@ export class ZohoDeskService {
     this.orgId = this.configService.getOrThrow<string>('ZOHO_ORG_ID');
     this.fromEmailAddress =
       this.configService.getOrThrow<string>('ZOHO_FROM_ADDRESS');
-    this.accountsUrl =
-      this.configService.get<string>('ZOHO_ACCOUNTS_URL') ??
-      DEFAULT_ACCOUNTS_URL;
-    this.baseUrlOverride = this.configService.get<string>('ZOHO_API_BASE_URL');
   }
 
   async getTicket(ticketId: string): Promise<ZohoTicket> {
@@ -119,7 +112,7 @@ export class ZohoDeskService {
     body?: unknown,
   ): Promise<T> {
     const token = await this.getAccessToken();
-    const response = await fetch(`${token.deskBaseUrl}/api/v1${path}`, {
+    const response = await fetch(`${DESK_BASE_URL}/api/v1${path}`, {
       method,
       headers: {
         Authorization: `Zoho-oauthtoken ${token.accessToken}`,
@@ -152,7 +145,7 @@ export class ZohoDeskService {
     });
 
     const response = await fetch(
-      `${this.accountsUrl}/oauth/v2/token?${params.toString()}`,
+      `${ACCOUNTS_URL}/oauth/v2/token?${params.toString()}`,
       { method: 'POST' },
     );
     if (!response.ok) {
@@ -164,7 +157,6 @@ export class ZohoDeskService {
 
     const token = (await response.json()) as {
       access_token?: string;
-      api_domain?: string;
       expires_in?: number;
     };
     if (!token.access_token)
@@ -172,21 +164,9 @@ export class ZohoDeskService {
 
     this.cachedToken = {
       accessToken: token.access_token,
-      deskBaseUrl: this.resolveDeskBaseUrl(token.api_domain),
       expiresAt:
         Date.now() + (token.expires_in ?? 3600) * 1000 - TOKEN_EXPIRY_SKEW_MS,
     };
     return this.cachedToken;
-  }
-
-  private resolveDeskBaseUrl(apiDomain?: string): string {
-    if (this.baseUrlOverride) return this.baseUrlOverride;
-    if (!apiDomain) return DEFAULT_DESK_BASE_URL;
-    // Token api_domain is the zohoapis host (e.g. https://www.zohoapis.in);
-    // the Desk API lives on the matching desk.zoho host for that data center.
-    return apiDomain.replace(
-      /https:\/\/(www\.)?zohoapis\./,
-      'https://desk.zoho.',
-    );
   }
 }

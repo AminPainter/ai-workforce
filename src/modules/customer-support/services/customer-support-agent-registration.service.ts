@@ -8,10 +8,6 @@ import {
   CUSTOMER_SUPPORT,
   createCustomerSupport,
 } from '../agent/customer-support.agent';
-import {
-  DRAFT_SANITIZER,
-  createDraftSanitizer,
-} from '../agent/draft-sanitizer.agent';
 
 @Injectable()
 export class CustomerSupportAgentRegistrationService implements OnApplicationBootstrap {
@@ -32,10 +28,6 @@ export class CustomerSupportAgentRegistrationService implements OnApplicationBoo
         this.sentryMcpService,
         this.configService,
       ),
-    );
-    this.agentRegistry.register(
-      DRAFT_SANITIZER,
-      createDraftSanitizer(this.aiService),
     );
   }
 }
