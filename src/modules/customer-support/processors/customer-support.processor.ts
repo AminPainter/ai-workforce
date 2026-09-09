@@ -69,11 +69,9 @@ export class CustomerSupportProcessor extends WorkerHost {
 
 function buildTriageNote(reason: string): string {
   const detail = reason.trim() || 'no reason given';
-  return [
-    'This is not a legitimate customer-support email. No reply was drafted.',
-    `Reason: ${detail}`,
-    'Please review and close or ignore this ticket if appropriate.',
-  ].join('\n');
+  return `This is not a legitimate customer-support email. No reply was drafted.
+Reason: ${detail}
+Please review and close or ignore this ticket if appropriate.`;
 }
 
 function buildDraftTask(
@@ -92,12 +90,10 @@ function buildDraftTask(
     })
     .join('\n\n');
 
-  return [
-    `Ticket subject: ${ticket.subject}`,
-    ``,
-    `Conversation (oldest to newest):`,
-    transcript || '(no conversation content available)',
-    ``,
-    `Write a draft reply to the newest customer message. Research with your tools first, then draft.`,
-  ].join('\n');
+  return `Ticket subject: ${ticket.subject}
+
+Conversation (oldest to newest):
+${transcript || '(no conversation content available)'}
+
+Write a draft reply to the newest customer message. Research with your tools first, then draft.`;
 }
