@@ -71,12 +71,20 @@ export class ZohoWebhookService {
   }
 
   private dispatch(event: ZohoWebhookEvent): void {
-    if (event.eventType !== TICKET_THREAD_ADD) return;
+    if (event.eventType !== TICKET_THREAD_ADD) {
+      this.logger.log(`ignoring event ${event.eventType}`);
+      return;
+    }
 
     const payload = event.payload ?? {};
     const isIncoming =
       payload.direction === 'in' || payload.direction === 'incoming';
-    if (!isIncoming) return;
+    if (!isIncoming) {
+      this.logger.log(
+        `ignoring ${payload.direction} thread on ticket ${payload.ticketId}`,
+      );
+      return;
+    }
 
     const ticketId = payload.ticketId;
     const threadId = payload.threadId ?? payload.id;
@@ -86,6 +94,9 @@ export class ZohoWebhookService {
       return;
     }
 
+    this.logger.log(
+      `incoming thread ${threadId} on ticket ${ticketId}, enqueuing draft`,
+    );
     const emitted: ZohoTicketThreadAddedEvent = { ticketId, threadId, orgId };
     this.eventEmitter.emit(ZOHO_TICKET_THREAD_ADDED, emitted);
   }
