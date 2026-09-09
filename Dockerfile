@@ -20,6 +20,11 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
 FROM searxng/searxng:latest AS runtime
+# The SearXNG base is Void Linux (glibc) with xbps, but the image ships no repo index,
+# so install git with an explicit repository (-R). git is needed by CodingAgentService
+# to clone/branch/push the target repo when opening PRs.
+RUN xbps-install -Sy -R https://repo-fastly.voidlinux.org/current git \
+    && rm -rf /var/cache/xbps
 # Bring in a glibc Node binary; all of its shared-lib deps (libc, libstdc++, libgcc_s,
 # libm, libdl, libpthread) already exist in the SearXNG base image.
 COPY --from=node:22-slim /usr/local/bin/node /usr/local/bin/node

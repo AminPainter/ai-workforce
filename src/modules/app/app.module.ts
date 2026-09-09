@@ -8,6 +8,7 @@ import { AgentsModule } from '../agents/agents.module';
 import { SlackModule } from '../slack/slack.module';
 import { GitHubModule } from '../github/github.module';
 import { ContractDriftModule } from '../contract-drift/contract-drift.module';
+import { CodingAgentModule } from '../coding-agent/coding-agent.module';
 import { EmployeeAssistantModule } from '../employee-assistant/employee-assistant.module';
 import { SnackTrackerModule } from '../snack-tracker/snack-tracker.module';
 import { ZohoModule } from '../zoho/zoho.module';
@@ -23,6 +24,7 @@ import { QueueModule } from '../queue/queue.module';
     SlackModule,
     GitHubModule,
     ContractDriftModule,
+    CodingAgentModule,
     EmployeeAssistantModule,
     SnackTrackerModule,
     ZohoModule,
