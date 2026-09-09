@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import axios, { AxiosInstance } from 'axios';
 import type {
   CachedToken,
   ZohoCommentInput,
@@ -24,6 +25,7 @@ export class ZohoDeskService {
   private readonly clientSecret: string;
   private readonly refreshToken: string;
   private readonly orgId: string;
+  private readonly deskClient: AxiosInstance;
   private cachedToken?: CachedToken;
 
   constructor(private readonly configService: ConfigService) {
@@ -33,11 +35,45 @@ export class ZohoDeskService {
     this.refreshToken =
       this.configService.getOrThrow<string>('ZOHO_REFRESH_TOKEN');
     this.orgId = this.configService.getOrThrow<string>('ZOHO_ORG_ID');
+
+    this.deskClient = axios.create({
+      baseURL: `${DESK_BASE_URL}/api/v1`,
+      headers: { orgId: this.orgId },
+    });
+
+    this.deskClient.interceptors.request.use(async (config) => {
+      const token = await this.getAccessToken();
+      config.headers.set(
+        'Authorization',
+        `Zoho-oauthtoken ${token.accessToken}`,
+      );
+      return config;
+    });
+
+    this.deskClient.interceptors.response.use(
+      (response) => {
+        const { method, url } = response.config;
+        this.logger.log(
+          `Zoho Desk ${method?.toUpperCase()} ${url} raw response: ${JSON.stringify(response.data)}`,
+        );
+        return response;
+      },
+      (error: unknown) => {
+        if (axios.isAxiosError(error) && error.response) {
+          const { method, url } = error.config ?? {};
+          this.logger.error(
+            `Zoho Desk ${method?.toUpperCase()} ${url} failed: ${error.response.status} ${JSON.stringify(error.response.data)}`,
+          );
+        }
+        return Promise.reject(
+          error instanceof Error ? error : new Error(String(error)),
+        );
+      },
+    );
   }
 
   async getTicket(ticketId: string): Promise<ZohoTicket> {
-    const ticket = await this.request<Record<string, unknown>>(
-      'GET',
+    const { data: ticket } = await this.deskClient.get<Record<string, unknown>>(
       `/tickets/${ticketId}`,
     );
     return {
@@ -47,8 +83,7 @@ export class ZohoDeskService {
   }
 
   async getConversations(ticketId: string): Promise<ZohoConversationEntry[]> {
-    const response = await this.request<{ data?: unknown[] }>(
-      'GET',
+    const { data: response } = await this.deskClient.get<{ data?: unknown[] }>(
       `/tickets/${ticketId}/conversations`,
     );
     const entries = Array.isArray(response.data) ? response.data : [];
@@ -68,43 +103,12 @@ export class ZohoDeskService {
     ticketId: string,
     input: ZohoCommentInput,
   ): Promise<void> {
-    await this.request('POST', `/tickets/${ticketId}/comments`, {
+    await this.deskClient.post(`/tickets/${ticketId}/comments`, {
       content: input.content,
       contentType: 'plainText',
       isPublic: false,
     });
     this.logger.log(`added private comment on ticket ${ticketId}`);
-  }
-
-  private async request<T>(
-    method: string,
-    path: string,
-    body?: unknown,
-  ): Promise<T> {
-    const token = await this.getAccessToken();
-    const response = await fetch(`${DESK_BASE_URL}/api/v1${path}`, {
-      method,
-      headers: {
-        Authorization: `Zoho-oauthtoken ${token.accessToken}`,
-        orgId: this.orgId,
-        'Content-Type': 'application/json',
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const detail = await response.text();
-      throw new Error(
-        `Zoho Desk ${method} ${path} failed: ${response.status} ${detail}`,
-      );
-    }
-
-    if (response.status === 204) return undefined as T;
-    const data = (await response.json()) as T;
-    this.logger.log(
-      `Zoho Desk ${method} ${path} raw response: ${JSON.stringify(data)}`,
-    );
-    return data;
   }
 
   private async getAccessToken(): Promise<CachedToken> {
@@ -118,21 +122,10 @@ export class ZohoDeskService {
       grant_type: 'refresh_token',
     });
 
-    const response = await fetch(
-      `${ACCOUNTS_URL}/oauth/v2/token?${params.toString()}`,
-      { method: 'POST' },
-    );
-    if (!response.ok) {
-      const detail = await response.text();
-      throw new Error(
-        `Zoho OAuth token refresh failed: ${response.status} ${detail}`,
-      );
-    }
-
-    const token = (await response.json()) as {
+    const { data: token } = await axios.post<{
       access_token?: string;
       expires_in?: number;
-    };
+    }>(`${ACCOUNTS_URL}/oauth/v2/token?${params.toString()}`);
     if (!token.access_token)
       throw new Error('Zoho OAuth token refresh returned no access_token');
 
