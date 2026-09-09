@@ -9,6 +9,7 @@ import { SlackModule } from '../slack/slack.module';
 import { GitHubModule } from '../github/github.module';
 import { ContractDriftModule } from '../contract-drift/contract-drift.module';
 import { EmployeeAssistantModule } from '../employee-assistant/employee-assistant.module';
+import { GlomopayAgentModule } from '../glomopay-agent/glomopay-agent.module';
 import { SnackTrackerModule } from '../snack-tracker/snack-tracker.module';
 import { ZohoModule } from '../zoho/zoho.module';
 import { QueueModule } from '../queue/queue.module';
@@ -24,6 +25,7 @@ import { QueueModule } from '../queue/queue.module';
     GitHubModule,
     ContractDriftModule,
     EmployeeAssistantModule,
+    GlomopayAgentModule,
     SnackTrackerModule,
     ZohoModule,
   ],
