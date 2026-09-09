@@ -14,9 +14,6 @@ function optString(value: unknown): string | undefined {
 export interface ZohoTicket {
   id: string;
   subject: string;
-  email?: string;
-  contactEmail?: string;
-  channel?: string;
 }
 
 export interface ZohoConversationEntry {
@@ -26,11 +23,9 @@ export interface ZohoConversationEntry {
   content: string;
 }
 
-export interface ZohoDraftReplyInput {
-  to: string;
+export interface ZohoCommentInput {
   content: string;
   contentType: 'html' | 'plainText';
-  channel?: string;
 }
 
 interface CachedToken {
@@ -45,7 +40,6 @@ export class ZohoDeskService {
   private readonly clientSecret: string;
   private readonly refreshToken: string;
   private readonly orgId: string;
-  private readonly fromEmailAddress: string;
   private cachedToken?: CachedToken;
 
   constructor(private readonly configService: ConfigService) {
@@ -55,8 +49,6 @@ export class ZohoDeskService {
     this.refreshToken =
       this.configService.getOrThrow<string>('ZOHO_REFRESH_TOKEN');
     this.orgId = this.configService.getOrThrow<string>('ZOHO_ORG_ID');
-    this.fromEmailAddress =
-      this.configService.getOrThrow<string>('ZOHO_FROM_ADDRESS');
   }
 
   async getTicket(ticketId: string): Promise<ZohoTicket> {
@@ -64,13 +56,9 @@ export class ZohoDeskService {
       'GET',
       `/tickets/${ticketId}`,
     );
-    const contact = ticket.contact as Record<string, unknown> | undefined;
     return {
       id: optString(ticket.id) ?? ticketId,
       subject: optString(ticket.subject) ?? '',
-      email: optString(ticket.email),
-      contactEmail: optString(contact?.email),
-      channel: optString(ticket.channel),
     };
   }
 
@@ -92,18 +80,16 @@ export class ZohoDeskService {
     });
   }
 
-  async createDraftReply(
+  async addPrivateComment(
     ticketId: string,
-    input: ZohoDraftReplyInput,
+    input: ZohoCommentInput,
   ): Promise<void> {
-    await this.request('POST', `/tickets/${ticketId}/draftReply`, {
-      channel: input.channel ?? 'EMAIL',
-      fromEmailAddress: this.fromEmailAddress,
-      to: input.to,
-      contentType: input.contentType,
+    await this.request('POST', `/tickets/${ticketId}/comments`, {
       content: input.content,
+      contentType: input.contentType,
+      isPublic: false,
     });
-    this.logger.log(`stored draft reply on ticket ${ticketId}`);
+    this.logger.log(`added private comment on ticket ${ticketId}`);
   }
 
   private async request<T>(

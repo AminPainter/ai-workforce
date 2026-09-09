@@ -38,14 +38,6 @@ export class CustomerSupportProcessor extends WorkerHost {
     const ticket = await this.zohoDeskService.getTicket(ticketId);
     const conversation = await this.zohoDeskService.getConversations(ticketId);
 
-    const recipient = ticket.email ?? ticket.contactEmail;
-    if (!recipient) {
-      this.logger.warn(
-        `ticket ${ticketId}: no customer email on record, skipping draft`,
-      );
-      return;
-    }
-
     const { output: draft } = (await this.agentRegistry
       .get(CUSTOMER_SUPPORT)
       .generate({
@@ -59,11 +51,9 @@ export class CustomerSupportProcessor extends WorkerHost {
         `ticket ${ticketId}: agent escalated — ${draft.escalateReason}`,
       );
 
-    await this.zohoDeskService.createDraftReply(ticketId, {
-      to: recipient,
+    await this.zohoDeskService.addPrivateComment(ticketId, {
       content: draft.customerReply,
       contentType: draft.contentType,
-      channel: ticket.channel === 'EMAIL' ? 'EMAIL' : undefined,
     });
   }
 
