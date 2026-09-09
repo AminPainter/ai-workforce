@@ -39,6 +39,16 @@ export class CustomerSupportProcessor extends WorkerHost {
         ],
       })) as { output: CustomerSupportDraft };
 
+    if (!draft.isSupportRequest) {
+      this.logger.log(
+        `ticket ${ticketId} is not a legitimate support request, skipping draft`,
+      );
+      await this.zohoDeskService.addPrivateComment(ticketId, {
+        content: buildTriageNote(draft.triageReason),
+      });
+      return;
+    }
+
     await this.zohoDeskService.addPrivateComment(ticketId, {
       content: draft.customerReply,
     });
@@ -53,6 +63,15 @@ export class CustomerSupportProcessor extends WorkerHost {
   onFailed(job: Job, err: Error): void {
     this.logger.error(`job ${job.id} failed: ${err.message}`);
   }
+}
+
+function buildTriageNote(reason: string): string {
+  const detail = reason.trim() || 'no reason given';
+  return [
+    'This is not a legitimate customer-support email. No reply was drafted.',
+    `Reason: ${detail}`,
+    'Please review and close or ignore this ticket if appropriate.',
+  ].join('\n');
 }
 
 function buildDraftTask(
