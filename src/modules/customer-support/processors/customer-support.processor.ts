@@ -80,9 +80,9 @@ Please review and close or ignore this ticket if appropriate.`;
     const transcript = conversation
       .map((entry) => {
         const who =
-          entry.direction === 'incoming'
+          entry.direction === 'in'
             ? 'Customer'
-            : entry.direction === 'outgoing'
+            : entry.direction === 'out'
               ? 'Support'
               : (entry.author ?? entry.type);
         return `${who}: ${entry.content}`;

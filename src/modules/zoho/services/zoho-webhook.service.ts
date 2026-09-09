@@ -74,7 +74,9 @@ export class ZohoWebhookService {
     if (event.eventType !== TICKET_THREAD_ADD) return;
 
     const payload = event.payload ?? {};
-    if (payload.direction !== 'incoming') return;
+    const isIncoming =
+      payload.direction === 'in' || payload.direction === 'incoming';
+    if (!isIncoming) return;
 
     const ticketId = payload.ticketId;
     const threadId = payload.threadId ?? payload.id;
