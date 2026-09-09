@@ -18,7 +18,6 @@ export interface ZohoConversationEntry {
 
 export interface ZohoCommentInput {
   content: string;
-  contentType: 'html' | 'plainText';
 }
 
 export interface CachedToken {

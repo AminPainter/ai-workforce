@@ -11,12 +11,8 @@ import type {
   CustomerSupportJob,
 } from '../customer-support.types';
 
-const CUSTOMER_SUPPORT_CONCURRENCY = Number(
-  process.env.CUSTOMER_SUPPORT_CONCURRENCY ?? 1,
-);
-
 @Processor(CUSTOMER_SUPPORT_QUEUE, {
-  concurrency: CUSTOMER_SUPPORT_CONCURRENCY,
+  concurrency: 1,
 })
 export class CustomerSupportProcessor extends WorkerHost {
   private readonly logger = new Logger(CustomerSupportProcessor.name);
@@ -45,7 +41,6 @@ export class CustomerSupportProcessor extends WorkerHost {
 
     await this.zohoDeskService.addPrivateComment(ticketId, {
       content: draft.customerReply,
-      contentType: draft.contentType,
     });
   }
 

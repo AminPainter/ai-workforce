@@ -70,7 +70,7 @@ export class ZohoDeskService {
   ): Promise<void> {
     await this.request('POST', `/tickets/${ticketId}/comments`, {
       content: input.content,
-      contentType: input.contentType,
+      contentType: 'plainText',
       isPublic: false,
     });
     this.logger.log(`added private comment on ticket ${ticketId}`);

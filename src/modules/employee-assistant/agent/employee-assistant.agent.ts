@@ -49,9 +49,7 @@ export function createEmployeeAssistant(
         bakarChannelId,
       ),
     },
-    stopWhen: stepCountIs(
-      Number(configService.get('EMPLOYEE_ASSISTANT_MAX_STEPS') ?? 40),
-    ),
+    stopWhen: stepCountIs(40),
     toolsContext: {
       markSnacksFulfilled: { channelId: '', requesterUserId: '' },
     },

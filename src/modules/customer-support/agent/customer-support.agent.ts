@@ -1,5 +1,4 @@
 import { ToolLoopAgent, stepCountIs, Output } from 'ai';
-import { ConfigService } from '@nestjs/config';
 import { AiService } from '../../ai/services/ai.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
@@ -13,7 +12,6 @@ export function createCustomerSupport(
   aiService: AiService,
   gitHubMcpService: GitHubMcpService,
   sentryMcpService: SentryMcpService,
-  configService: ConfigService,
 ): RegisteredAgent {
   return new ToolLoopAgent({
     model: aiService.model(),
@@ -23,9 +21,7 @@ export function createCustomerSupport(
       ...gitHubMcpService.getTools(),
       ...sentryMcpService.getTools(),
     },
-    stopWhen: stepCountIs(
-      Number(configService.get('CUSTOMER_SUPPORT_MAX_STEPS') ?? 30),
-    ),
+    stopWhen: stepCountIs(30),
     output: Output.object({ schema: customerSupportDraftSchema }),
   });
 }
