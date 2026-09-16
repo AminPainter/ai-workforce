@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { createHmac, timingSafeEqual } from 'crypto';
+import jwt from 'jsonwebtoken';
+import { JwksClient } from 'jwks-rsa';
 import { ZOHO_TICKET_THREAD_ADDED } from '../zoho.events';
 import type {
   ZohoTicketThreadAddedEvent,
@@ -9,53 +10,77 @@ import type {
 } from '../zoho.types';
 
 const TICKET_THREAD_ADD = 'Ticket_Thread_Add';
+const JWKS_URL = 'https://desk.zoho.in/.well-known/jwks.json';
 
 @Injectable()
 export class ZohoWebhookService {
   private readonly logger = new Logger(ZohoWebhookService.name);
-  private readonly webhookSecret: string;
+  private readonly issuer: string;
+  private readonly audience?: string;
+  private readonly jwksClient: JwksClient;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
   ) {
-    this.webhookSecret = this.configService.getOrThrow<string>(
-      'ZOHO_WEBHOOK_SECRET',
-    );
+    this.issuer = `orgId:${this.configService.getOrThrow<string>('ZOHO_ORG_ID')}`;
+    const webhookId = this.configService.get<string>('ZOHO_WEBHOOK_ID');
+    this.audience = webhookId ? `webhookId:${webhookId}` : undefined;
+    this.jwksClient = new JwksClient({
+      jwksUri: JWKS_URL,
+      cache: true,
+      rateLimit: true,
+    });
   }
 
-  handleWebhook(
+  async handleWebhook(
     rawBody: Buffer | undefined,
-    signature: string | undefined,
-  ): void {
+    token: string | undefined,
+  ): Promise<void> {
     if (!rawBody) {
       this.logger.warn('missing raw body');
       return;
     }
 
-    if (!this.verifySignature(rawBody, signature)) {
-      this.logger.warn('rejected delivery: signature mismatch');
+    if (!(await this.verifyJwt(token))) {
+      this.logger.warn('rejected delivery: JWT verification failed');
       return;
     }
 
     for (const event of this.parseEvents(rawBody)) this.dispatch(event);
   }
 
-  private verifySignature(
-    rawBody: Buffer,
-    signature: string | undefined,
-  ): boolean {
-    if (!signature) return false;
+  private async verifyJwt(token: string | undefined): Promise<boolean> {
+    if (!token) return false;
 
-    const expected = createHmac('sha256', this.webhookSecret)
-      .update(rawBody)
-      .digest('base64');
-
-    const provided = Buffer.from(signature);
-    const computed = Buffer.from(expected);
-    return (
-      provided.length === computed.length && timingSafeEqual(provided, computed)
-    );
+    try {
+      await new Promise((resolve, reject) => {
+        jwt.verify(
+          token,
+          (header, callback) => {
+            this.jwksClient.getSigningKey(header.kid, (err, key) => {
+              if (err || !key) {
+                callback(err ?? new Error('signing key not found'));
+                return;
+              }
+              callback(null, key.getPublicKey());
+            });
+          },
+          {
+            algorithms: ['RS256'],
+            issuer: this.issuer,
+            ...(this.audience ? { audience: this.audience } : {}),
+          },
+          (err, decoded) => (err ? reject(err) : resolve(decoded)),
+        );
+      });
+      return true;
+    } catch (error) {
+      this.logger.warn(
+        `JWT verification failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return false;
+    }
   }
 
   private parseEvents(rawBody: Buffer): ZohoWebhookEvent[] {
