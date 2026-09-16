@@ -1,12 +1,13 @@
 export interface ZohoTicketThreadAddedEvent {
   ticketId: string;
-  threadId: string;
+  threadId?: string;
   orgId: string;
 }
 
 export interface ZohoTicketResponse {
   id?: string;
   subject?: string;
+  description?: string;
 }
 
 export interface ZohoThreadResponse {
@@ -21,6 +22,7 @@ export interface ZohoThreadResponse {
 export interface ZohoTicket {
   id: string;
   subject: string;
+  description: string;
 }
 
 export interface ZohoConversationEntry {

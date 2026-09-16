@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
+import { convert } from 'html-to-text';
 import type {
   CachedToken,
   ZohoCommentInput,
@@ -75,6 +76,7 @@ export class ZohoDeskService {
     return {
       id: ticket.id ?? ticketId,
       subject: ticket.subject ?? '',
+      description: ticket.description ? convert(ticket.description) : '',
     };
   }
 

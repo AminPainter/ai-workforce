@@ -89,10 +89,15 @@ Please review and close or ignore this ticket if appropriate.`;
       })
       .join('\n\n');
 
+    const body =
+      transcript ||
+      (ticket.description ? `Customer: ${ticket.description}` : '') ||
+      '(no conversation content available)';
+
     return `Ticket subject: ${ticket.subject}
 
 Conversation (oldest to newest):
-${transcript || '(no conversation content available)'}
+${body}
 
 Write a draft reply to the newest customer message. Research with your tools first, then draft.`;
   }
