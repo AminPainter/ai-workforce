@@ -24,7 +24,9 @@ export class CustomerSupportListener {
   }: ZohoTicketThreadAddedEvent): Promise<void> {
     const job: CustomerSupportJob = { ticketId, threadId, orgId };
     try {
-      await this.customerSupportQueue.add('draft', job, { jobId: threadId });
+      await this.customerSupportQueue.add('draft', job, {
+        jobId: threadId ?? ticketId,
+      });
     } catch (error) {
       this.logger.error(error);
     }

@@ -10,6 +10,7 @@ import type {
 } from '../zoho.types';
 
 const TICKET_THREAD_ADD = 'Ticket_Thread_Add';
+const TICKET_ADD = 'Ticket_Add';
 const JWKS_URL = 'https://desk.zoho.in/.well-known/jwks.json';
 
 @Injectable()
@@ -96,11 +97,19 @@ export class ZohoWebhookService {
   }
 
   private dispatch(event: ZohoWebhookEvent): void {
-    if (event.eventType !== TICKET_THREAD_ADD) {
-      this.logger.log(`ignoring event ${event.eventType}`);
-      return;
+    switch (event.eventType) {
+      case TICKET_THREAD_ADD:
+        this.dispatchThreadAdd(event);
+        return;
+      case TICKET_ADD:
+        this.dispatchTicketAdd(event);
+        return;
+      default:
+        this.logger.log(`ignoring event ${event.eventType}`);
     }
+  }
 
+  private dispatchThreadAdd(event: ZohoWebhookEvent): void {
     const payload = event.payload ?? {};
     const isIncoming =
       payload.direction === 'in' || payload.direction === 'incoming';
@@ -123,6 +132,20 @@ export class ZohoWebhookService {
       `incoming thread ${threadId} on ticket ${ticketId}, enqueuing draft`,
     );
     const emitted: ZohoTicketThreadAddedEvent = { ticketId, threadId, orgId };
+    this.eventEmitter.emit(ZOHO_TICKET_THREAD_ADDED, emitted);
+  }
+
+  private dispatchTicketAdd(event: ZohoWebhookEvent): void {
+    const payload = event.payload ?? {};
+    const ticketId = payload.ticketId ?? payload.id;
+    const orgId = event.orgId;
+    if (!ticketId || !orgId) {
+      this.logger.warn('ticket add event missing ticketId/orgId');
+      return;
+    }
+
+    this.logger.log(`new ticket ${ticketId}, enqueuing draft`);
+    const emitted: ZohoTicketThreadAddedEvent = { ticketId, orgId };
     this.eventEmitter.emit(ZOHO_TICKET_THREAD_ADDED, emitted);
   }
 }

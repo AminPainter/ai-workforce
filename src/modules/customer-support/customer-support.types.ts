@@ -3,7 +3,7 @@ import { customerSupportDraftSchema } from './agent/customer-support.schema';
 
 export interface CustomerSupportJob {
   ticketId: string;
-  threadId: string;
+  threadId?: string;
   orgId: string;
 }
 
