@@ -5,11 +5,9 @@ import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { ZohoDeskService } from '../../zoho/services/zoho-desk.service';
 import type { ZohoConversationEntry, ZohoTicket } from '../../zoho/zoho.types';
 import { CUSTOMER_SUPPORT } from '../agent/customer-support.agent';
+import { CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER } from '../agent/customer-support.prompt';
 import { CUSTOMER_SUPPORT_QUEUE } from '../queues/customer-support.queue';
-import type {
-  CustomerSupportDraft,
-  CustomerSupportJob,
-} from '../customer-support.types';
+import type { CustomerSupportJob } from '../customer-support.types';
 
 @Processor(CUSTOMER_SUPPORT_QUEUE, {
   concurrency: 1,
@@ -31,28 +29,29 @@ export class CustomerSupportProcessor extends WorkerHost {
     const ticket = await this.zohoDeskService.getTicket(ticketId);
     const conversation = await this.zohoDeskService.getConversations(ticketId);
 
-    const { output: draft } = (await this.agentRegistry
-      .get(CUSTOMER_SUPPORT)
-      .generate({
-        messages: [
-          { role: 'user', content: this.buildDraftTask(ticket, conversation) },
-        ],
-      })) as { output: CustomerSupportDraft };
+    const { text } = (await this.agentRegistry.get(CUSTOMER_SUPPORT).generate({
+      messages: [
+        { role: 'user', content: this.buildDraftTask(ticket, conversation) },
+      ],
+    })) as { text: string };
 
-    if (!draft.isSupportRequest) {
+    const reply = text.trim();
+
+    if (reply.startsWith(CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER)) {
+      const reason = reply
+        .slice(CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER.length)
+        .trim();
       this.logger.log(
         `ticket ${ticketId} is not a legitimate support request, skipping draft`,
       );
       await this.zohoDeskService.addPrivateComment(ticketId, {
-        content: this.buildDisqualifiedTicketNote(
-          draft.reasonForDisqualifyingTicketAsLegitCustomerQuery,
-        ),
+        content: this.buildDisqualifiedTicketNote(reason),
       });
       return;
     }
 
     await this.zohoDeskService.addPrivateComment(ticketId, {
-      content: draft.customerReply,
+      content: reply,
     });
   }
 
