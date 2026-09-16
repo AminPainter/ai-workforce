@@ -1,5 +1,4 @@
 import { ToolLoopAgent, stepCountIs, Output } from 'ai';
-import { ConfigService } from '@nestjs/config';
 import { AiService } from '../../ai/services/ai.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
@@ -11,15 +10,12 @@ export const CONTRACT_DRIFT_SKEPTIC = 'contract-drift-skeptic';
 export function createContractDriftSkeptic(
   aiService: AiService,
   gitHubMcpService: GitHubMcpService,
-  configService: ConfigService,
 ): RegisteredAgent {
   return new ToolLoopAgent({
     model: aiService.model(),
     instructions: CONTRACT_DRIFT_SKEPTIC_SYSTEM_PROMPT,
     tools: { ...gitHubMcpService.getTools() },
-    stopWhen: stepCountIs(
-      Number(configService.get('CONTRACT_DRIFT_SKEPTIC_MAX_STEPS') ?? 50),
-    ),
+    stopWhen: stepCountIs(50),
     output: Output.object({ schema: skepticVerdictSchema }),
   });
 }
