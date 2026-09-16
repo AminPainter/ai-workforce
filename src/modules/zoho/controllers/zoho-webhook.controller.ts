@@ -20,12 +20,18 @@ export class ZohoWebhookController {
   @HttpCode(200)
   handleZohoWebhook(
     @Req() req: RawBodyRequest<ExpressRequest>,
-    @Headers('x-hook-signature') signature: string | undefined,
+    @Headers() headers: Record<string, string>,
   ): { ok: true } {
-    // Zoho sends an unsigned setup/validation request when the webhook is
-    // registered. Acknowledge it without processing so registration succeeds.
+    // TEMP DIAGNOSTIC: log what Zoho actually sends so we can pick the right
+    // verification scheme (this basic Desk webhook has no HMAC secret field).
+    this.logger.log(`Zoho webhook headers: ${JSON.stringify(headers)}`);
+    this.logger.log(
+      `Zoho webhook body: ${req.rawBody?.toString('utf8') ?? '(none)'}`,
+    );
+
+    const signature = headers['x-hook-signature'];
     if (!signature) {
-      this.logger.log('Zoho webhook validation request acknowledged');
+      this.logger.log('Zoho webhook has no x-hook-signature');
       return { ok: true };
     }
 
