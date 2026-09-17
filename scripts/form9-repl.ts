@@ -1,10 +1,9 @@
 /**
- * Standalone harness for the Form 9 classifier agent.
+ * Standalone harness for the Form 9 classifier + mapping pipeline.
  *
  * Boots a trimmed Nest context (AiModule only — no Redis, no Zoho) and runs the
- * real `createForm9Classifier` ToolLoopAgent against fixture tickets, mirroring
- * what Form9Processor does: build the classify task, run the agent, read
- * `.output`.
+ * real `createForm9Classifier` ToolLoopAgent to pick a taxonomy node, then runs
+ * the deterministic `lookupForm9` mapping — mirroring what Form9Processor does.
  *
  * Run:
  *   pnpm f9:repl                            # runs the worked-example suite
@@ -19,7 +18,11 @@ import { NestFactory } from '@nestjs/core';
 import { AiModule } from '../src/modules/ai/ai.module';
 import { AiService } from '../src/modules/ai/services/ai.service';
 import { createForm9Classifier } from '../src/modules/form9/agent/form9-classifier.agent';
-import type { Form9Classification } from '../src/modules/form9/agent/form9-classifier.schema';
+import type { Form9Taxonomy } from '../src/modules/form9/agent/form9-classifier.schema';
+import {
+  lookupForm9,
+  type Form9Derivation,
+} from '../src/modules/form9/mapping/form9-mapping';
 import type {
   ZohoConversationEntry,
   ZohoTicket,
@@ -57,7 +60,7 @@ function buildClassifyTask(
 Conversation (oldest to newest):
 ${body}
 
-Classify this ticket's Form 9 fields.`;
+Classify this ticket into a taxonomy node (L1 > L2 > L3).`;
 }
 
 interface Fixture {
@@ -99,8 +102,6 @@ const FIXTURES: Fixture[] = [
     subject: 'Payin failed',
     message:
       'I tried to pay in but it failed. My bank said there were insufficient funds in my account at the time.',
-    // serviceType follows the rail (LRS payin), not reportable — "Not applicable"
-    // service type is reserved for L1 "Not an Issue" only.
     expect: {
       reportable: 'Not applicable',
       serviceType: 'Cross border money transfer',
@@ -129,12 +130,36 @@ const FIXTURES: Fixture[] = [
       complaintType: '13 Others',
     },
   },
+  {
+    name: 'duplicate card debit on subscription',
+    subject: 'Charged twice',
+    message:
+      'My card was charged twice for the same subscription cycle this month. Please reverse the extra charge.',
+    expect: {
+      reportable: 'Complaint',
+      serviceType: 'Merchant acquisition',
+      complaintType: '05 Amount not credited back to source',
+    },
+  },
+  {
+    name: 'folio not allotted after payment',
+    subject: 'No folio after payment',
+    message:
+      'I completed the investment payment but no folio has been allotted to me yet.',
+    expect: {
+      reportable: 'Complaint',
+      serviceType: 'Cross border money transfer',
+      complaintType: '12 Non-delivery of goods/services from merchant',
+    },
+  },
 ];
 
-function fmt(c: Form9Classification): string {
-  return `${c.reportable} / ${c.serviceType} / ${c.complaintType}${
-    c.complaintType === '13 Others' ? ` [${c.othersDetail}]` : ''
-  }`;
+function fmtDerivation(d: Form9Derivation): string {
+  const others =
+    d.complaintType === '13 Others'
+      ? ` [${[d.matchedIssueType2, d.matchedIssueType3].filter(Boolean).join(' > ')}]`
+      : '';
+  return `${d.reportable} / ${d.serviceType} / ${d.complaintType}${others}`;
 }
 
 async function main(): Promise<void> {
@@ -145,10 +170,10 @@ async function main(): Promise<void> {
   });
   const agent = createForm9Classifier(app.get(AiService));
 
-  const run = async (
+  const classify = async (
     subject: string,
     message: string,
-  ): Promise<Form9Classification> => {
+  ): Promise<{ taxonomy: Form9Taxonomy; derivation?: Form9Derivation }> => {
     const task = buildClassifyTask(
       { id: 'repl-1', subject, description: message },
       [
@@ -160,36 +185,50 @@ async function main(): Promise<void> {
         },
       ],
     );
-    const { output } = (await agent.generate({
+    const { output: taxonomy } = (await agent.generate({
       messages: [{ role: 'user', content: task }],
-    })) as { output: Form9Classification };
-    return output;
+    })) as { output: Form9Taxonomy };
+    const derivation = lookupForm9(
+      taxonomy.issueType1,
+      taxonomy.issueType2,
+      taxonomy.issueType3,
+    );
+    return { taxonomy, derivation };
   };
 
+  const taxoStr = (t: Form9Taxonomy): string =>
+    [t.issueType1, t.issueType2, t.issueType3].filter(Boolean).join(' > ');
+
   if (subjectArg && messageArg) {
-    const out = await run(subjectArg, messageArg);
-    console.log('\n' + fmt(out));
-    console.log('reasoning:', out.reasoning);
+    const { taxonomy, derivation } = await classify(subjectArg, messageArg);
+    console.log('\ntaxonomy:', taxoStr(taxonomy));
+    console.log(
+      'form9:   ',
+      derivation ? fmtDerivation(derivation) : '(no mapping match)',
+    );
+    console.log('reasoning:', taxonomy.reasoning);
     await app.close();
     return;
   }
 
   let passed = 0;
   for (const f of FIXTURES) {
-    const out = await run(f.subject, f.message);
+    const { taxonomy, derivation } = await classify(f.subject, f.message);
     const ok =
-      out.reportable === f.expect.reportable &&
-      out.serviceType === f.expect.serviceType &&
-      out.complaintType === f.expect.complaintType;
+      derivation !== undefined &&
+      derivation.reportable === f.expect.reportable &&
+      derivation.serviceType === f.expect.serviceType &&
+      derivation.complaintType === f.expect.complaintType;
     if (ok) passed++;
     console.log(`\n[${ok ? 'PASS' : 'FAIL'}] ${f.name}`);
-    console.log(`  got:      ${fmt(out)}`);
+    console.log(`  taxonomy: ${taxoStr(taxonomy)}`);
+    console.log(
+      `  got:      ${derivation ? fmtDerivation(derivation) : '(no mapping match)'}`,
+    );
     if (!ok)
       console.log(
         `  expected: ${f.expect.reportable} / ${f.expect.serviceType} / ${f.expect.complaintType}`,
       );
-
-    console.log(`  reasoning: ${out.reasoning}`);
   }
   console.log(`\n${passed}/${FIXTURES.length} matched`);
   await app.close();

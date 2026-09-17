@@ -9,7 +9,8 @@ import type {
   ZohoTicket,
 } from '../../zoho/zoho.types';
 import { FORM9_CLASSIFIER } from '../agent/form9-classifier.agent';
-import type { Form9Classification } from '../agent/form9-classifier.schema';
+import type { Form9Taxonomy } from '../agent/form9-classifier.schema';
+import { lookupForm9, type Form9Derivation } from '../mapping/form9-mapping';
 import { FORM9_QUEUE } from '../queues/form9.queue';
 import type { Form9Job } from '../form9.types';
 
@@ -31,7 +32,7 @@ export class Form9Processor extends WorkerHost {
     const ticket = await this.zohoDeskService.getTicket(ticketId);
     const conversation = await this.zohoDeskService.getConversations(ticketId);
 
-    const { output: classification } = (await this.agentRegistry
+    const { output: taxonomy } = (await this.agentRegistry
       .get(FORM9_CLASSIFIER)
       .generate({
         messages: [
@@ -40,12 +41,24 @@ export class Form9Processor extends WorkerHost {
             content: this.buildClassifyTask(ticket, conversation),
           },
         ],
-      })) as { output: Form9Classification };
+      })) as { output: Form9Taxonomy };
 
-    const cf = this.buildCustomFields(classification);
+    const derivation = lookupForm9(
+      taxonomy.issueType1,
+      taxonomy.issueType2,
+      taxonomy.issueType3,
+    );
+    if (!derivation) {
+      this.logger.error(
+        `ticket ${ticketId}: no Form 9 mapping for taxonomy ${taxonomy.issueType1} > ${taxonomy.issueType2} > ${taxonomy.issueType3}`,
+      );
+      return;
+    }
+
+    const cf = this.buildCustomFields(derivation);
     await this.zohoDeskService.updateTicketCustomFields(ticketId, cf);
     this.logger.log(
-      `ticket ${ticketId} classified: ${classification.reportable} / ${classification.serviceType} / ${classification.complaintType}`,
+      `ticket ${ticketId} classified: ${taxonomy.issueType1} > ${taxonomy.issueType2} > ${taxonomy.issueType3} => ${derivation.reportable} / ${derivation.serviceType} / ${derivation.complaintType}`,
     );
   }
 
@@ -59,17 +72,17 @@ export class Form9Processor extends WorkerHost {
     this.logger.error(`job ${job.id} failed: ${err.message}`);
   }
 
-  private buildCustomFields(
-    classification: Form9Classification,
-  ): ZohoCustomFields {
+  private buildCustomFields(derivation: Form9Derivation): ZohoCustomFields {
     const othersDetail =
-      classification.complaintType === '13 Others'
-        ? classification.othersDetail.trim()
+      derivation.complaintType === '13 Others'
+        ? [derivation.matchedIssueType2, derivation.matchedIssueType3]
+            .filter((part) => part.length > 0)
+            .join(' > ')
         : '';
     return {
-      cf_form9_reportable: classification.reportable,
-      cf_form9_service_type: classification.serviceType,
-      cf_form9_complaint_type: classification.complaintType,
+      cf_form9_reportable: derivation.reportable,
+      cf_form9_service_type: derivation.serviceType,
+      cf_form9_complaint_type: derivation.complaintType,
       cf_form9_others_detail: othersDetail || null,
     };
   }
@@ -100,6 +113,6 @@ export class Form9Processor extends WorkerHost {
 Conversation (oldest to newest):
 ${body}
 
-Classify this ticket's Form 9 fields.`;
+Classify this ticket into a taxonomy node (L1 > L2 > L3).`;
   }
 }
