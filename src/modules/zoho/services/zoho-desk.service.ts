@@ -6,6 +6,7 @@ import type {
   CachedToken,
   ZohoCommentInput,
   ZohoConversationEntry,
+  ZohoCustomFields,
   ZohoTicket,
   ZohoTicketResponse,
   ZohoThreadResponse,
@@ -111,6 +112,16 @@ export class ZohoDeskService {
       isPublic: false,
     });
     this.logger.log(`added private comment on ticket ${ticketId}`);
+  }
+
+  async updateTicketCustomFields(
+    ticketId: string,
+    cf: ZohoCustomFields,
+  ): Promise<void> {
+    await this.deskClient.patch(`/tickets/${ticketId}`, { cf });
+    this.logger.log(
+      `updated custom fields on ticket ${ticketId}: ${Object.keys(cf).join(', ')}`,
+    );
   }
 
   private async getAccessToken(): Promise<CachedToken> {
