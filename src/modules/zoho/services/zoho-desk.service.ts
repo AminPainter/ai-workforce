@@ -90,12 +90,15 @@ export class ZohoDeskService {
     threads.sort((a, b) =>
       (a.createdTime ?? '').localeCompare(b.createdTime ?? ''),
     );
-    return threads.map((entry) => ({
-      type: entry.type ?? 'thread',
-      direction: entry.direction,
-      author: entry.author?.name,
-      content: entry.content ?? entry.summary ?? '',
-    }));
+    return threads.map((entry) => {
+      const content = entry.content ?? entry.summary ?? '';
+      return {
+        type: entry.type ?? 'thread',
+        direction: entry.direction,
+        author: entry.author?.name,
+        content: content ? convert(content) : '',
+      };
+    });
   }
 
   async addPrivateComment(
