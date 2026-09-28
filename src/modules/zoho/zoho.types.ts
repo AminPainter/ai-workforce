@@ -4,6 +4,13 @@ export interface ZohoTicketThreadAddedEvent {
   orgId: string;
 }
 
+export interface ZohoTicketCreatedEvent {
+  ticketId: string;
+  orgId: string;
+}
+
+export type ZohoCustomFields = Record<string, string | null>;
+
 export interface ZohoTicketResponse {
   id?: string;
   subject?: string;

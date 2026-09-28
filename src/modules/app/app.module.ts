@@ -13,6 +13,7 @@ import { GlomopayAgentModule } from '../glomopay-agent/glomopay-agent.module';
 import { SnackTrackerModule } from '../snack-tracker/snack-tracker.module';
 import { ZohoModule } from '../zoho/zoho.module';
 import { CustomerSupportModule } from '../customer-support/customer-support.module';
+import { Form9Module } from '../form9/form9.module';
 import { QueueModule } from '../queue/queue.module';
 
 @Module({
@@ -30,6 +31,7 @@ import { QueueModule } from '../queue/queue.module';
     SnackTrackerModule,
     ZohoModule,
     CustomerSupportModule,
+    Form9Module,
   ],
   controllers: [AppController],
   providers: [AppService],
