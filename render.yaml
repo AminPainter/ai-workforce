@@ -48,7 +48,7 @@ services:
       - key: CONTRACT_DRIFT_CONCURRENCY
         value: "1"
       - key: ALLOYDB_MCP_URL
-        value: http://teleport-alloydb-mcp:8080/mcp
+        value: http://teleport-alloydb-mcp:10000/mcp
       - key: ALLOYDB_MCP_API_KEY
         sync: false
       # Add SLACK_APP_TOKEN / *_MCP_URL as sync:false only if the populated .env needs them.
@@ -67,7 +67,6 @@ services:
     dockerContext: ./teleport-alloydb-mcp
     region: singapore
     plan: starter
-    healthCheckPath: /
     autoDeployTrigger: commit
     envVars:
       - key: TELEPORT_PROXY
