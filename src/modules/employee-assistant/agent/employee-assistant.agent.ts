@@ -5,6 +5,7 @@ import { AiService } from '../../ai/services/ai.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
+import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service';
 import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
@@ -23,6 +24,7 @@ export function createEmployeeAssistant(
   sentryMcpService: SentryMcpService,
   gitHubMcpService: GitHubMcpService,
   atlassianMcpService: AtlassianMcpService,
+  alloyDbMcpService: AlloyDbMcpService,
   skillsService: SkillsService,
   snacksLedgerService: SnacksLedgerService,
   configService: ConfigService,
@@ -44,6 +46,7 @@ export function createEmployeeAssistant(
       ...sentryMcpService.getTools(),
       ...gitHubMcpService.getTools(),
       ...atlassianMcpService.getTools(),
+      ...alloyDbMcpService.getTools(),
       ...skills.tools,
       glomopayAgent: createGlomopayAgentTool(agentRegistry),
       snacksLedger: createSnacksLedgerTool(snacksLedgerService),

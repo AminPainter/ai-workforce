@@ -47,7 +47,11 @@ services:
         value: "5000"
       - key: CONTRACT_DRIFT_CONCURRENCY
         value: "1"
-      # Add SLACK_APP_TOKEN / *_MCP_URL as sync:false only if the populated .env needs them.
+      - key: ALLOYDB_MCP_URL
+        value: http://teleport-alloydb-mcp:8080/mcp
+      - key: ALLOYDB_MCP_API_KEY
+        sync: false
+      # Add SLACK_APP_TOKEN as sync:false only if the populated .env needs it.
 
   - type: keyvalue
     name: glomo-ai-workforce-redis
@@ -55,3 +59,29 @@ services:
     plan: starter # 'free' is non-persistent + tiny; 'starter'+ persists
     maxmemoryPolicy: noeviction # protect BullMQ jobs / Chat locks from eviction
     ipAllowList: [] # empty = private (internal Render network only)
+
+  # Bridges Teleport's `tsh mcp db start` (stdio) to Streamable HTTP so the
+  # main app can query production AlloyDB (read-only) as a plain MCP tool,
+  # same shape as the GitHub/Atlassian/Sentry/Glomopay MCP integrations.
+  # See teleport-alloydb-mcp/README.md for details. Infra-owned, temporary —
+  # safe to delete this block + the directory if the integration is retired.
+  - type: web
+    name: teleport-alloydb-mcp
+    runtime: docker
+    dockerfilePath: ./teleport-alloydb-mcp/Dockerfile
+    dockerContext: ./teleport-alloydb-mcp
+    region: singapore
+    plan: starter
+    healthCheckPath: /
+    autoDeployTrigger: commit
+    envVars:
+      - key: TELEPORT_PROXY
+        value: teleport.glomopay-eng.com:443
+      - key: TELEPORT_TOKEN
+        value: render-agent
+      - key: TELEPORT_DB_URI
+        value: teleport://clusters/prod-teleport/databases/alloydb-production?dbName=glomopay_service&dbUser=teleport-token-v2@glomopay-production.iam
+      - key: MCP_PROXY_API_KEY
+        sync: false
+      - key: TBOT_BOUND_KEYPAIR_STATIC_KEY
+        sync: false

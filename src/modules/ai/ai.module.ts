@@ -4,6 +4,7 @@ import { SentryMcpService } from './services/sentry-mcp.service';
 import { GitHubMcpService } from './services/github-mcp.service';
 import { AtlassianMcpService } from './services/atlassian-mcp.service';
 import { GlomopayMcpService } from './services/glomopay-mcp.service';
+import { AlloyDbMcpService } from './services/alloydb-mcp.service';
 
 @Module({
   providers: [
@@ -12,6 +13,7 @@ import { GlomopayMcpService } from './services/glomopay-mcp.service';
     GitHubMcpService,
     AtlassianMcpService,
     GlomopayMcpService,
+    AlloyDbMcpService,
   ],
   exports: [
     AiService,
@@ -19,6 +21,7 @@ import { GlomopayMcpService } from './services/glomopay-mcp.service';
     GitHubMcpService,
     AtlassianMcpService,
     GlomopayMcpService,
+    AlloyDbMcpService,
   ],
 })
 export class AiModule {}
