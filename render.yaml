@@ -51,7 +51,7 @@ services:
         value: http://teleport-alloydb-mcp:8080/mcp
       - key: ALLOYDB_MCP_API_KEY
         sync: false
-      # Add SLACK_APP_TOKEN as sync:false only if the populated .env needs it.
+      # Add SLACK_APP_TOKEN / *_MCP_URL as sync:false only if the populated .env needs them.
 
   - type: keyvalue
     name: glomo-ai-workforce-redis
@@ -60,11 +60,6 @@ services:
     maxmemoryPolicy: noeviction # protect BullMQ jobs / Chat locks from eviction
     ipAllowList: [] # empty = private (internal Render network only)
 
-  # Bridges Teleport's `tsh mcp db start` (stdio) to Streamable HTTP so the
-  # main app can query production AlloyDB (read-only) as a plain MCP tool,
-  # same shape as the GitHub/Atlassian/Sentry/Glomopay MCP integrations.
-  # See teleport-alloydb-mcp/README.md for details. Infra-owned, temporary —
-  # safe to delete this block + the directory if the integration is retired.
   - type: web
     name: teleport-alloydb-mcp
     runtime: docker
