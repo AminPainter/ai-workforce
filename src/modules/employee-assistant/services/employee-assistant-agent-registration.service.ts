@@ -4,6 +4,7 @@ import { AiService } from '../../ai/services/ai.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
+import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service';
 import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
@@ -19,6 +20,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
     private readonly sentryMcpService: SentryMcpService,
     private readonly gitHubMcpService: GitHubMcpService,
     private readonly atlassianMcpService: AtlassianMcpService,
+    private readonly alloyDbMcpService: AlloyDbMcpService,
     private readonly skillsService: SkillsService,
     private readonly snacksLedgerService: SnacksLedgerService,
     private readonly configService: ConfigService,
@@ -33,6 +35,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
         this.sentryMcpService,
         this.gitHubMcpService,
         this.atlassianMcpService,
+        this.alloyDbMcpService,
         this.skillsService,
         this.snacksLedgerService,
         this.configService,
