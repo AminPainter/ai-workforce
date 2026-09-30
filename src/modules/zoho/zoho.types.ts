@@ -15,6 +15,7 @@ export interface ZohoTicketResponse {
   id?: string;
   subject?: string;
   description?: string;
+  email?: string;
 }
 
 export interface ZohoThreadResponse {
@@ -30,6 +31,7 @@ export interface ZohoTicket {
   id: string;
   subject: string;
   description: string;
+  email: string;
 }
 
 export interface ZohoConversationEntry {
