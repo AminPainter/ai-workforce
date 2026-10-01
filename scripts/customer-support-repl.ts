@@ -7,12 +7,15 @@
  * and split on the NOT_A_SUPPORT_REQUEST marker.
  *
  * Run:
- *   pnpm cs:repl                          # uses the built-in fixture
- *   pnpm cs:repl "subject" "customer msg" # ad-hoc ticket
+ *   pnpm cs:repl                                          # uses the built-in fixture
+ *   pnpm cs:repl "subject" "customer msg"                 # ad-hoc ticket, no requester email
+ *   pnpm cs:repl "subject" "customer msg" "j@example.com" # ad-hoc ticket with requester email
  *
- * Env required: AI_GATEWAY_API_KEY, AI_GATEWAY_BASE_URL, AI_GATEWAY_MODEL, SEARXNG_BASE_URL.
+ * Env required: AI_GATEWAY_API_KEY, AI_GATEWAY_BASE_URL, AI_GATEWAY_MODEL, SEARXNG_BASE_URL,
+ * ALLOYDB_MCP_URL, ALLOYDB_MCP_API_KEY.
  * GITHUB_PAT / SENTRY_AUTH_TOKEN are optional — the MCP services swallow
  * connection failures and the agent runs with whatever tools connected.
+ * The AlloyDB tools hit PRODUCTION. Every SQL query the agent runs is printed.
  */
 import 'reflect-metadata';
 import { Module } from '@nestjs/common';
@@ -22,6 +25,7 @@ import { AiModule } from '../src/modules/ai/ai.module';
 import { AiService } from '../src/modules/ai/services/ai.service';
 import { GitHubMcpService } from '../src/modules/ai/services/github-mcp.service';
 import { SentryMcpService } from '../src/modules/ai/services/sentry-mcp.service';
+import { AlloyDbMcpService } from '../src/modules/ai/services/alloydb-mcp.service';
 import { createCustomerSupport } from '../src/modules/customer-support/agent/customer-support.agent';
 import { CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER } from '../src/modules/customer-support/agent/customer-support.prompt';
 import type {
@@ -57,6 +61,7 @@ function buildDraftTask(
     '(no conversation content available)';
 
   return `Ticket subject: ${ticket.subject}
+Requester email (from the Zoho ticket record): ${ticket.email || '(none)'}
 
 Conversation (oldest to newest):
 ${body}
@@ -65,7 +70,7 @@ Write a draft reply to the newest customer message. Research with your tools fir
 }
 
 async function main(): Promise<void> {
-  const [subjectArg, messageArg] = process.argv.slice(2);
+  const [subjectArg, messageArg, emailArg] = process.argv.slice(2);
 
   const ticket: ZohoTicket = {
     id: 'repl-1',
@@ -73,6 +78,7 @@ async function main(): Promise<void> {
     description:
       messageArg ??
       'Hi, my GlomoPay card keeps getting declined when I try to pay in USD on international sites, but domestic works fine. Nothing changed on my end. Can you help?',
+    email: emailArg ?? '',
   };
 
   const conversation: ZohoConversationEntry[] = [
@@ -92,6 +98,7 @@ async function main(): Promise<void> {
     app.get(AiService),
     app.get(GitHubMcpService),
     app.get(SentryMcpService),
+    app.get(AlloyDbMcpService),
   );
 
   const task = buildDraftTask(ticket, conversation);
@@ -101,11 +108,16 @@ async function main(): Promise<void> {
   const result = (await agent.generate({
     messages: [{ role: 'user', content: task }],
     onStepFinish: (step: {
-      toolCalls?: { toolName: string }[];
+      toolCalls?: { toolName: string; input?: unknown }[];
       text?: string;
     }) => {
       const calls = (step.toolCalls ?? []).map((c) => c.toolName).join(', ');
       console.log(`[step] tools=[${calls}] textLen=${step.text?.length ?? 0}`);
+      for (const call of step.toolCalls ?? []) {
+        if (call.toolName === 'teleport_postgres_query') {
+          console.log(`[sql] ${JSON.stringify(call.input)}`);
+        }
+      }
     },
   } as Parameters<typeof agent.generate>[0])) as {
     text: string;
