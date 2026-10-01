@@ -94,6 +94,7 @@ Please review and close or ignore this ticket if appropriate.`;
       '(no conversation content available)';
 
     return `Ticket subject: ${ticket.subject}
+Requester email (from the Zoho ticket record): ${ticket.email || '(none)'}
 
 Conversation (oldest to newest):
 ${body}

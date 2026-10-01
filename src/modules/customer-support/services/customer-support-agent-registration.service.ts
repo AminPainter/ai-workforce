@@ -2,6 +2,7 @@ import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AiService } from '../../ai/services/ai.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
+import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import {
   CUSTOMER_SUPPORT,
@@ -14,6 +15,7 @@ export class CustomerSupportAgentRegistrationService implements OnApplicationBoo
     private readonly aiService: AiService,
     private readonly gitHubMcpService: GitHubMcpService,
     private readonly sentryMcpService: SentryMcpService,
+    private readonly alloyDbMcpService: AlloyDbMcpService,
     private readonly agentRegistry: AgentRegistry,
   ) {}
 
@@ -24,6 +26,7 @@ export class CustomerSupportAgentRegistrationService implements OnApplicationBoo
         this.aiService,
         this.gitHubMcpService,
         this.sentryMcpService,
+        this.alloyDbMcpService,
       ),
     );
   }

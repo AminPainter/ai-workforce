@@ -78,6 +78,7 @@ export class ZohoDeskService {
       id: ticket.id ?? ticketId,
       subject: ticket.subject ?? '',
       description: ticket.description ? convert(ticket.description) : '',
+      email: ticket.email ?? '',
     };
   }
 

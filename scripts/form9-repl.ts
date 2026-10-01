@@ -175,7 +175,7 @@ async function main(): Promise<void> {
     message: string,
   ): Promise<{ taxonomy: Form9Taxonomy; derivation?: Form9Derivation }> => {
     const task = buildClassifyTask(
-      { id: 'repl-1', subject, description: message },
+      { id: 'repl-1', subject, description: message, email: '' },
       [
         {
           type: 'thread',
