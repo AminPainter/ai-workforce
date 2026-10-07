@@ -13,6 +13,7 @@ export interface SlackPerson {
 
 export interface LeaveMessageContext {
   author: SlackPerson;
+  isThreadReply: boolean;
   classifierInput: string;
 }
 
@@ -24,6 +25,7 @@ export class LeaveMessageContextService {
     const author = await this.lookupAuthor(job.userId);
     return {
       author,
+      isThreadReply: threadTsOf(job) !== job.messageId,
       classifierInput: formatClassifierInput({
         now,
         postedAt: new Date(job.postedAt),
@@ -43,7 +45,7 @@ export class LeaveMessageContextService {
   private async ownThreadParent(
     job: LeaveMessageJob,
   ): Promise<ThreadParentMessage | null> {
-    const [, , threadTs] = job.threadId.split(':');
+    const threadTs = threadTsOf(job);
     if (threadTs === job.messageId) return null;
 
     const parent = await this.slackBotService.fetchMessage(
@@ -57,4 +59,9 @@ export class LeaveMessageContextService {
       postedAt: parent.metadata.dateSent,
     };
   }
+}
+
+function threadTsOf(job: LeaveMessageJob): string {
+  const [, , threadTs] = job.threadId.split(':');
+  return threadTs;
 }

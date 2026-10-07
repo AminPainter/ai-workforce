@@ -307,6 +307,16 @@ const FIXTURES: Fixture[] = [
     expect: { intent: 'ignore' },
   },
   {
+    name: 'unrelated thread reply under own wfh post',
+    text: 'nothing. just need some more time to build it. Will build it once i have some free time',
+    postedAt: '2026-10-07T10:15:00+05:30',
+    threadParent: {
+      text: 'I will be working from home tomorrow',
+      postedAt: '2026-10-07T09:00:00+05:30',
+    },
+    expect: { intent: 'ignore' },
+  },
+  {
     name: 'answer to clarification',
     text: '7th to 9th',
     postedAt: '2026-10-07T09:28:00+05:30',

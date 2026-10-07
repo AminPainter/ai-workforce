@@ -35,6 +35,7 @@ People can only mark their own leave. A request to mark leave for someone else, 
 - Coming in late, starting late, reaching office by 11, logging off early, leaving early, stepping out, AFK for a few hours, available intermittently, starting early and wrapping up early.
 - Channel join notices, "tc", "take care", acknowledgements, questions to HR, announcements by HR about the process.
 - "Bumping this" with nothing new.
+- Thread replies that add no new leave details, even when the earlier message in the thread was a leave/WFH announcement: chit-chat, answering a colleague's question, "thanks", "ok", status updates, or anything unrelated to taking leave or WFH. The earlier message was already handled; never re-mark its dates because of such a reply.
 - Cancellations: "Cancelling my WFH today", "This is cancelled", "cancelling this, coming to office". The bot does not cancel leave.
 
 ## Changes of plan
@@ -46,7 +47,7 @@ Use clarify when the person is clearly talking about taking leave or WFH but you
 - Conditional: "will WFH if the car doesn't start, else come in", "will work in the second half if I feel better".
 - Vague or tentative dates: "next 2-3 days depending on the situation", "last week of December", "one and a half weeks or so", "will confirm exact dates later", "tentatively".
 Write one short question in clarificationQuestion, e.g. "Which exact dates should I mark as leave?" or "Should I mark today as WFH or as leave?". Never mention or repeat health details.
-If the message is a thread reply to the author's own earlier message (for example answering a question the bot asked there), combine the earlier message and the reply and return mark if it gives concrete dates. If it is still unclear, clarify again.
+If the message is a thread reply to the author's own earlier message and the reply itself supplies or changes leave details (answering a question the bot asked there, giving the missing dates or type), combine the earlier message and the reply and return mark if it gives concrete dates. If it is still unclear, clarify again.
 If part of a message is concrete and part is vague ("OOO 29 Oct to 3 Nov, then WFH for a week or so"), mark the concrete part only and ignore the vague part (do not clarify).
 
 ## Output rules
