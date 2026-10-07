@@ -71,7 +71,7 @@ Leave bot (#leaves → RazorpayX Payroll attendance, `src/modules/leave-tracker`
 - `LEAVES_SLACK_CHANNEL` (optional) — #leaves channel id. Unset disables the bot. The Slack
   app needs `users:read.email`, `reactions:write`, `channels:history` and the
   `message.channels` event, and must be a member of the channel.
-- `LEAVES_PEOPLE_PARTNER_SLACK_USER_ID` (optional) — tagged on failures.
+- `LEAVES_PEOPLE_PARTNER_SLACK_USER_ID` (required) — Slack user id tagged on failures.
 - `LEAVES_EMAIL_OVERRIDES` (optional) — JSON map of Slack email → RazorpayX email for people
   whose RazorpayX email differs.
 - `RAZORPAYX_PAYROLL_COMPANIES` (required for the bot to write) — JSON array

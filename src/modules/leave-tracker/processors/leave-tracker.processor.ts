@@ -26,7 +26,7 @@ const PROBLEM_REACTION = 'warning';
 @Processor(LEAVE_TRACKER_QUEUE, { concurrency: 1 })
 export class LeaveTrackerProcessor extends WorkerHost {
   private readonly logger = new Logger(LeaveTrackerProcessor.name);
-  private readonly peoplePartnerUserId?: string;
+  private readonly peoplePartnerUserId: string;
 
   constructor(
     private readonly agentRegistry: AgentRegistry,
@@ -37,7 +37,7 @@ export class LeaveTrackerProcessor extends WorkerHost {
     private readonly configService: ConfigService,
   ) {
     super();
-    this.peoplePartnerUserId = this.configService.get<string>(
+    this.peoplePartnerUserId = this.configService.getOrThrow<string>(
       'LEAVES_PEOPLE_PARTNER_SLACK_USER_ID',
     );
   }
@@ -213,13 +213,11 @@ export class LeaveTrackerProcessor extends WorkerHost {
     return `<@${job.userId}>`;
   }
 
-  private peoplePartnerMention(): string | null {
-    if (!this.peoplePartnerUserId) return null;
+  private peoplePartnerMention(): string {
     return `<@${this.peoplePartnerUserId}>`;
   }
 
   private escalation(): string {
-    const mention = this.peoplePartnerMention();
-    return mention ? ` ${mention} please check.` : '';
+    return ` ${this.peoplePartnerMention()} please check.`;
   }
 }

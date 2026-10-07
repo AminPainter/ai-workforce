@@ -12,7 +12,7 @@ export interface LeaveReplyInput {
   outcomes: DateOutcome[];
   skipped: SkippedDate[];
   invalidRanges: string[];
-  peoplePartnerMention: string | null;
+  peoplePartnerMention: string;
 }
 
 export interface LeaveReply {
@@ -27,9 +27,7 @@ const SKIP_REASON_LABELS: Record<SkippedDate['reason'], string> = {
 };
 
 export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
-  const escalation = input.peoplePartnerMention
-    ? ` ${input.peoplePartnerMention} please check.`
-    : '';
+  const escalation = ` ${input.peoplePartnerMention} please check.`;
 
   if (!input.employeeFound)
     return {
@@ -83,7 +81,7 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
       );
     if (input.invalidRanges.length > 0)
       lines.push(`• I couldn't read some of the dates in this message.`);
-    if (escalation) lines.push(escalation.trim());
+    lines.push(escalation.trim());
   }
 
   if (lines.length === 0)
