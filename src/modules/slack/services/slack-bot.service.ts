@@ -139,17 +139,23 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getUser(userId: string): Promise<import('chat').UserInfo | null> {
-    return this.bot.getUser(userId);
-  }
-
   // Bypasses the adapter's 8-day user cache, which can hold entries fetched
   // before the users:read.email scope was granted.
-  async getUserEmail(userId: string): Promise<string | null> {
+  async fetchUser(
+    userId: string,
+  ): Promise<{ name: string | null; email: string | null }> {
     const { user } = await this.slackAdapter.webClient.users.info({
       user: userId,
     });
-    return user?.profile?.email || null;
+    return {
+      name:
+        user?.real_name ||
+        user?.profile?.real_name ||
+        user?.profile?.display_name ||
+        user?.name ||
+        null,
+      email: user?.profile?.email || null,
+    };
   }
 
   async fetchMessage(
