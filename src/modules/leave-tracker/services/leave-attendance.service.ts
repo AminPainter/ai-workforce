@@ -15,7 +15,7 @@ import {
 } from '../constants/leave-kinds';
 import type { PlannedMark } from '../utils/leave-plan';
 
-const MARK_REMARKS_SUFFIX = 'Applied via Slack leave bot';
+const MARK_REMARKS_SUFFIX = 'Applied by leave bot v2';
 
 export type DateOutcomeStatus = 'done' | 'already_done' | 'mismatch' | 'failed';
 
