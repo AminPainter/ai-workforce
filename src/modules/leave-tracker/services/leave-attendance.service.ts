@@ -17,10 +17,6 @@ import {
   type LeavePortion,
 } from '../constants/leave-kinds';
 import type { PlannedMark, PlannedRevert } from '../utils/leave-plan';
-import {
-  LeaveLedgerService,
-  type EmployeeCompany,
-} from './leave-ledger.service';
 
 const MARK_REMARKS_SUFFIX = 'Applied via Slack leave bot';
 const REVERT_REMARKS = 'Cancelled via Slack leave bot';
@@ -46,6 +42,11 @@ export interface ApplyLeavePlanInput {
   reverts: PlannedRevert[];
 }
 
+interface EmployeeCompany {
+  companyId: number;
+  razorpayxEmail: string;
+}
+
 export interface ApplyLeavePlanResult {
   employeeFound: boolean;
   outcomes: DateOutcome[];
@@ -58,7 +59,6 @@ export class LeaveAttendanceService {
 
   constructor(
     private readonly razorpayxPayrollService: RazorpayxPayrollService,
-    private readonly leaveLedgerService: LeaveLedgerService,
     private readonly configService: ConfigService,
   ) {
     const rawOverrides = this.configService.get<string>(
@@ -88,13 +88,10 @@ export class LeaveAttendanceService {
     return { employeeFound: true, outcomes };
   }
 
-  async resolveEmployee(
+  private async resolveEmployee(
     email: string,
     today: string,
   ): Promise<EmployeeCompany | null> {
-    const cached = await this.leaveLedgerService.getEmployeeCompany(email);
-    if (cached) return cached;
-
     const candidateEmails = [
       ...new Set([email, this.emailOverrides[email.toLowerCase()]]),
     ].filter((candidate): candidate is string => Boolean(candidate));
@@ -102,24 +99,18 @@ export class LeaveAttendanceService {
     for (const razorpayxEmail of candidateEmails)
       for (const companyId of this.razorpayxPayrollService.companyIds)
         try {
-          const record = await this.razorpayxPayrollService.fetchAttendance(
+          await this.razorpayxPayrollService.fetchAttendance(
             companyId,
             razorpayxEmail,
             today,
           );
-          const employee = {
-            companyId,
-            razorpayxEmail,
-            employeeId: record.employeeId,
-          };
-          await this.leaveLedgerService.setEmployeeCompany(email, employee);
-          return employee;
+          return { companyId, razorpayxEmail };
         } catch (error) {
           if (error instanceof EmployeeNotFoundError) continue;
           this.logger.warn(
-            `company ${companyId} probe errored without "user not found"; using it uncached: ${String(error)}`,
+            `company ${companyId} probe errored without "user not found"; using it anyway: ${String(error)}`,
           );
-          return { companyId, razorpayxEmail, employeeId: null };
+          return { companyId, razorpayxEmail };
         }
 
     return null;
@@ -262,24 +253,26 @@ export class LeaveAttendanceService {
     }
   }
 
-  private async audit(
+  private audit(
     input: ApplyLeavePlanInput,
     employee: EmployeeCompany,
     write: AttendanceWrite | null,
     outcome: DateOutcome,
-  ): Promise<DateOutcome> {
-    await this.leaveLedgerService.appendAudit({
-      at: new Date().toISOString(),
-      sourceMessageId: input.sourceMessageId,
-      actorSlackUserId: input.actorSlackUserId,
-      subjectEmail: employee.razorpayxEmail,
-      companyId: employee.companyId,
-      date: outcome.date,
-      operation: outcome.operation,
-      request: write ? { ...write } : null,
-      outcome: outcome.status,
-      detail: outcome.detail,
-    });
+  ): DateOutcome {
+    this.logger.log(
+      `audit ${JSON.stringify({
+        sourceMessageId: input.sourceMessageId,
+        actorSlackUserId: input.actorSlackUserId,
+        companyId: employee.companyId,
+        date: outcome.date,
+        operation: outcome.operation,
+        request: write
+          ? { status: write.status, leaveType: write.leaveType }
+          : null,
+        outcome: outcome.status,
+        detail: outcome.detail,
+      })}`,
+    );
     return outcome;
   }
 }

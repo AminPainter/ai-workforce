@@ -9,7 +9,7 @@ import {
 
 const MAX_DAYS_PER_RANGE = 120;
 export const PAST_WINDOW_DAYS = 7;
-export const FUTURE_WINDOW_DAYS = 180;
+const FUTURE_WINDOW_DAYS = 180;
 
 export interface PlannedMark {
   date: string;

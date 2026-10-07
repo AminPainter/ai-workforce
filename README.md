@@ -75,7 +75,7 @@ Leave bot (#leaves → RazorpayX Payroll attendance, `src/modules/leave-tracker`
 - `LEAVES_EMAIL_OVERRIDES` (optional) — JSON map of Slack email → RazorpayX email for people
   whose RazorpayX email differs.
 - `RAZORPAYX_PAYROLL_COMPANIES` (required for the bot to write) — JSON array
-  `[{"id": 337931, "key": "...", "name": "..."}]`, one per payroll company. Leave-type codes
+  `[{"id": 337931, "key": "..."}]`, one per payroll company. Leave-type codes
   per company live in `leave-tracker/constants/leave-kinds.ts`; a company without codes there
   fails its writes loudly.
 

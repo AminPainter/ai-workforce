@@ -12,11 +12,7 @@ import {
   type LeaveMessageJob,
 } from '../queues/leave-tracker.queue';
 import { LeaveAttendanceService } from '../services/leave-attendance.service';
-import { LeaveLedgerService } from '../services/leave-ledger.service';
-import {
-  LeaveMessageContextService,
-  type LeaveMessageContext,
-} from '../services/leave-message-context.service';
+import { LeaveMessageContextService } from '../services/leave-message-context.service';
 import { planLeaveRequest } from '../utils/leave-plan';
 import { formatLeaveReply } from '../utils/leave-reply';
 
@@ -30,7 +26,6 @@ export class LeaveTrackerProcessor extends WorkerHost {
 
   constructor(
     private readonly agentRegistry: AgentRegistry,
-    private readonly leaveLedgerService: LeaveLedgerService,
     private readonly leaveMessageContextService: LeaveMessageContextService,
     private readonly leaveAttendanceService: LeaveAttendanceService,
     private readonly slackBotService: SlackBotService,
@@ -43,15 +38,7 @@ export class LeaveTrackerProcessor extends WorkerHost {
   }
 
   async process(job: Job<LeaveMessageJob>): Promise<void> {
-    const { messageId } = job.data;
-    if (!(await this.leaveLedgerService.markSeen(messageId))) return;
-    try {
-      await this.handle(job.data);
-    } catch (error) {
-      // Roll back the gate so a retry can process this message again.
-      await this.leaveLedgerService.unmarkSeen(messageId);
-      throw error;
-    }
+    await this.handle(job.data);
   }
 
   @OnWorkerEvent('failed')
@@ -79,14 +66,9 @@ export class LeaveTrackerProcessor extends WorkerHost {
       `message ${job.messageId}: ${classification.intent} (${classification.reason})`,
     );
 
-    if (context.pending && classification.intent !== 'clarify')
-      await this.leaveLedgerService.clearPendingClarification(
-        job.threadId,
-        job.userId,
-      );
     if (classification.intent === 'ignore') return;
     if (classification.intent === 'clarify')
-      return this.askClarification(job, context, classification);
+      return this.askClarification(job, classification);
 
     const { email } = context.author;
     if (!email) {
@@ -109,8 +91,6 @@ export class LeaveTrackerProcessor extends WorkerHost {
       reverts: plan.reverts,
     });
 
-    await this.recordOutcomes(job, context, email, result.outcomes);
-
     const reply = formatLeaveReply({
       addressee: this.addressee(job),
       employeeFound: result.employeeFound,
@@ -130,69 +110,12 @@ export class LeaveTrackerProcessor extends WorkerHost {
 
   private async askClarification(
     job: LeaveMessageJob,
-    context: LeaveMessageContext,
     classification: LeaveRequestClassification,
   ): Promise<void> {
     const question =
       classification.clarificationQuestion ??
       'Could you confirm the exact dates and whether it is leave or WFH?';
     await this.respond(job, `${this.addressee(job)} ${question}`, null);
-
-    const original = context.pending;
-    await this.leaveLedgerService.setPendingClarification(
-      job.threadId,
-      job.userId,
-      {
-        messageId: original?.messageId ?? job.messageId,
-        text: original
-          ? `${original.text}\n\nLater reply: ${job.text}`
-          : job.text,
-        postedAt: original?.postedAt ?? job.postedAt,
-        question,
-      },
-    );
-  }
-
-  private async recordOutcomes(
-    job: LeaveMessageJob,
-    context: LeaveMessageContext,
-    email: string,
-    outcomes: Awaited<ReturnType<LeaveAttendanceService['apply']>>['outcomes'],
-  ): Promise<void> {
-    const recorded = outcomes.flatMap((outcome) =>
-      outcome.operation === 'mark' &&
-      outcome.kind &&
-      outcome.portion &&
-      (outcome.status === 'done' || outcome.status === 'already_done')
-        ? [
-            {
-              email,
-              date: outcome.date,
-              kind: outcome.kind,
-              portion: outcome.portion,
-            },
-          ]
-        : [],
-    );
-    await this.leaveLedgerService.addRecordedEntries(job.messageId, recorded);
-    if (context.pending)
-      await this.leaveLedgerService.addRecordedEntries(
-        context.pending.messageId,
-        recorded,
-      );
-
-    const revertedDates = outcomes
-      .filter(
-        (outcome) =>
-          outcome.operation === 'revert' && outcome.status === 'done',
-      )
-      .map(({ date }) => date);
-    if (context.parentMessageId && revertedDates.length > 0)
-      await this.leaveLedgerService.removeRecordedEntries(
-        context.parentMessageId,
-        email,
-        revertedDates,
-      );
   }
 
   private async respond(

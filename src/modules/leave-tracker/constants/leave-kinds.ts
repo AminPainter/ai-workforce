@@ -39,10 +39,7 @@ interface CompanyLeaveTypeCodes {
 const GLOMOPAY_SOFTWARE_PRIVATE_LIMITED_COMPANY_ID = 337931;
 
 // TODO: add Glomo Payments IFSC Private Limited (GIFT City).
-export const LEAVE_TYPE_CODES_BY_COMPANY: Record<
-  number,
-  CompanyLeaveTypeCodes
-> = {
+const LEAVE_TYPE_CODES_BY_COMPANY: Record<number, CompanyLeaveTypeCodes> = {
   [GLOMOPAY_SOFTWARE_PRIVATE_LIMITED_COMPANY_ID]: {
     leave: {
       [LeaveKind.Earned]: 0,

@@ -21,7 +21,6 @@ import { AiService } from '../src/modules/ai/services/ai.service';
 import { toIstDateString } from '../src/common/utils/date.util';
 import { createLeaveRequestClassifier } from '../src/modules/leave-tracker/agents/leave-request-classifier.agent';
 import type { LeaveRequestClassification } from '../src/modules/leave-tracker/agents/leave-request-classifier.schema';
-import { LeaveKind } from '../src/modules/leave-tracker/constants/leave-kinds';
 import {
   formatClassifierInput,
   type ClassifierContextMessage,
@@ -320,9 +319,6 @@ const FIXTURES: Fixture[] = [
           'This message is a reply in a thread. The thread starts with written by the same author.',
         text: 'Will be on leave tomorrow.',
         postedAt: '2026-10-06T18:00:00+05:30',
-        recordedEntries: [
-          { date: '2026-10-07', kind: LeaveKind.Earned, portion: 'full' },
-        ],
       },
     ],
     expect: { intent: 'cancel', reverts: ['2026-10-07'] },
@@ -334,10 +330,9 @@ const FIXTURES: Fixture[] = [
     context: [
       {
         heading:
-          'Earlier, the author posted the message below and the bot asked them: "Which exact dates should I mark as leave?". The current message is their answer.',
+          'This message is a reply in a thread. The thread starts with written by the same author.',
         text: 'My grandmother is unwell and I need to travel to my hometown urgently. I may need to take leave for the next 2–3 days, depending on the situation.',
         postedAt: '2026-10-07T09:25:00+05:30',
-        recordedEntries: [],
       },
     ],
     expect: {

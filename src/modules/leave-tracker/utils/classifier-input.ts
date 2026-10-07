@@ -2,21 +2,11 @@ import {
   formatIstDateTime,
   toIstDateString,
 } from '../../../common/utils/date.util';
-import {
-  describeEntry,
-  type LeaveKind,
-  type LeavePortion,
-} from '../constants/leave-kinds';
 
 export interface ClassifierContextMessage {
   heading: string;
   text: string;
   postedAt: Date;
-  recordedEntries: Array<{
-    date: string;
-    kind: LeaveKind;
-    portion: LeavePortion;
-  }>;
 }
 
 export interface ClassifierInputArgs {
@@ -40,7 +30,7 @@ export function formatClassifierInput(args: ClassifierInputArgs): string {
     '"""',
   ];
 
-  for (const context of args.contextMessages) {
+  for (const context of args.contextMessages)
     lines.push(
       '',
       `Context: ${context.heading} It was posted at ${describeMoment(context.postedAt)}:`,
@@ -48,16 +38,7 @@ export function formatClassifierInput(args: ClassifierInputArgs): string {
       context.text,
       '"""',
     );
-    if (context.recordedEntries.length > 0)
-      lines.push(
-        `The leave bot already recorded from that message: ${context.recordedEntries
-          .map(
-            (entry) =>
-              `${entry.date} ${describeEntry(entry.kind, entry.portion)}`,
-          )
-          .join('; ')}.`,
-      );
-  }
+
   return lines.join('\n');
 }
 

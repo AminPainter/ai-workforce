@@ -1,7 +1,6 @@
 export interface RazorpayxCompany {
   id: number;
   key: string;
-  name: string;
 }
 
 export type AttendanceStatus =
@@ -16,8 +15,6 @@ export interface AttendanceWrite {
 }
 
 export interface AttendanceRecord {
-  employeeId: string | number | null;
-  date: string;
   statusCode: number | null;
   statusDescription: string | null;
   leaveTypeCode: number | null;
@@ -34,8 +31,6 @@ interface CodedValue {
 export interface RazorpayxFetchResponse {
   status?: string;
   data?: {
-    'employee-id'?: string | number | null;
-    date?: string;
     status?: CodedValue | null;
     'leave-type'?: CodedValue | null;
     'requested-status'?: CodedValue | null;

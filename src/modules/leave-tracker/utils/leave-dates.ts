@@ -40,7 +40,7 @@ export function expandDateRange(
   return dates;
 }
 
-export function nextWeekday(date: string): string {
+function nextWeekday(date: string): string {
   let next = addDays(date, 1);
   while (isWeekend(next)) next = addDays(next, 1);
   return next;

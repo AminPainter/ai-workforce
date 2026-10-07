@@ -5,7 +5,6 @@ import { AgentsModule } from '../agents/agents.module';
 import { SlackModule } from '../slack/slack.module';
 import { RazorpayxModule } from '../razorpayx/razorpayx.module';
 import { LeaveTrackerAgentRegistrationService } from './services/leave-tracker-agent-registration.service';
-import { LeaveLedgerService } from './services/leave-ledger.service';
 import { LeaveMessageContextService } from './services/leave-message-context.service';
 import { LeaveAttendanceService } from './services/leave-attendance.service';
 import { LeaveTrackerListener } from './leave-tracker.listener';
@@ -22,7 +21,6 @@ import { LEAVE_TRACKER_QUEUE } from './queues/leave-tracker.queue';
   ],
   providers: [
     LeaveTrackerAgentRegistrationService,
-    LeaveLedgerService,
     LeaveMessageContextService,
     LeaveAttendanceService,
     LeaveTrackerListener,

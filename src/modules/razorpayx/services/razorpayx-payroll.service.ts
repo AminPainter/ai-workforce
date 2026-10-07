@@ -40,10 +40,6 @@ export class RazorpayxPayrollService {
     return this.companies.map((company) => company.id);
   }
 
-  companyName(companyId: number): string {
-    return this.getCompany(companyId).name;
-  }
-
   async fetchAttendance(
     companyId: number,
     email: string,
@@ -72,8 +68,6 @@ export class RazorpayxPayrollService {
     }
     const data = body.data ?? {};
     return {
-      employeeId: data['employee-id'] ?? null,
-      date: data.date ?? date,
       statusCode: data.status?.code ?? null,
       statusDescription: data.status?.description ?? null,
       leaveTypeCode: data['leave-type']?.code ?? null,
@@ -161,13 +155,9 @@ function parseCompanies(raw: string | undefined): RazorpayxCompany[] {
   return parsed.map((company) => {
     if (typeof company.id !== 'number' || typeof company.key !== 'string')
       throw new Error(
-        'RAZORPAYX_PAYROLL_COMPANIES must be a JSON array of {"id": number, "key": string, "name": string}',
+        'RAZORPAYX_PAYROLL_COMPANIES must be a JSON array of {"id": number, "key": string}',
       );
-    return {
-      id: company.id,
-      key: company.key,
-      name: company.name ?? String(company.id),
-    };
+    return { id: company.id, key: company.key };
   });
 }
 
