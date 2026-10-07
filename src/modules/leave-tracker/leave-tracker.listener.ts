@@ -37,7 +37,6 @@ export class LeaveTrackerListener {
           rawText: rawText?.trim() || text,
           userId: message.author.userId,
           userName: message.author.userName,
-          fullName: message.author.fullName,
           postedAt: message.metadata.dateSent.toISOString(),
         } satisfies LeaveMessageJob,
         { jobId: message.id },

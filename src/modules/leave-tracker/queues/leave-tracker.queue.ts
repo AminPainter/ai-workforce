@@ -7,6 +7,5 @@ export interface LeaveMessageJob {
   rawText: string;
   userId: string;
   userName: string;
-  fullName: string;
   postedAt: string;
 }

@@ -2,13 +2,11 @@ import { describeEntry, LEAVE_KIND_LABELS } from '../constants/leave-kinds';
 import type {
   DateOutcome,
   DateOutcomeStatus,
-  LeaveBotMode,
 } from '../services/leave-attendance.service';
 import { PAST_WINDOW_DAYS, type SkippedDate } from './leave-plan';
 import { formatDateRanges, formatShortDate } from './leave-dates';
 
 export interface LeaveReplyInput {
-  mode: LeaveBotMode;
   addressee: string;
   employeeFound: boolean;
   outcomes: DateOutcome[];
@@ -39,7 +37,6 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
       hasProblems: true,
     };
 
-  const isShadow = input.mode === 'shadow';
   const marks = input.outcomes.filter(({ operation }) => operation === 'mark');
   const reverts = input.outcomes.filter(
     ({ operation }) => operation === 'revert',
@@ -58,15 +55,9 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
     if (dates.length > 0) lines.push(`${heading} ${formatDateRanges(dates)}`);
   };
 
-  pushMarkSection(
-    isShadow ? 'Would mark in RazorpayX:' : 'Marked in RazorpayX:',
-    isShadow ? 'would_do' : 'done',
-  );
+  pushMarkSection('Marked in RazorpayX:', 'done');
   pushMarkSection('Already marked:', 'already_done');
-  pushRevertSection(
-    isShadow ? 'Would cancel:' : 'Cancelled in RazorpayX:',
-    isShadow ? 'would_do' : 'done',
-  );
+  pushRevertSection('Cancelled in RazorpayX:', 'done');
   pushRevertSection('Nothing was marked on:', 'already_done');
 
   for (const revert of reverts.filter(

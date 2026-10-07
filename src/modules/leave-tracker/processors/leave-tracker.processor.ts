@@ -11,10 +11,7 @@ import {
   LEAVE_TRACKER_QUEUE,
   type LeaveMessageJob,
 } from '../queues/leave-tracker.queue';
-import {
-  LeaveAttendanceService,
-  type LeaveBotMode,
-} from '../services/leave-attendance.service';
+import { LeaveAttendanceService } from '../services/leave-attendance.service';
 import { LeaveLedgerService } from '../services/leave-ledger.service';
 import {
   LeaveMessageContextService,
@@ -29,8 +26,6 @@ const PROBLEM_REACTION = 'warning';
 @Processor(LEAVE_TRACKER_QUEUE, { concurrency: 1 })
 export class LeaveTrackerProcessor extends WorkerHost {
   private readonly logger = new Logger(LeaveTrackerProcessor.name);
-  private readonly mode: LeaveBotMode;
-  private readonly shadowChannelId?: string;
   private readonly peoplePartnerUserId?: string;
 
   constructor(
@@ -42,13 +37,6 @@ export class LeaveTrackerProcessor extends WorkerHost {
     private readonly configService: ConfigService,
   ) {
     super();
-    this.mode =
-      this.configService.get<string>('LEAVES_BOT_MODE') === 'live'
-        ? 'live'
-        : 'shadow';
-    this.shadowChannelId = this.configService.get<string>(
-      'LEAVES_SHADOW_SLACK_CHANNEL',
-    );
     this.peoplePartnerUserId = this.configService.get<string>(
       'LEAVES_PEOPLE_PARTNER_SLACK_USER_ID',
     );
@@ -113,7 +101,6 @@ export class LeaveTrackerProcessor extends WorkerHost {
     const today = toIstDateString(now);
     const plan = planLeaveRequest(classification, today);
     const result = await this.leaveAttendanceService.apply({
-      mode: this.mode,
       email,
       actorSlackUserId: job.userId,
       sourceMessageId: job.messageId,
@@ -122,11 +109,9 @@ export class LeaveTrackerProcessor extends WorkerHost {
       reverts: plan.reverts,
     });
 
-    if (this.mode === 'live')
-      await this.recordOutcomes(job, context, email, result.outcomes);
+    await this.recordOutcomes(job, context, email, result.outcomes);
 
     const reply = formatLeaveReply({
-      mode: this.mode,
       addressee: this.addressee(job),
       employeeFound: result.employeeFound,
       outcomes: result.outcomes,
@@ -152,7 +137,6 @@ export class LeaveTrackerProcessor extends WorkerHost {
       classification.clarificationQuestion ??
       'Could you confirm the exact dates and whether it is leave or WFH?';
     await this.respond(job, `${this.addressee(job)} ${question}`, null);
-    if (this.mode !== 'live') return;
 
     const original = context.pending;
     await this.leaveLedgerService.setPendingClarification(
@@ -216,46 +200,26 @@ export class LeaveTrackerProcessor extends WorkerHost {
     text: string,
     reaction: string | null,
   ): Promise<void> {
-    if (this.mode === 'live') {
-      await this.slackBotService.postToThread(job.threadId, text);
-      if (reaction)
-        await this.slackBotService.addReaction(
-          job.threadId,
-          job.messageId,
-          reaction,
-        );
-      return;
-    }
-
-    this.logger.log(`[shadow] reply for ${job.messageId}: ${text}`);
-    if (!this.shadowChannelId) return;
-    await this.slackBotService.postToChannel(
-      this.shadowChannelId,
-      `[shadow] ${slackPermalink(job)}\n${text}`,
-    );
+    await this.slackBotService.postToThread(job.threadId, text);
+    if (reaction)
+      await this.slackBotService.addReaction(
+        job.threadId,
+        job.messageId,
+        reaction,
+      );
   }
 
   private addressee(job: LeaveMessageJob): string {
-    return this.mode === 'live' ? `<@${job.userId}>` : job.fullName;
+    return `<@${job.userId}>`;
   }
 
   private peoplePartnerMention(): string | null {
     if (!this.peoplePartnerUserId) return null;
-    return this.mode === 'live'
-      ? `<@${this.peoplePartnerUserId}>`
-      : '(People partner)';
+    return `<@${this.peoplePartnerUserId}>`;
   }
 
   private escalation(): string {
     const mention = this.peoplePartnerMention();
     return mention ? ` ${mention} please check.` : '';
   }
-}
-
-function slackPermalink({ threadId, messageId }: LeaveMessageJob): string {
-  const [, channelId, threadTs] = threadId.split(':');
-  const base = `https://slack.com/archives/${channelId}/p${messageId.replace('.', '')}`;
-  return threadTs === messageId
-    ? base
-    : `${base}?thread_ts=${threadTs}&cid=${channelId}`;
 }

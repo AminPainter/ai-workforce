@@ -56,10 +56,6 @@ services:
       # #leaves → RazorpayX Payroll leave bot.
       - key: LEAVES_SLACK_CHANNEL
         value: C0806NMM3L7
-      - key: LEAVES_BOT_MODE
-        value: shadow
-      - key: LEAVES_SHADOW_SLACK_CHANNEL
-        sync: false
       - key: LEAVES_PEOPLE_PARTNER_SLACK_USER_ID
         sync: false
       - key: LEAVES_EMAIL_OVERRIDES

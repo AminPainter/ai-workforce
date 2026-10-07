@@ -29,7 +29,6 @@ export interface PendingClarification {
 
 export interface LeaveAuditEntry {
   at: string;
-  mode: 'live' | 'shadow';
   sourceMessageId: string;
   actorSlackUserId: string;
   subjectEmail: string;

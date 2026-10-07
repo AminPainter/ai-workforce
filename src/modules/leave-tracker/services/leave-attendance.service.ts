@@ -25,15 +25,8 @@ import {
 const MARK_REMARKS_SUFFIX = 'Applied via Slack leave bot';
 const REVERT_REMARKS = 'Cancelled via Slack leave bot';
 
-export type LeaveBotMode = 'live' | 'shadow';
-
 export type DateOutcomeStatus =
-  | 'done'
-  | 'already_done'
-  | 'would_do'
-  | 'left_unchanged'
-  | 'mismatch'
-  | 'failed';
+  'done' | 'already_done' | 'left_unchanged' | 'mismatch' | 'failed';
 
 export interface DateOutcome {
   date: string;
@@ -45,7 +38,6 @@ export interface DateOutcome {
 }
 
 export interface ApplyLeavePlanInput {
-  mode: LeaveBotMode;
   email: string;
   actorSlackUserId: string;
   sourceMessageId: string;
@@ -153,8 +145,6 @@ export class LeaveAttendanceService {
         ...base,
         status: 'already_done',
       });
-    if (input.mode === 'shadow')
-      return this.audit(input, employee, null, { ...base, status: 'would_do' });
 
     const write: AttendanceWrite = {
       email: employee.razorpayxEmail,
@@ -226,8 +216,6 @@ export class LeaveAttendanceService {
         status: 'left_unchanged',
         detail: `RazorpayX shows ${describeRecord(before)}`,
       });
-    if (input.mode === 'shadow')
-      return this.audit(input, employee, null, { ...base, status: 'would_do' });
 
     const write: AttendanceWrite = {
       email: employee.razorpayxEmail,
@@ -282,7 +270,6 @@ export class LeaveAttendanceService {
   ): Promise<DateOutcome> {
     await this.leaveLedgerService.appendAudit({
       at: new Date().toISOString(),
-      mode: input.mode,
       sourceMessageId: input.sourceMessageId,
       actorSlackUserId: input.actorSlackUserId,
       subjectEmail: employee.razorpayxEmail,
