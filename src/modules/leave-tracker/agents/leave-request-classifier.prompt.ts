@@ -35,7 +35,6 @@ People can only mark their own leave. A request to mark leave for someone else, 
 - Coming in late, starting late, reaching office by 11, logging off early, leaving early, stepping out, AFK for a few hours, available intermittently, starting early and wrapping up early.
 - Channel join notices, "tc", "take care", acknowledgements, questions to HR, announcements by HR about the process.
 - "Bumping this" with nothing new.
-- Messages whose leave content is entirely struck through (~like this~) - struck-through text is withdrawn.
 - Cancellations: "Cancelling my WFH today", "This is cancelled", "cancelling this, coming to office". The bot does not cancel leave.
 
 ## Changes of plan

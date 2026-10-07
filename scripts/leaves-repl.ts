@@ -179,12 +179,6 @@ const FIXTURES: Fixture[] = [
     },
   },
   {
-    name: 'struck-through tentative leave',
-    text: "Hi Team,\n\n~I'll be tentatively taking leave from 25th - 30Oct. Will confirm the dates by EOW.~",
-    postedAt: '2026-09-30T10:29:00+05:30',
-    expect: { intent: 'ignore' },
-  },
-  {
     name: 'appointment window',
     text: "Tomorrow I'll have to step out for an appointment during 11:30am to 1pm.",
     postedAt: '2026-10-06T21:12:00+05:30',

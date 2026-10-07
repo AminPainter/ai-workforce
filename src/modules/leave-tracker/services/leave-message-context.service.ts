@@ -5,7 +5,6 @@ import {
   formatClassifierInput,
   type ThreadParentMessage,
 } from '../utils/classifier-input';
-import { cleanSlackText } from '../utils/slack-text';
 
 export interface SlackPerson {
   name: string;
@@ -30,7 +29,7 @@ export class LeaveMessageContextService {
         postedAt: new Date(job.postedAt),
         authorName: author.name,
         authorUserId: job.userId,
-        text: cleanSlackText(job.rawText),
+        text: job.text,
         threadParent: await this.ownThreadParent(job),
       }),
     };
@@ -56,9 +55,8 @@ export class LeaveMessageContextService {
     );
     if (!parent || parent.author.userId !== job.userId) return null;
 
-    const rawText = (parent.raw as { text?: string } | undefined)?.text;
     return {
-      text: cleanSlackText(rawText ?? parent.text),
+      text: parent.text,
       postedAt: parent.metadata.dateSent,
     };
   }

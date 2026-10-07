@@ -25,7 +25,6 @@ export class LeaveTrackerListener {
     if (message.author.isBot === true || message.author.isMe) return;
     const text = message.text?.trim();
     if (!text) return;
-    const rawText = (message.raw as { text?: string } | undefined)?.text;
 
     try {
       await this.leaveTrackerQueue.add(
@@ -33,7 +32,7 @@ export class LeaveTrackerListener {
         {
           threadId: message.threadId,
           messageId: message.id,
-          rawText: rawText?.trim() || text,
+          text,
           userId: message.author.userId,
           postedAt: message.metadata.dateSent.toISOString(),
         } satisfies LeaveMessageJob,
