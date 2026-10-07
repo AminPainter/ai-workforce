@@ -307,6 +307,16 @@ const FIXTURES: Fixture[] = [
     expect: { intent: 'ignore' },
   },
   {
+    name: 'unrelated thread reply under own wfh post',
+    text: 'nothing. just need some more time to build it. Will build it once i have some free time',
+    postedAt: '2026-10-07T10:15:00+05:30',
+    threadParent: {
+      text: 'I will be working from home tomorrow',
+      postedAt: '2026-10-07T09:00:00+05:30',
+    },
+    expect: { intent: 'ignore' },
+  },
+  {
     name: 'answer to clarification',
     text: '7th to 9th',
     postedAt: '2026-10-07T09:28:00+05:30',
@@ -349,6 +359,18 @@ const FIXTURES: Fixture[] = [
         '2026-11-25 wfh full',
       ],
     },
+  },
+  {
+    name: 'logging in second half tomorrow',
+    text: 'I will be loggin in in the second half post 2 pm tomorrow',
+    postedAt: '2026-10-07T18:30:00+05:30',
+    expect: { intent: 'mark', marks: ['2026-10-08 earned first_half'] },
+  },
+  {
+    name: 'logging off after first half today',
+    text: 'Have a family function, will be logging off at 1 pm today',
+    postedAt: '2026-10-07T09:10:00+05:30',
+    expect: { intent: 'mark', marks: ['2026-10-07 earned second_half'] },
   },
   {
     name: 'early logoff tomorrow',

@@ -90,6 +90,18 @@ export class LeaveTrackerProcessor extends WorkerHost {
       marks: plan.marks,
     });
 
+    const changedNothing =
+      result.employeeFound &&
+      plan.skipped.length === 0 &&
+      plan.invalidRanges.length === 0 &&
+      result.outcomes.every(({ status }) => status === 'already_done');
+    if (context.isThreadReply && changedNothing) {
+      this.logger.log(
+        `message ${job.messageId}: thread reply with nothing new to mark, staying silent`,
+      );
+      return;
+    }
+
     const reply = formatLeaveReply({
       addressee: this.addressee(job),
       employeeFound: result.employeeFound,

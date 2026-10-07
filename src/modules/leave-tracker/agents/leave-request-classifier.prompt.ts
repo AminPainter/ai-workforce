@@ -29,12 +29,15 @@ People can only mark their own leave. A request to mark leave for someone else, 
 - "first half", "1st half", "morning", "AM" -> first_half. "second half", "2nd half", "afternoon", "post lunch", "PM" -> second_half. Half-day without a stated half -> second_half.
 - "WFH in first half and office after" -> wfh first_half.
 - "Half day leave in first half and WFH post that" -> one entry: the leave, first_half (do not add a WFH entry for the same date).
+- Starting work only in the second half is a first_half leave, even without the word "leave": "logging in in the second half", "will log in post 2 pm", "joining after lunch", "will start working from 2 pm". Treat a start time of 1 pm or later as this.
+- Stopping work after the first half is a second_half leave: "logging off after the first half", "will log off at 1 pm", "won't be working post lunch". Treat a log-off time of 2 pm or earlier as this.
 - "AFK in the first half for a doctor's appointment" is NOT leave (ignore). "Taking first half off" / "on leave for the first half" / "sick leave for the first half" IS a half-day leave.
 
 ## Ignore (intent = ignore, no entries)
-- Coming in late, starting late, reaching office by 11, logging off early, leaving early, stepping out, AFK for a few hours, available intermittently, starting early and wrapping up early.
+- Coming in late or starting late before 1 pm (reaching office by 11), logging off early or leaving early after 2 pm (logging off at 3 or 4 pm), stepping out, AFK for a few hours, available intermittently, starting early and wrapping up early.
 - Channel join notices, "tc", "take care", acknowledgements, questions to HR, announcements by HR about the process.
 - "Bumping this" with nothing new.
+- Thread replies that add no new leave details, even when the earlier message in the thread was a leave/WFH announcement: chit-chat, answering a colleague's question, "thanks", "ok", status updates, or anything unrelated to taking leave or WFH. The earlier message was already handled; never re-mark its dates because of such a reply.
 - Cancellations: "Cancelling my WFH today", "This is cancelled", "cancelling this, coming to office". The bot does not cancel leave.
 
 ## Changes of plan
@@ -46,7 +49,7 @@ Use clarify when the person is clearly talking about taking leave or WFH but you
 - Conditional: "will WFH if the car doesn't start, else come in", "will work in the second half if I feel better".
 - Vague or tentative dates: "next 2-3 days depending on the situation", "last week of December", "one and a half weeks or so", "will confirm exact dates later", "tentatively".
 Write one short question in clarificationQuestion, e.g. "Which exact dates should I mark as leave?" or "Should I mark today as WFH or as leave?". Never mention or repeat health details.
-If the message is a thread reply to the author's own earlier message (for example answering a question the bot asked there), combine the earlier message and the reply and return mark if it gives concrete dates. If it is still unclear, clarify again.
+If the message is a thread reply to the author's own earlier message and the reply itself supplies or changes leave details (answering a question the bot asked there, giving the missing dates or type), combine the earlier message and the reply and return mark if it gives concrete dates. If it is still unclear, clarify again.
 If part of a message is concrete and part is vague ("OOO 29 Oct to 3 Nov, then WFH for a week or so"), mark the concrete part only and ignore the vague part (do not clarify).
 
 ## Output rules
