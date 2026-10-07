@@ -85,8 +85,7 @@ Leave bot (#leaves → RazorpayX Payroll attendance, `src/modules/leave-tracker`
   per entity live in `leave-tracker/constants/leave-kinds.ts`; an entity without codes there
   fails its writes loudly.
 
-`pnpm leaves:repl` runs the classifier golden set; `pnpm rzp:probe` exercises the RazorpayX
-attendance API (read-only `fetch`; writes need `--confirm`).
+`pnpm leaves:repl` runs the classifier golden set.
 
 SearXNG:
 - `SEARXNG_SECRET` (required) — SearXNG reads this natively and overrides `secret_key`. If it is

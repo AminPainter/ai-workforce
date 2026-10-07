@@ -107,26 +107,6 @@ export class RazorpayxPayrollService {
     }
   }
 
-  async listLeaveTypes(
-    entityId: number,
-    email: string,
-    date: string,
-  ): Promise<unknown> {
-    try {
-      return await this.call('PATCH', entityId, 'modify', {
-        email,
-        'employee-type': 'employee',
-        date,
-        status: 'leave',
-        'leave-type': -1,
-        remarks: 'Leave type discovery',
-      });
-    } catch (error) {
-      if (error instanceof RazorpayxApiError) return error.responseBody;
-      throw error;
-    }
-  }
-
   private async call<T extends { status?: string }>(
     method: HttpMethod,
     entityId: number,
