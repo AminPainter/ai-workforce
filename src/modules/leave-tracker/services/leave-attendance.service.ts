@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { RazorpayxPayrollService } from '../../razorpayx/services/razorpayx-payroll.service';
 import {
   EmployeeNotFoundError,
@@ -44,7 +43,7 @@ export interface ApplyLeavePlanInput {
 
 interface EmployeeCompany {
   companyId: number;
-  razorpayxEmail: string;
+  email: string;
 }
 
 export interface ApplyLeavePlanResult {
@@ -55,26 +54,10 @@ export interface ApplyLeavePlanResult {
 @Injectable()
 export class LeaveAttendanceService {
   private readonly logger = new Logger(LeaveAttendanceService.name);
-  private readonly emailOverrides: Record<string, string>;
 
   constructor(
     private readonly razorpayxPayrollService: RazorpayxPayrollService,
-    private readonly configService: ConfigService,
-  ) {
-    const rawOverrides = this.configService.get<string>(
-      'LEAVES_EMAIL_OVERRIDES',
-    );
-    this.emailOverrides = Object.fromEntries(
-      Object.entries(
-        rawOverrides
-          ? (JSON.parse(rawOverrides) as Record<string, string>)
-          : {},
-      ).map(([slackEmail, razorpayxEmail]) => [
-        slackEmail.toLowerCase(),
-        razorpayxEmail,
-      ]),
-    );
-  }
+  ) {}
 
   async apply(input: ApplyLeavePlanInput): Promise<ApplyLeavePlanResult> {
     const employee = await this.resolveEmployee(input.email, input.today);
@@ -92,26 +75,21 @@ export class LeaveAttendanceService {
     email: string,
     today: string,
   ): Promise<EmployeeCompany | null> {
-    const candidateEmails = [
-      ...new Set([email, this.emailOverrides[email.toLowerCase()]]),
-    ].filter((candidate): candidate is string => Boolean(candidate));
-
-    for (const razorpayxEmail of candidateEmails)
-      for (const companyId of this.razorpayxPayrollService.companyIds)
-        try {
-          await this.razorpayxPayrollService.fetchAttendance(
-            companyId,
-            razorpayxEmail,
-            today,
-          );
-          return { companyId, razorpayxEmail };
-        } catch (error) {
-          if (error instanceof EmployeeNotFoundError) continue;
-          this.logger.warn(
-            `company ${companyId} probe errored without "user not found"; using it anyway: ${String(error)}`,
-          );
-          return { companyId, razorpayxEmail };
-        }
+    for (const companyId of this.razorpayxPayrollService.companyIds)
+      try {
+        await this.razorpayxPayrollService.fetchAttendance(
+          companyId,
+          email,
+          today,
+        );
+        return { companyId, email };
+      } catch (error) {
+        if (error instanceof EmployeeNotFoundError) continue;
+        this.logger.warn(
+          `company ${companyId} probe errored without "user not found"; using it anyway: ${String(error)}`,
+        );
+        return { companyId, email };
+      }
 
     return null;
   }
@@ -138,7 +116,7 @@ export class LeaveAttendanceService {
       });
 
     const write: AttendanceWrite = {
-      email: employee.razorpayxEmail,
+      email: employee.email,
       date,
       status: target.status,
       leaveType: target.leaveType,
@@ -209,7 +187,7 @@ export class LeaveAttendanceService {
       });
 
     const write: AttendanceWrite = {
-      email: employee.razorpayxEmail,
+      email: employee.email,
       date,
       status: 'present',
       remarks: REVERT_REMARKS,
@@ -244,7 +222,7 @@ export class LeaveAttendanceService {
     try {
       return await this.razorpayxPayrollService.fetchAttendance(
         employee.companyId,
-        employee.razorpayxEmail,
+        employee.email,
         date,
       );
     } catch (error) {
