@@ -19,7 +19,7 @@ import {
 import type { PlannedMark, PlannedRevert } from '../utils/leave-plan';
 import {
   LeaveLedgerService,
-  type EmployeeEntity,
+  type EmployeeCompany,
 } from './leave-ledger.service';
 
 const MARK_REMARKS_SUFFIX = 'Applied via Slack leave bot';
@@ -99,8 +99,8 @@ export class LeaveAttendanceService {
   async resolveEmployee(
     email: string,
     today: string,
-  ): Promise<EmployeeEntity | null> {
-    const cached = await this.leaveLedgerService.getEmployeeEntity(email);
+  ): Promise<EmployeeCompany | null> {
+    const cached = await this.leaveLedgerService.getEmployeeCompany(email);
     if (cached) return cached;
 
     const candidateEmails = [
@@ -108,26 +108,26 @@ export class LeaveAttendanceService {
     ].filter((candidate): candidate is string => Boolean(candidate));
 
     for (const razorpayxEmail of candidateEmails)
-      for (const entityId of this.razorpayxPayrollService.entityIds)
+      for (const companyId of this.razorpayxPayrollService.companyIds)
         try {
           const record = await this.razorpayxPayrollService.fetchAttendance(
-            entityId,
+            companyId,
             razorpayxEmail,
             today,
           );
           const employee = {
-            entityId,
+            companyId,
             razorpayxEmail,
             employeeId: record.employeeId,
           };
-          await this.leaveLedgerService.setEmployeeEntity(email, employee);
+          await this.leaveLedgerService.setEmployeeCompany(email, employee);
           return employee;
         } catch (error) {
           if (error instanceof EmployeeNotFoundError) continue;
           this.logger.warn(
-            `entity ${entityId} probe errored without "user not found"; using it uncached: ${String(error)}`,
+            `company ${companyId} probe errored without "user not found"; using it uncached: ${String(error)}`,
           );
-          return { entityId, razorpayxEmail, employeeId: null };
+          return { companyId, razorpayxEmail, employeeId: null };
         }
 
     return null;
@@ -135,16 +135,16 @@ export class LeaveAttendanceService {
 
   private async applyMark(
     input: ApplyLeavePlanInput,
-    employee: EmployeeEntity,
+    employee: EmployeeCompany,
     { date, kind, portion }: PlannedMark,
   ): Promise<DateOutcome> {
     const base = { date, operation: 'mark' as const, kind, portion };
-    const target = toAttendanceTarget(employee.entityId, kind, portion);
+    const target = toAttendanceTarget(employee.companyId, kind, portion);
     if (!target)
       return this.audit(input, employee, null, {
         ...base,
         status: 'failed',
-        detail: `leave-type codes for RazorpayX entity ${employee.entityId} are not configured`,
+        detail: `leave-type codes for RazorpayX company ${employee.companyId} are not configured`,
       });
 
     const before = await this.tryFetch(employee, date);
@@ -165,7 +165,7 @@ export class LeaveAttendanceService {
     };
     try {
       await this.razorpayxPayrollService.modifyAttendance(
-        employee.entityId,
+        employee.companyId,
         write,
       );
     } catch (error) {
@@ -198,7 +198,7 @@ export class LeaveAttendanceService {
 
   private async applyRevert(
     input: ApplyLeavePlanInput,
-    employee: EmployeeEntity,
+    employee: EmployeeCompany,
     { date, kind }: PlannedRevert,
   ): Promise<DateOutcome> {
     const base = {
@@ -217,7 +217,9 @@ export class LeaveAttendanceService {
       before &&
       kind &&
       before.leaveTypeCode !== null &&
-      !leaveKindsForCode(employee.entityId, before.leaveTypeCode).includes(kind)
+      !leaveKindsForCode(employee.companyId, before.leaveTypeCode).includes(
+        kind,
+      )
     )
       return this.audit(input, employee, null, {
         ...base,
@@ -235,7 +237,7 @@ export class LeaveAttendanceService {
     };
     try {
       await this.razorpayxPayrollService.modifyAttendance(
-        employee.entityId,
+        employee.companyId,
         write,
       );
     } catch (error) {
@@ -257,12 +259,12 @@ export class LeaveAttendanceService {
   }
 
   private async tryFetch(
-    employee: EmployeeEntity,
+    employee: EmployeeCompany,
     date: string,
   ): Promise<AttendanceRecord | null> {
     try {
       return await this.razorpayxPayrollService.fetchAttendance(
-        employee.entityId,
+        employee.companyId,
         employee.razorpayxEmail,
         date,
       );
@@ -274,7 +276,7 @@ export class LeaveAttendanceService {
 
   private async audit(
     input: ApplyLeavePlanInput,
-    employee: EmployeeEntity,
+    employee: EmployeeCompany,
     write: AttendanceWrite | null,
     outcome: DateOutcome,
   ): Promise<DateOutcome> {
@@ -284,7 +286,7 @@ export class LeaveAttendanceService {
       sourceMessageId: input.sourceMessageId,
       actorSlackUserId: input.actorSlackUserId,
       subjectEmail: employee.razorpayxEmail,
-      entityId: employee.entityId,
+      companyId: employee.companyId,
       date: outcome.date,
       operation: outcome.operation,
       request: write ? { ...write } : null,

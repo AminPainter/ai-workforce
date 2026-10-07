@@ -19,18 +19,12 @@ import { LeaveLedgerService } from '../services/leave-ledger.service';
 import {
   LeaveMessageContextService,
   type LeaveMessageContext,
-  type SlackPerson,
 } from '../services/leave-message-context.service';
 import { planLeaveRequest } from '../utils/leave-plan';
 import { formatLeaveReply } from '../utils/leave-reply';
 
 const SUCCESS_REACTION = 'white_check_mark';
 const PROBLEM_REACTION = 'warning';
-
-interface LeaveSubject {
-  person: SlackPerson;
-  label: string | null;
-}
 
 @Processor(LEAVE_TRACKER_QUEUE, { concurrency: 1 })
 export class LeaveTrackerProcessor extends WorkerHost {
@@ -106,12 +100,11 @@ export class LeaveTrackerProcessor extends WorkerHost {
     if (classification.intent === 'clarify')
       return this.askClarification(job, context, classification);
 
-    const subject = await this.resolveSubject(job, context, classification);
-    if (!subject) return;
-    if (!subject.person.email) {
+    const { email } = context.author;
+    if (!email) {
       await this.respond(
         job,
-        `${this.addressee(job)} :warning: I couldn't read an email address from the Slack profile${subject.label ? ` of ${subject.label}` : ''}, so nothing was marked.${this.escalation()}`,
+        `${this.addressee(job)} :warning: I couldn't read an email address from your Slack profile, so nothing was marked.${this.escalation()}`,
         PROBLEM_REACTION,
       );
       return;
@@ -121,7 +114,7 @@ export class LeaveTrackerProcessor extends WorkerHost {
     const plan = planLeaveRequest(classification, today);
     const result = await this.leaveAttendanceService.apply({
       mode: this.mode,
-      email: subject.person.email,
+      email,
       actorSlackUserId: job.userId,
       sourceMessageId: job.messageId,
       today,
@@ -130,17 +123,11 @@ export class LeaveTrackerProcessor extends WorkerHost {
     });
 
     if (this.mode === 'live')
-      await this.recordOutcomes(
-        job,
-        context,
-        subject.person.email,
-        result.outcomes,
-      );
+      await this.recordOutcomes(job, context, email, result.outcomes);
 
     const reply = formatLeaveReply({
       mode: this.mode,
       addressee: this.addressee(job),
-      subjectLabel: subject.label,
       employeeFound: result.employeeFound,
       outcomes: result.outcomes,
       skipped: plan.skipped,
@@ -180,39 +167,6 @@ export class LeaveTrackerProcessor extends WorkerHost {
         question,
       },
     );
-  }
-
-  private async resolveSubject(
-    job: LeaveMessageJob,
-    context: LeaveMessageContext,
-    classification: LeaveRequestClassification,
-  ): Promise<LeaveSubject | null> {
-    const subjectUserId = classification.subjectSlackUserId;
-    if (!subjectUserId || subjectUserId === job.userId)
-      return { person: context.author, label: null };
-
-    if (!context.isAdmin) {
-      await this.respond(
-        job,
-        `${this.addressee(job)} Only the People team can mark leave for someone else. Please ask them to post their own message here.`,
-        null,
-      );
-      return null;
-    }
-    if (!context.mentionedUserIds.includes(subjectUserId)) {
-      await this.respond(
-        job,
-        `${this.addressee(job)} I couldn't tell whose leave to mark. Please @mention them in the message.`,
-        PROBLEM_REACTION,
-      );
-      return null;
-    }
-    const person =
-      await this.leaveMessageContextService.lookupPerson(subjectUserId);
-    return {
-      person,
-      label: this.mode === 'live' ? `<@${subjectUserId}>` : person.name,
-    };
   }
 
   private async recordOutcomes(

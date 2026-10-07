@@ -75,14 +75,12 @@ Leave bot (#leaves → RazorpayX Payroll attendance, `src/modules/leave-tracker`
   never writes; replies go to `LEAVES_SHADOW_SLACK_CHANNEL` (or logs only). `live` writes and
   replies in-thread.
 - `LEAVES_SHADOW_SLACK_CHANNEL` (optional) — channel id for shadow-mode output.
-- `LEAVES_ADMIN_SLACK_USER_IDS` (optional) — comma-separated Slack user ids allowed to mark
-  leave for someone else ("Mark sick leave today for @X").
 - `LEAVES_PEOPLE_PARTNER_SLACK_USER_ID` (optional) — tagged on failures.
 - `LEAVES_EMAIL_OVERRIDES` (optional) — JSON map of Slack email → RazorpayX email for people
   whose RazorpayX email differs.
-- `RAZORPAYX_PAYROLL_ENTITIES` (required for the bot to write) — JSON array
-  `[{"id": 337931, "key": "...", "name": "..."}]`, one per payroll entity. Leave-type codes
-  per entity live in `leave-tracker/constants/leave-kinds.ts`; an entity without codes there
+- `RAZORPAYX_PAYROLL_COMPANIES` (required for the bot to write) — JSON array
+  `[{"id": 337931, "key": "...", "name": "..."}]`, one per payroll company. Leave-type codes
+  per company live in `leave-tracker/constants/leave-kinds.ts`; a company without codes there
   fails its writes loudly.
 
 `pnpm leaves:repl` runs the classifier golden set.

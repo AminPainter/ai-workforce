@@ -10,7 +10,6 @@ import { formatDateRanges, formatShortDate } from './leave-dates';
 export interface LeaveReplyInput {
   mode: LeaveBotMode;
   addressee: string;
-  subjectLabel: string | null;
   employeeFound: boolean;
   outcomes: DateOutcome[];
   skipped: SkippedDate[];
@@ -30,14 +29,13 @@ const SKIP_REASON_LABELS: Record<SkippedDate['reason'], string> = {
 };
 
 export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
-  const forSubject = input.subjectLabel ? ` for ${input.subjectLabel}` : '';
   const escalation = input.peoplePartnerMention
     ? ` ${input.peoplePartnerMention} please check.`
     : '';
 
   if (!input.employeeFound)
     return {
-      text: `${input.addressee} :warning: I couldn't find${forSubject ? forSubject : ' you'} in RazorpayX Payroll, so nothing was marked.${escalation}`,
+      text: `${input.addressee} :warning: I couldn't find you in RazorpayX Payroll, so nothing was marked.${escalation}`,
       hasProblems: true,
     };
 
@@ -61,9 +59,7 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
   };
 
   pushMarkSection(
-    isShadow
-      ? `Would mark in RazorpayX${forSubject}:`
-      : `Marked in RazorpayX${forSubject}:`,
+    isShadow ? 'Would mark in RazorpayX:' : 'Marked in RazorpayX:',
     isShadow ? 'would_do' : 'done',
   );
   pushMarkSection('Already marked:', 'already_done');

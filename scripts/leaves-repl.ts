@@ -21,6 +21,7 @@ import { AiService } from '../src/modules/ai/services/ai.service';
 import { toIstDateString } from '../src/common/utils/date.util';
 import { createLeaveRequestClassifier } from '../src/modules/leave-tracker/agents/leave-request-classifier.agent';
 import type { LeaveRequestClassification } from '../src/modules/leave-tracker/agents/leave-request-classifier.schema';
+import { LeaveKind } from '../src/modules/leave-tracker/constants/leave-kinds';
 import {
   formatClassifierInput,
   type ClassifierContextMessage,
@@ -38,14 +39,11 @@ class ReplModule {}
 // Wednesday 2026-10-07, 09:30 IST.
 const NOW = new Date('2026-10-07T09:30:00+05:30');
 const AUTHOR_ID = 'U0AUTHOR01';
-const COLLEAGUE_ID = 'U0COLLEAG1';
 
 interface Fixture {
   name: string;
   text: string;
   postedAt: string;
-  isAdmin?: boolean;
-  mentioned?: Array<[string, string]>;
   context?: Array<
     Omit<ClassifierContextMessage, 'postedAt'> & { postedAt: string }
   >;
@@ -54,7 +52,6 @@ interface Fixture {
     // "YYYY-MM-DD kind portion"; kind may be "*" when either reading is acceptable.
     marks?: string[];
     reverts?: string[];
-    subject?: string;
   };
 }
 
@@ -284,22 +281,15 @@ const FIXTURES: Fixture[] = [
     },
   },
   {
-    name: 'admin marks for someone',
+    name: 'marking for someone else is ignored',
     text: 'Mark sick leave today for @Colleague',
     postedAt: '2026-10-07T08:48:00+05:30',
-    isAdmin: true,
-    mentioned: [[COLLEAGUE_ID, 'Colleague']],
-    expect: {
-      intent: 'mark',
-      subject: COLLEAGUE_ID,
-      marks: ['2026-10-07 sick full'],
-    },
+    expect: { intent: 'ignore' },
   },
   {
     name: 'cc is not the subject',
     text: "I'll be on leave tomorrow.\n\ncc: @Colleague @Team",
     postedAt: '2026-10-06T20:50:00+05:30',
-    mentioned: [[COLLEAGUE_ID, 'Colleague']],
     expect: { intent: 'mark', marks: ['2026-10-07 earned full'] },
   },
   {
@@ -331,7 +321,7 @@ const FIXTURES: Fixture[] = [
         text: 'Will be on leave tomorrow.',
         postedAt: '2026-10-06T18:00:00+05:30',
         recordedEntries: [
-          { date: '2026-10-07', kind: 'earned', portion: 'full' },
+          { date: '2026-10-07', kind: LeaveKind.Earned, portion: 'full' },
         ],
       },
     ],
@@ -439,9 +429,7 @@ async function main(): Promise<void> {
       postedAt: new Date(fixture.postedAt),
       authorName: 'Employee',
       authorUserId: AUTHOR_ID,
-      isAdmin: fixture.isAdmin ?? false,
       text: fixture.text,
-      mentionedUsers: new Map(fixture.mentioned ?? []),
       contextMessages: (fixture.context ?? []).map((context) => ({
         ...context,
         postedAt: new Date(context.postedAt),
@@ -468,25 +456,20 @@ async function main(): Promise<void> {
   for (const fixture of FIXTURES) {
     const { output, plan } = await classify(fixture);
     const actual = planToStrings(plan);
-    const actualSubject =
-      output.subjectSlackUserId === AUTHOR_ID
-        ? null
-        : output.subjectSlackUserId;
     const expectedMarks = fixture.expect.marks ?? [];
     const expectedReverts = fixture.expect.reverts ?? [];
     const ok =
       output.intent === fixture.expect.intent &&
       marksMatch(actual.marks, expectedMarks) &&
-      JSON.stringify(actual.reverts) === JSON.stringify(expectedReverts) &&
-      (fixture.expect.subject ?? null) === actualSubject;
+      JSON.stringify(actual.reverts) === JSON.stringify(expectedReverts);
     if (ok) passed++;
     console.log(`\n[${ok ? 'PASS' : 'FAIL'}] ${fixture.name}`);
     if (!ok) {
       console.log(
-        `  expected: ${fixture.expect.intent} marks=${JSON.stringify(expectedMarks)} reverts=${JSON.stringify(expectedReverts)}${fixture.expect.subject ? ` subject=${fixture.expect.subject}` : ''}`,
+        `  expected: ${fixture.expect.intent} marks=${JSON.stringify(expectedMarks)} reverts=${JSON.stringify(expectedReverts)}`,
       );
       console.log(
-        `  got:      ${output.intent} marks=${JSON.stringify(actual.marks)} reverts=${JSON.stringify(actual.reverts)} subject=${actualSubject}`,
+        `  got:      ${output.intent} marks=${JSON.stringify(actual.marks)} reverts=${JSON.stringify(actual.reverts)}`,
       );
       console.log(`  reason:   ${output.reason}`);
     }

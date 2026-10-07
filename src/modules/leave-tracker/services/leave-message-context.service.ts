@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { SlackBotService } from '../../slack/services/slack-bot.service';
 import type { LeaveMessageJob } from '../queues/leave-tracker.queue';
 import {
@@ -24,49 +23,22 @@ export interface SlackPerson {
 
 export interface LeaveMessageContext {
   author: SlackPerson;
-  isAdmin: boolean;
   parentMessageId: string | null;
   pending: PendingClarification | null;
-  mentionedUserIds: string[];
   classifierInput: string;
 }
 
 @Injectable()
 export class LeaveMessageContextService {
-  private readonly adminUserIds: Set<string>;
-
   constructor(
     private readonly slackBotService: SlackBotService,
     private readonly leaveLedgerService: LeaveLedgerService,
-    private readonly configService: ConfigService,
-  ) {
-    this.adminUserIds = new Set(
-      (this.configService.get<string>('LEAVES_ADMIN_SLACK_USER_IDS') ?? '')
-        .split(',')
-        .map((id) => id.trim())
-        .filter(Boolean),
-    );
-  }
-
-  isAdmin(userId: string): boolean {
-    return this.adminUserIds.has(userId);
-  }
-
-  async lookupPerson(userId: string): Promise<SlackPerson> {
-    const user = await this.slackBotService.getUser(userId);
-    return {
-      userId,
-      name: user?.fullName || user?.userName || userId,
-      email: user?.email ?? null,
-    };
-  }
+  ) {}
 
   async build(job: LeaveMessageJob, now: Date): Promise<LeaveMessageContext> {
     const author = await this.lookupPerson(job.userId);
-    const isAdmin = this.isAdmin(job.userId);
-    const mentionedUserIds = extractMentionedUserIds(job.rawText);
     const userNames = new Map<string, string>();
-    for (const userId of mentionedUserIds)
+    for (const userId of extractMentionedUserIds(job.rawText))
       userNames.set(userId, (await this.lookupPerson(userId)).name);
 
     const [, channelId, threadTs] = job.threadId.split(':');
@@ -113,20 +85,25 @@ export class LeaveMessageContextService {
 
     return {
       author,
-      isAdmin,
       parentMessageId,
       pending,
-      mentionedUserIds,
       classifierInput: formatClassifierInput({
         now,
         postedAt: new Date(job.postedAt),
         authorName: author.name,
         authorUserId: job.userId,
-        isAdmin,
         text: cleanSlackText(job.rawText, userNames),
-        mentionedUsers: userNames,
         contextMessages,
       }),
+    };
+  }
+
+  private async lookupPerson(userId: string): Promise<SlackPerson> {
+    const user = await this.slackBotService.getUser(userId);
+    return {
+      userId,
+      name: user?.fullName || user?.userName || userId,
+      email: user?.email ?? null,
     };
   }
 

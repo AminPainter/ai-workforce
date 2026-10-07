@@ -7,8 +7,8 @@ const AUDIT_RETENTION_MS = 3 * ONE_YEAR_IN_MS;
 const PENDING_CLARIFICATION_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 const AUDIT_KEY = 'audit';
 
-export interface EmployeeEntity {
-  entityId: number;
+export interface EmployeeCompany {
+  companyId: number;
   razorpayxEmail: string;
   employeeId: string | number | null;
 }
@@ -33,7 +33,7 @@ export interface LeaveAuditEntry {
   sourceMessageId: string;
   actorSlackUserId: string;
   subjectEmail: string;
-  entityId: number | null;
+  companyId: number | null;
   date: string;
   operation: 'mark' | 'revert';
   request: Record<string, unknown> | null;
@@ -68,15 +68,15 @@ export class LeaveLedgerService implements OnModuleInit {
     return (await this.store.get(`seen:${messageId}`)) !== null;
   }
 
-  async getEmployeeEntity(email: string): Promise<EmployeeEntity | null> {
-    return this.store.get<EmployeeEntity>(`entity:${email.toLowerCase()}`);
+  async getEmployeeCompany(email: string): Promise<EmployeeCompany | null> {
+    return this.store.get<EmployeeCompany>(`company:${email.toLowerCase()}`);
   }
 
-  async setEmployeeEntity(
+  async setEmployeeCompany(
     email: string,
-    entity: EmployeeEntity,
+    company: EmployeeCompany,
   ): Promise<void> {
-    await this.store.set(`entity:${email.toLowerCase()}`, entity);
+    await this.store.set(`company:${email.toLowerCase()}`, company);
   }
 
   async getRecordedEntries(messageId: string): Promise<RecordedEntry[]> {

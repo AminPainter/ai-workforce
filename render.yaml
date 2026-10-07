@@ -60,13 +60,11 @@ services:
         value: shadow
       - key: LEAVES_SHADOW_SLACK_CHANNEL
         sync: false
-      - key: LEAVES_ADMIN_SLACK_USER_IDS
-        sync: false
       - key: LEAVES_PEOPLE_PARTNER_SLACK_USER_ID
         sync: false
       - key: LEAVES_EMAIL_OVERRIDES
         sync: false
-      - key: RAZORPAYX_PAYROLL_ENTITIES
+      - key: RAZORPAYX_PAYROLL_COMPANIES
         sync: false
       # Add SLACK_APP_TOKEN / *_MCP_URL as sync:false only if the populated .env needs them.
 

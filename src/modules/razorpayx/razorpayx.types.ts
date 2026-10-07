@@ -1,4 +1,4 @@
-export interface RazorpayxEntity {
+export interface RazorpayxCompany {
   id: number;
   key: string;
   name: string;

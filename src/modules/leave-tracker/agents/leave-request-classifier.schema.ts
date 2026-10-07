@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LEAVE_KINDS, LEAVE_PORTIONS } from '../constants/leave-kinds';
+import { LEAVE_PORTIONS, LeaveKind } from '../constants/leave-kinds';
 
 const dateField = z
   .string()
@@ -11,12 +11,6 @@ export const leaveRequestClassificationSchema = z.object({
     .describe(
       'mark: the person announces leave/WFH on concrete dates. cancel: withdraws previously announced leave/WFH. cancel_and_mark: withdraws some dates and announces replacement or corrected ones in the same message. clarify: it is about taking leave/WFH but the dates or the type cannot be determined with confidence (conditional, vague or tentative). ignore: everything else (late start, leaving early, AFK, bumps with nothing new, questions, chit-chat, join notices).',
     ),
-  subjectSlackUserId: z
-    .string()
-    .nullable()
-    .describe(
-      'Slack user id (U...) of the person the leave is FOR, only when the author explicitly asks to mark leave on behalf of someone else ("Mark sick leave today for @X"). null in every other case, including cc/@mentions/FYI tags.',
-    ),
   entries: z
     .array(
       z.object({
@@ -25,7 +19,7 @@ export const leaveRequestClassificationSchema = z.object({
           'Last date of the range, inclusive. Same as startDate for a single day.',
         ),
         kind: z
-          .enum(LEAVE_KINDS)
+          .enum(LeaveKind)
           .describe(
             'earned for planned/personal leave, day off, OOO, travel, family events. sick for illness. period for cramps/period pain. optional for optional leave. wfh for work from home / working remotely.',
           ),
@@ -45,7 +39,7 @@ export const leaveRequestClassificationSchema = z.object({
         startDate: dateField,
         endDate: dateField,
         kind: z
-          .enum(LEAVE_KINDS)
+          .enum(LeaveKind)
           .nullable()
           .describe(
             'The kind being cancelled if stated ("cancelling my WFH" -> wfh), else null.',

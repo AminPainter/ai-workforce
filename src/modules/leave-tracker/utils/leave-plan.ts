@@ -1,5 +1,5 @@
 import type { LeaveRequestClassification } from '../agents/leave-request-classifier.schema';
-import type { LeaveKind, LeavePortion } from '../constants/leave-kinds';
+import { LeaveKind, type LeavePortion } from '../constants/leave-kinds';
 import {
   addDays,
   expandDateRange,
@@ -106,7 +106,7 @@ export function planLeaveRequest(
 }
 
 function markPriority({ kind, portion }: PlannedMark): number {
-  const isLeave = kind !== 'wfh';
+  const isLeave = kind !== LeaveKind.Wfh;
   const isFullDay = portion === 'full';
   return (isLeave ? 2 : 0) + (isFullDay ? 1 : 0);
 }

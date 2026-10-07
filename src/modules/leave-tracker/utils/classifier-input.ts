@@ -24,9 +24,7 @@ export interface ClassifierInputArgs {
   postedAt: Date;
   authorName: string;
   authorUserId: string;
-  isAdmin: boolean;
   text: string;
-  mentionedUsers: Map<string, string>;
   contextMessages: ClassifierContextMessage[];
 }
 
@@ -34,13 +32,13 @@ export function formatClassifierInput(args: ClassifierInputArgs): string {
   const lines = [
     `Today: ${describeMoment(args.now)}.`,
     `Message posted at: ${describeMoment(args.postedAt)}.`,
-    `Author: ${args.authorName} (${args.authorUserId})${args.isAdmin ? ', an admin who may mark leave for others' : ''}.`,
+    `Author: ${args.authorName} (${args.authorUserId}).`,
+    '',
+    'Message:',
+    '"""',
+    args.text,
+    '"""',
   ];
-  if (args.mentionedUsers.size > 0)
-    lines.push(
-      `Mentioned users: ${[...args.mentionedUsers].map(([id, name]) => `@${name} = ${id}`).join(', ')}.`,
-    );
-  lines.push('', 'Message:', '"""', args.text, '"""');
 
   for (const context of args.contextMessages) {
     lines.push(

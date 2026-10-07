@@ -6,7 +6,7 @@ import {
   RazorpayxApiError,
   type AttendanceRecord,
   type AttendanceWrite,
-  type RazorpayxEntity,
+  type RazorpayxCompany,
   type RazorpayxFetchResponse,
 } from '../razorpayx.types';
 
@@ -21,12 +21,12 @@ type HttpMethod = 'POST' | 'PATCH';
 @Injectable()
 export class RazorpayxPayrollService {
   private readonly logger = new Logger(RazorpayxPayrollService.name);
-  private readonly entities: RazorpayxEntity[];
+  private readonly companies: RazorpayxCompany[];
   private readonly payrollClient: AxiosInstance;
 
   constructor(private readonly configService: ConfigService) {
-    this.entities = parseEntities(
-      this.configService.get<string>('RAZORPAYX_PAYROLL_ENTITIES'),
+    this.companies = parseCompanies(
+      this.configService.get<string>('RAZORPAYX_PAYROLL_COMPANIES'),
     );
     this.payrollClient = axios.create({
       baseURL: PAYROLL_API_BASE_URL,
@@ -36,16 +36,16 @@ export class RazorpayxPayrollService {
     });
   }
 
-  get entityIds(): number[] {
-    return this.entities.map((entity) => entity.id);
+  get companyIds(): number[] {
+    return this.companies.map((company) => company.id);
   }
 
-  entityName(entityId: number): string {
-    return this.getEntity(entityId).name;
+  companyName(companyId: number): string {
+    return this.getCompany(companyId).name;
   }
 
   async fetchAttendance(
-    entityId: number,
+    companyId: number,
     email: string,
     date: string,
   ): Promise<AttendanceRecord> {
@@ -53,7 +53,7 @@ export class RazorpayxPayrollService {
     try {
       body = await this.call<RazorpayxFetchResponse>(
         'POST',
-        entityId,
+        companyId,
         'fetch',
         {
           email,
@@ -84,7 +84,7 @@ export class RazorpayxPayrollService {
   }
 
   async modifyAttendance(
-    entityId: number,
+    companyId: number,
     write: AttendanceWrite,
   ): Promise<void> {
     const data: Record<string, unknown> = {
@@ -97,34 +97,34 @@ export class RazorpayxPayrollService {
     if (write.leaveType !== undefined) data['leave-type'] = write.leaveType;
 
     try {
-      await this.call('PATCH', entityId, 'modify', data);
+      await this.call('PATCH', companyId, 'modify', data);
     } catch (error) {
       if (error instanceof EmployeeNotFoundError) throw error;
       this.logger.warn(
-        `PATCH modify failed for entity ${entityId} on ${write.date}, retrying as POST: ${String(error)}`,
+        `PATCH modify failed for company ${companyId} on ${write.date}, retrying as POST: ${String(error)}`,
       );
-      await this.call('POST', entityId, 'modify', data);
+      await this.call('POST', companyId, 'modify', data);
     }
   }
 
   private async call<T extends { status?: string }>(
     method: HttpMethod,
-    entityId: number,
+    companyId: number,
     subType: 'fetch' | 'modify',
     data: Record<string, unknown>,
   ): Promise<T> {
-    const entity = this.getEntity(entityId);
+    const company = this.getCompany(companyId);
     const response = await this.payrollClient.request<T>({
       url: '/att',
       method,
       data: {
-        auth: { id: entity.id, key: entity.key },
+        auth: { id: company.id, key: company.key },
         request: { type: 'attendance', 'sub-type': subType },
         data,
       },
     });
     const body = response.data;
-    const summary = `RazorpayX ${method} attendance/${subType} entity=${entityId} date=${String(data.date)}`;
+    const summary = `RazorpayX ${method} attendance/${subType} company=${companyId} date=${String(data.date)}`;
 
     const isOk =
       response.status < 400 &&
@@ -145,28 +145,28 @@ export class RazorpayxPayrollService {
     throw new RazorpayxApiError(message, code, body);
   }
 
-  private getEntity(entityId: number): RazorpayxEntity {
-    const entity = this.entities.find(({ id }) => id === entityId);
-    if (!entity)
+  private getCompany(companyId: number): RazorpayxCompany {
+    const company = this.companies.find(({ id }) => id === companyId);
+    if (!company)
       throw new Error(
-        `RazorpayX entity ${entityId} is not configured in RAZORPAYX_PAYROLL_ENTITIES`,
+        `RazorpayX company ${companyId} is not configured in RAZORPAYX_PAYROLL_COMPANIES`,
       );
-    return entity;
+    return company;
   }
 }
 
-function parseEntities(raw: string | undefined): RazorpayxEntity[] {
+function parseCompanies(raw: string | undefined): RazorpayxCompany[] {
   if (!raw) return [];
-  const parsed = JSON.parse(raw) as Array<Partial<RazorpayxEntity>>;
-  return parsed.map((entity) => {
-    if (typeof entity.id !== 'number' || typeof entity.key !== 'string')
+  const parsed = JSON.parse(raw) as Array<Partial<RazorpayxCompany>>;
+  return parsed.map((company) => {
+    if (typeof company.id !== 'number' || typeof company.key !== 'string')
       throw new Error(
-        'RAZORPAYX_PAYROLL_ENTITIES must be a JSON array of {"id": number, "key": string, "name": string}',
+        'RAZORPAYX_PAYROLL_COMPANIES must be a JSON array of {"id": number, "key": string, "name": string}',
       );
     return {
-      id: entity.id,
-      key: entity.key,
-      name: entity.name ?? String(entity.id),
+      id: company.id,
+      key: company.key,
+      name: company.name ?? String(company.id),
     };
   });
 }
