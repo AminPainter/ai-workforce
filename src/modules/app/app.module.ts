@@ -11,6 +11,7 @@ import { ContractDriftModule } from '../contract-drift/contract-drift.module';
 import { EmployeeAssistantModule } from '../employee-assistant/employee-assistant.module';
 import { GlomopayAgentModule } from '../glomopay-agent/glomopay-agent.module';
 import { SnackTrackerModule } from '../snack-tracker/snack-tracker.module';
+import { LeaveTrackerModule } from '../leave-tracker/leave-tracker.module';
 import { ZohoModule } from '../zoho/zoho.module';
 import { CustomerSupportModule } from '../customer-support/customer-support.module';
 import { Form9Module } from '../form9/form9.module';
@@ -29,6 +30,7 @@ import { QueueModule } from '../queue/queue.module';
     EmployeeAssistantModule,
     GlomopayAgentModule,
     SnackTrackerModule,
+    LeaveTrackerModule,
     ZohoModule,
     CustomerSupportModule,
     Form9Module,

@@ -8,9 +8,11 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
+import { formatIstDateTime } from '../../../common/utils/date.util';
 import {
   SLACK_BAKAR_MESSAGE_EVENT,
-  type SlackBakarEvent,
+  SLACK_LEAVES_MESSAGE_EVENT,
+  type SlackChannelMessageEvent,
 } from '../slack.events';
 
 const ALLOWED_SLACK_USER_IDS = new Set<string>([
@@ -37,7 +39,8 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   private slackAdapter!: import('chat').Adapter;
   private emoji!: typeof import('chat').emoji;
   private readonly maxContextMessages: number;
-  private readonly bakarChannelId: string;
+  private readonly leavesChannelId?: string;
+  private readonly channelMessageEvents = new Map<string, string>();
 
   constructor(
     private readonly agentRegistry: AgentRegistry,
@@ -47,9 +50,20 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     this.maxContextMessages = Number(
       this.configService.get('EMPLOYEE_ASSISTANT_MAX_CONTEXT_MESSAGES') ?? 50,
     );
-    this.bakarChannelId = `slack:${this.configService.getOrThrow<string>(
-      'BAKAR_SLACK_CHANNEL',
-    )}`;
+    this.channelMessageEvents.set(
+      `slack:${this.configService.getOrThrow<string>('BAKAR_SLACK_CHANNEL')}`,
+      SLACK_BAKAR_MESSAGE_EVENT,
+    );
+    const leavesChannel = this.configService.get<string>(
+      'LEAVES_SLACK_CHANNEL',
+    );
+    if (leavesChannel) {
+      this.leavesChannelId = `slack:${leavesChannel}`;
+      this.channelMessageEvents.set(
+        this.leavesChannelId,
+        SLACK_LEAVES_MESSAGE_EVENT,
+      );
+    }
   }
 
   async onModuleInit(): Promise<void> {
@@ -69,6 +83,10 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.bot.onNewMention(async (thread, message) => {
+      if (thread.channelId === this.leavesChannelId) {
+        this.emitChannelMessage(thread, message);
+        return;
+      }
       if (!this.isMessageAuthorAllowedToInteract(message)) {
         this.logger.warn(`ignored mention from ${message.author.userId}`);
         await thread.post(UNAUTHORIZED_MESSAGE);
@@ -80,11 +98,7 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.bot.onNewMessage(/[\s\S]/, (thread, message) => {
-      if (thread.channelId !== this.bakarChannelId) return;
-      this.eventEmitter.emit(SLACK_BAKAR_MESSAGE_EVENT, {
-        thread,
-        message,
-      } satisfies SlackBakarEvent);
+      this.emitChannelMessage(thread, message);
     });
   }
 
@@ -113,18 +127,53 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     await this.bot.thread(threadId).post(message);
   }
 
+  async addReaction(
+    threadId: string,
+    messageId: string,
+    emojiName: string,
+  ): Promise<void> {
+    try {
+      await this.slackAdapter.addReaction(threadId, messageId, emojiName);
+    } catch (error) {
+      this.logger.warn(`failed to add ${emojiName} reaction: ${error}`);
+    }
+  }
+
+  async getUser(userId: string): Promise<import('chat').UserInfo | null> {
+    return this.bot.getUser(userId);
+  }
+
+  async fetchMessage(
+    threadId: string,
+    messageId: string,
+  ): Promise<import('chat').Message | null> {
+    if (!this.slackAdapter.fetchMessage) return null;
+    try {
+      return await this.slackAdapter.fetchMessage(threadId, messageId);
+    } catch (error) {
+      this.logger.warn(
+        `failed to fetch message ${messageId} in ${threadId}: ${error}`,
+      );
+      return null;
+    }
+  }
+
+  private emitChannelMessage(
+    thread: import('chat').Thread,
+    message: import('chat').Message,
+  ): void {
+    const event = this.channelMessageEvents.get(thread.channelId);
+    if (!event) return;
+    this.eventEmitter.emit(event, {
+      thread,
+      message,
+    } satisfies SlackChannelMessageEvent);
+  }
+
   private async addSeenReaction(
     message: import('chat').Message,
   ): Promise<void> {
-    try {
-      await this.slackAdapter.addReaction(
-        message.threadId,
-        message.id,
-        this.emoji.eyes,
-      );
-    } catch (error) {
-      this.logger.warn(`failed to add eyes reaction: ${error}`);
-    }
+    await this.addReaction(message.threadId, message.id, this.emoji.eyes.name);
   }
 
   private async answer(
@@ -197,16 +246,6 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   }
 
   private datePrefix(): string {
-    const now = new Intl.DateTimeFormat('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(new Date());
-    return `Current date/time: ${now} IST`;
+    return `Current date/time: ${formatIstDateTime(new Date())} IST`;
   }
 }

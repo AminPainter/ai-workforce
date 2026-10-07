@@ -67,6 +67,27 @@ Queue infra (`src/modules/queue`, shared by any future webhook consumer):
   `contract-drift` queue (read from `process.env` at module load — the `@Processor`
   concurrency option is decorator-time).
 
+Leave bot (#leaves → RazorpayX Payroll attendance, `src/modules/leave-tracker`):
+- `LEAVES_SLACK_CHANNEL` (optional) — #leaves channel id. Unset disables the bot. The Slack
+  app needs `users:read.email`, `reactions:write`, `channels:history` and the
+  `message.channels` event, and must be a member of the channel.
+- `LEAVES_BOT_MODE` (optional, default `shadow`) — `shadow` classifies and reads RazorpayX but
+  never writes; replies go to `LEAVES_SHADOW_SLACK_CHANNEL` (or logs only). `live` writes and
+  replies in-thread.
+- `LEAVES_SHADOW_SLACK_CHANNEL` (optional) — channel id for shadow-mode output.
+- `LEAVES_ADMIN_SLACK_USER_IDS` (optional) — comma-separated Slack user ids allowed to mark
+  leave for someone else ("Mark sick leave today for @X").
+- `LEAVES_PEOPLE_PARTNER_SLACK_USER_ID` (optional) — tagged on failures.
+- `LEAVES_EMAIL_OVERRIDES` (optional) — JSON map of Slack email → RazorpayX email for people
+  whose RazorpayX email differs.
+- `RAZORPAYX_PAYROLL_ENTITIES` (required for the bot to write) — JSON array
+  `[{"id": 337931, "key": "...", "name": "..."}]`, one per payroll entity. Leave-type codes
+  per entity live in `leave-tracker/constants/leave-kinds.ts`; an entity without codes there
+  fails its writes loudly.
+
+`pnpm leaves:repl` runs the classifier golden set; `pnpm rzp:probe` exercises the RazorpayX
+attendance API (read-only `fetch`; writes need `--confirm`).
+
 SearXNG:
 - `SEARXNG_SECRET` (required) — SearXNG reads this natively and overrides `secret_key`. If it is
   unset in production, SearXNG's boot guard exits with an error rather than running with a weak
