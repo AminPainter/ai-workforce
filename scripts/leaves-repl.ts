@@ -361,6 +361,18 @@ const FIXTURES: Fixture[] = [
     },
   },
   {
+    name: 'logging in second half tomorrow',
+    text: 'I will be loggin in in the second half post 2 pm tomorrow',
+    postedAt: '2026-10-07T18:30:00+05:30',
+    expect: { intent: 'mark', marks: ['2026-10-08 earned first_half'] },
+  },
+  {
+    name: 'logging off after first half today',
+    text: 'Have a family function, will be logging off at 1 pm today',
+    postedAt: '2026-10-07T09:10:00+05:30',
+    expect: { intent: 'mark', marks: ['2026-10-07 earned second_half'] },
+  },
+  {
     name: 'early logoff tomorrow',
     text: 'Will be logging off at 3pm tomorrow. Travelling to Bangalore.',
     postedAt: '2026-10-06T09:00:00+05:30',
