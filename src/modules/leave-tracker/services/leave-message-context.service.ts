@@ -36,11 +36,8 @@ export class LeaveMessageContextService {
   }
 
   private async lookupAuthor(userId: string): Promise<SlackPerson> {
-    const user = await this.slackBotService.getUser(userId);
-    return {
-      name: user?.fullName || user?.userName || userId,
-      email: user?.email ?? null,
-    };
+    const { name, email } = await this.slackBotService.fetchUser(userId);
+    return { name: name ?? userId, email };
   }
 
   private async ownThreadParent(

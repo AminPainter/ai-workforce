@@ -36,7 +36,7 @@ const GENERATION_FAILED_MESSAGE =
 export class SlackBotService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SlackBotService.name);
   private bot!: import('chat').Chat;
-  private slackAdapter!: import('chat').Adapter;
+  private slackAdapter!: import('@chat-adapter/slack').SlackAdapter;
   private emoji!: typeof import('chat').emoji;
   private readonly maxContextMessages: number;
   private readonly leavesChannelId?: string;
@@ -139,8 +139,23 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getUser(userId: string): Promise<import('chat').UserInfo | null> {
-    return this.bot.getUser(userId);
+  // Bypasses the adapter's 8-day user cache, which can hold entries fetched
+  // before the users:read.email scope was granted.
+  async fetchUser(
+    userId: string,
+  ): Promise<{ name: string | null; email: string | null }> {
+    const { user } = await this.slackAdapter.webClient.users.info({
+      user: userId,
+    });
+    return {
+      name:
+        user?.real_name ||
+        user?.profile?.real_name ||
+        user?.profile?.display_name ||
+        user?.name ||
+        null,
+      email: user?.profile?.email || null,
+    };
   }
 
   async fetchMessage(
