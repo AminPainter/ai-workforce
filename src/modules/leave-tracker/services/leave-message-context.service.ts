@@ -36,10 +36,13 @@ export class LeaveMessageContextService {
   }
 
   private async lookupAuthor(userId: string): Promise<SlackPerson> {
-    const user = await this.slackBotService.getUser(userId);
+    const [user, email] = await Promise.all([
+      this.slackBotService.getUser(userId),
+      this.slackBotService.getUserEmail(userId),
+    ]);
     return {
       name: user?.fullName || user?.userName || userId,
-      email: user?.email ?? null,
+      email,
     };
   }
 
