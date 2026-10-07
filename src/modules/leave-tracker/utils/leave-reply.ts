@@ -1,4 +1,4 @@
-import { describeEntry, LEAVE_KIND_LABELS } from '../constants/leave-kinds';
+import { describeEntry } from '../constants/leave-kinds';
 import type {
   DateOutcome,
   DateOutcomeStatus,
@@ -35,35 +35,18 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
       hasProblems: true,
     };
 
-  const marks = input.outcomes.filter(({ operation }) => operation === 'mark');
-  const reverts = input.outcomes.filter(
-    ({ operation }) => operation === 'revert',
-  );
   const problems = input.outcomes.filter(({ status }) => isProblem(status));
 
   const lines: string[] = [];
   const pushMarkSection = (heading: string, status: DateOutcomeStatus) => {
-    const section = groupMarks(marks.filter((mark) => mark.status === status));
+    const section = groupMarks(
+      input.outcomes.filter((mark) => mark.status === status),
+    );
     if (section.length > 0) lines.push(heading, ...section);
-  };
-  const pushRevertSection = (heading: string, status: DateOutcomeStatus) => {
-    const dates = reverts
-      .filter((revert) => revert.status === status)
-      .map(({ date }) => date);
-    if (dates.length > 0) lines.push(`${heading} ${formatDateRanges(dates)}`);
   };
 
   pushMarkSection('Marked in RazorpayX:', 'done');
   pushMarkSection('Already marked:', 'already_done');
-  pushRevertSection('Cancelled in RazorpayX:', 'done');
-  pushRevertSection('Nothing was marked on:', 'already_done');
-
-  for (const revert of reverts.filter(
-    ({ status }) => status === 'left_unchanged',
-  ))
-    lines.push(
-      `Left ${formatShortDate(revert.date)} unchanged: you asked to cancel ${revert.kind ? LEAVE_KIND_LABELS[revert.kind] : 'leave'}, but ${revert.detail}.`,
-    );
 
   const skippedByReason = new Map<SkippedDate['reason'], string[]>();
   for (const { date, reason } of input.skipped)
@@ -77,7 +60,7 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
     lines.push(`:warning: Could not update RazorpayX:`);
     for (const problem of problems)
       lines.push(
-        `• ${formatShortDate(problem.date)}${problem.kind && problem.portion ? ` (${describeEntry(problem.kind, problem.portion)})` : ''}: ${problem.detail ?? problem.status}`,
+        `• ${formatShortDate(problem.date)} (${describeEntry(problem.kind, problem.portion)}): ${problem.detail ?? problem.status}`,
       );
     if (input.invalidRanges.length > 0)
       lines.push(`• I couldn't read some of the dates in this message.`);
@@ -96,7 +79,6 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
 function groupMarks(marks: DateOutcome[]): string[] {
   const datesByLabel = new Map<string, string[]>();
   for (const mark of marks) {
-    if (!mark.kind || !mark.portion) continue;
     const label = describeEntry(mark.kind, mark.portion);
     datesByLabel.set(label, [...(datesByLabel.get(label) ?? []), mark.date]);
   }

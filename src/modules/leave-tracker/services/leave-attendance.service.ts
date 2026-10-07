@@ -6,28 +6,23 @@ import {
   type AttendanceWrite,
 } from '../../razorpayx/razorpayx.types';
 import {
-  RAZORPAYX_LEAVE_STATUS_CODES,
   RAZORPAYX_STATUS_CODE_BY_STATUS,
   describeEntry,
-  leaveKindsForCode,
   toAttendanceTarget,
   type AttendanceTarget,
   type LeaveKind,
   type LeavePortion,
 } from '../constants/leave-kinds';
-import type { PlannedMark, PlannedRevert } from '../utils/leave-plan';
+import type { PlannedMark } from '../utils/leave-plan';
 
 const MARK_REMARKS_SUFFIX = 'Applied via Slack leave bot';
-const REVERT_REMARKS = 'Cancelled via Slack leave bot';
 
-export type DateOutcomeStatus =
-  'done' | 'already_done' | 'left_unchanged' | 'mismatch' | 'failed';
+export type DateOutcomeStatus = 'done' | 'already_done' | 'mismatch' | 'failed';
 
 export interface DateOutcome {
   date: string;
-  operation: 'mark' | 'revert';
-  kind: LeaveKind | null;
-  portion: LeavePortion | null;
+  kind: LeaveKind;
+  portion: LeavePortion;
   status: DateOutcomeStatus;
   detail?: string;
 }
@@ -38,7 +33,6 @@ export interface ApplyLeavePlanInput {
   sourceMessageId: string;
   today: string;
   marks: PlannedMark[];
-  reverts: PlannedRevert[];
 }
 
 interface EmployeeCompany {
@@ -63,11 +57,9 @@ export class LeaveAttendanceService {
     const employee = await this.resolveEmployee(input.email, input.today);
     if (!employee) return { employeeFound: false, outcomes: [] };
 
-    const outcomes: DateOutcome[] = [];
-    for (const mark of input.marks)
-      outcomes.push(await this.applyMark(input, employee, mark));
-    for (const revert of input.reverts)
-      outcomes.push(await this.applyRevert(input, employee, revert));
+    const outcomes = await Promise.all(
+      input.marks.map((mark) => this.applyMark(input, employee, mark)),
+    );
     return { employeeFound: true, outcomes };
   }
 
@@ -84,11 +76,7 @@ export class LeaveAttendanceService {
         );
         return { companyId, email };
       } catch (error) {
-        if (error instanceof EmployeeNotFoundError) continue;
-        this.logger.warn(
-          `company ${companyId} probe errored without "user not found"; using it anyway: ${String(error)}`,
-        );
-        return { companyId, email };
+        if (!(error instanceof EmployeeNotFoundError)) throw error;
       }
 
     return null;
@@ -99,7 +87,7 @@ export class LeaveAttendanceService {
     employee: EmployeeCompany,
     { date, kind, portion }: PlannedMark,
   ): Promise<DateOutcome> {
-    const base = { date, operation: 'mark' as const, kind, portion };
+    const base = { date, kind, portion };
     const target = toAttendanceTarget(employee.companyId, kind, portion);
     if (!target)
       return this.audit(input, employee, null, {
@@ -155,66 +143,6 @@ export class LeaveAttendanceService {
     });
   }
 
-  private async applyRevert(
-    input: ApplyLeavePlanInput,
-    employee: EmployeeCompany,
-    { date, kind }: PlannedRevert,
-  ): Promise<DateOutcome> {
-    const base = {
-      date,
-      operation: 'revert' as const,
-      kind,
-      portion: null,
-    };
-    const before = await this.tryFetch(employee, date);
-    if (before && !isLeaveRecord(before))
-      return this.audit(input, employee, null, {
-        ...base,
-        status: 'already_done',
-      });
-    if (
-      before &&
-      kind &&
-      before.leaveTypeCode !== null &&
-      !leaveKindsForCode(employee.companyId, before.leaveTypeCode).includes(
-        kind,
-      )
-    )
-      return this.audit(input, employee, null, {
-        ...base,
-        status: 'left_unchanged',
-        detail: `RazorpayX shows ${describeRecord(before)}`,
-      });
-
-    const write: AttendanceWrite = {
-      email: employee.email,
-      date,
-      status: 'present',
-      remarks: REVERT_REMARKS,
-    };
-    try {
-      await this.razorpayxPayrollService.modifyAttendance(
-        employee.companyId,
-        write,
-      );
-    } catch (error) {
-      return this.audit(input, employee, write, {
-        ...base,
-        status: 'failed',
-        detail: errorMessage(error),
-      });
-    }
-
-    const after = await this.tryFetch(employee, date);
-    if (after && isLeaveRecord(after))
-      return this.audit(input, employee, write, {
-        ...base,
-        status: 'mismatch',
-        detail: `RazorpayX still shows ${describeRecord(after)}`,
-      });
-    return this.audit(input, employee, write, { ...base, status: 'done' });
-  }
-
   private async tryFetch(
     employee: EmployeeCompany,
     date: string,
@@ -243,7 +171,6 @@ export class LeaveAttendanceService {
         actorSlackUserId: input.actorSlackUserId,
         companyId: employee.companyId,
         date: outcome.date,
-        operation: outcome.operation,
         request: write
           ? { status: write.status, leaveType: write.leaveType }
           : null,
@@ -262,13 +189,6 @@ function matchesTarget(
   return (
     record.statusCode === RAZORPAYX_STATUS_CODE_BY_STATUS[target.status] &&
     record.leaveTypeCode === target.leaveType
-  );
-}
-
-function isLeaveRecord(record: AttendanceRecord): boolean {
-  return (
-    record.statusCode !== null &&
-    RAZORPAYX_LEAVE_STATUS_CODES.has(record.statusCode)
   );
 }
 

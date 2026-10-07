@@ -88,7 +88,6 @@ export class LeaveTrackerProcessor extends WorkerHost {
       sourceMessageId: job.messageId,
       today,
       marks: plan.marks,
-      reverts: plan.reverts,
     });
 
     const reply = formatLeaveReply({

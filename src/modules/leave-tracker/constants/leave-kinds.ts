@@ -63,10 +63,6 @@ export const RAZORPAYX_STATUS_CODE_BY_STATUS: Partial<
   'half-day': 25,
 };
 
-export const RAZORPAYX_LEAVE_STATUS_CODES = new Set(
-  Object.values(RAZORPAYX_STATUS_CODE_BY_STATUS),
-);
-
 export interface AttendanceTarget {
   status: AttendanceStatus;
   leaveType: number;
@@ -88,19 +84,6 @@ export function toAttendanceTarget(
     status: portion === 'full' ? 'leave' : 'half-day',
     leaveType: codes.leave[kind],
   };
-}
-
-export function leaveKindsForCode(
-  companyId: number,
-  leaveTypeCode: number,
-): LeaveKind[] {
-  const codes = LEAVE_TYPE_CODES_BY_COMPANY[companyId];
-  if (!codes) return [];
-  if (leaveTypeCode === codes.wfhFullDay || leaveTypeCode === codes.wfhHalfDay)
-    return [LeaveKind.Wfh];
-  return (Object.keys(codes.leave) as NonWfhLeaveKind[]).filter(
-    (kind) => codes.leave[kind] === leaveTypeCode,
-  );
 }
 
 export function describeEntry(kind: LeaveKind, portion: LeavePortion): string {

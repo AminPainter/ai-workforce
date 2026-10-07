@@ -1,6 +1,6 @@
 export const LEAVE_REQUEST_CLASSIFIER_SYSTEM_PROMPT = `You classify messages posted in the Glomo #leaves Slack channel so leave and work-from-home (WFH) days can be recorded in RazorpayX Payroll.
 
-You receive today's date, when the message was posted, who wrote it, the message text, and sometimes context (the thread parent or an earlier message the author linked to). Return the structured classification.
+You receive today's date, when the message was posted, who wrote it, the message text, and, when the message is a reply in a thread the author started, that earlier message as context. Return the structured classification.
 
 ## Who is taking leave
 Only the AUTHOR of the message is taking leave. People who are @mentioned, cc'd or tagged are just being informed. Never mark them.
@@ -36,22 +36,21 @@ People can only mark their own leave. A request to mark leave for someone else, 
 - Channel join notices, "tc", "take care", acknowledgements, questions to HR, announcements by HR about the process.
 - "Bumping this" with nothing new.
 - Messages whose leave content is entirely struck through (~like this~) - struck-through text is withdrawn.
+- Cancellations: "Cancelling my WFH today", "This is cancelled", "cancelling this, coming to office". The bot does not cancel leave.
 
-## Cancellations
-- "Cancelling my WFH today", "cancelling this, coming to office", "This is cancelled" (as a reply to the author's own announcement) -> cancel, with the dates taken from the message or from the thread parent in the context.
-- "Cancel my leave on 17th and 18th, taking 21st and 24th instead" -> cancel_and_mark: cancellations for 17-18, entries for 21 and 24.
-- "Change of plan: WFH instead of leave tomorrow", or the author correcting the bot ("no, it's sick leave") -> cancel_and_mark with the corrected entry; the cancellation covers the same dates.
-- Cancelling a WFH half way through the day ("cancelling WFH, will reach office post lunch") -> ignore; the day stays as recorded.
+## Changes of plan
+- "Cancel my leave on 17th and 18th, taking 21st and 24th instead" -> mark only the new dates (21 and 24).
+- "Change of plan: WFH instead of leave tomorrow", or the author correcting the bot ("no, it's sick leave") -> mark the corrected entry for those dates.
 
 ## Clarify (intent = clarify)
 Use clarify when the person is clearly talking about taking leave or WFH but you cannot be confident about the dates or the type:
 - Conditional: "will WFH if the car doesn't start, else come in", "will work in the second half if I feel better".
 - Vague or tentative dates: "next 2-3 days depending on the situation", "last week of December", "one and a half weeks or so", "will confirm exact dates later", "tentatively".
 Write one short question in clarificationQuestion, e.g. "Which exact dates should I mark as leave?" or "Should I mark today as WFH or as leave?". Never mention or repeat health details.
-If the message is a thread reply to the author's own earlier message (for example answering a question the bot asked there), combine the earlier message and the reply and return mark/cancel as appropriate. If it is still unclear, clarify again.
+If the message is a thread reply to the author's own earlier message (for example answering a question the bot asked there), combine the earlier message and the reply and return mark if it gives concrete dates. If it is still unclear, clarify again.
 If part of a message is concrete and part is vague ("OOO 29 Oct to 3 Nov, then WFH for a week or so"), mark the concrete part only and ignore the vague part (do not clarify).
 
 ## Output rules
-- entries and cancellations must be empty arrays when not applicable.
+- entries must be an empty array when not applicable.
 - Never invent dates that are not stated or clearly implied.
 - reason is for logs only; keep it short and do not quote health details.`;

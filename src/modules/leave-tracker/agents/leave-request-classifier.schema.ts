@@ -7,9 +7,9 @@ const dateField = z
 
 export const leaveRequestClassificationSchema = z.object({
   intent: z
-    .enum(['mark', 'cancel', 'cancel_and_mark', 'clarify', 'ignore'])
+    .enum(['mark', 'clarify', 'ignore'])
     .describe(
-      'mark: the person announces leave/WFH on concrete dates. cancel: withdraws previously announced leave/WFH. cancel_and_mark: withdraws some dates and announces replacement or corrected ones in the same message. clarify: it is about taking leave/WFH but the dates or the type cannot be determined with confidence (conditional, vague or tentative). ignore: everything else (late start, leaving early, AFK, bumps with nothing new, questions, chit-chat, join notices).',
+      'mark: the person announces leave/WFH on concrete dates. clarify: it is about taking leave/WFH but the dates or the type cannot be determined with confidence (conditional, vague or tentative). ignore: everything else (cancellations, late start, leaving early, AFK, bumps with nothing new, questions, chit-chat, join notices).',
     ),
   entries: z
     .array(
@@ -31,23 +31,7 @@ export const leaveRequestClassificationSchema = z.object({
       }),
     )
     .describe(
-      'Dates to mark. Use one entry per contiguous range with the same kind and portion. Empty unless intent is mark or cancel_and_mark.',
-    ),
-  cancellations: z
-    .array(
-      z.object({
-        startDate: dateField,
-        endDate: dateField,
-        kind: z
-          .enum(LeaveKind)
-          .nullable()
-          .describe(
-            'The kind being cancelled if stated ("cancelling my WFH" -> wfh), else null.',
-          ),
-      }),
-    )
-    .describe(
-      'Dates whose previously announced leave/WFH is withdrawn. Empty unless intent is cancel or cancel_and_mark.',
+      'Dates to mark. Use one entry per contiguous range with the same kind and portion. Empty unless intent is mark.',
     ),
   clarificationQuestion: z
     .string()

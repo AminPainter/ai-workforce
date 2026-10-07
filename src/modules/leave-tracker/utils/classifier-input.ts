@@ -3,8 +3,7 @@ import {
   toIstDateString,
 } from '../../../common/utils/date.util';
 
-export interface ClassifierContextMessage {
-  heading: string;
+export interface ThreadParentMessage {
   text: string;
   postedAt: Date;
 }
@@ -15,7 +14,7 @@ export interface ClassifierInputArgs {
   authorName: string;
   authorUserId: string;
   text: string;
-  contextMessages: ClassifierContextMessage[];
+  threadParent: ThreadParentMessage | null;
 }
 
 export function formatClassifierInput(args: ClassifierInputArgs): string {
@@ -30,12 +29,12 @@ export function formatClassifierInput(args: ClassifierInputArgs): string {
     '"""',
   ];
 
-  for (const context of args.contextMessages)
+  if (args.threadParent)
     lines.push(
       '',
-      `Context: ${context.heading} It was posted at ${describeMoment(context.postedAt)}:`,
+      `Context: this message is a reply in a thread the author started with the message below, posted at ${describeMoment(args.threadParent.postedAt)}:`,
       '"""',
-      context.text,
+      args.threadParent.text,
       '"""',
     );
 

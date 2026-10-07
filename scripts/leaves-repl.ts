@@ -21,10 +21,7 @@ import { AiService } from '../src/modules/ai/services/ai.service';
 import { toIstDateString } from '../src/common/utils/date.util';
 import { createLeaveRequestClassifier } from '../src/modules/leave-tracker/agents/leave-request-classifier.agent';
 import type { LeaveRequestClassification } from '../src/modules/leave-tracker/agents/leave-request-classifier.schema';
-import {
-  formatClassifierInput,
-  type ClassifierContextMessage,
-} from '../src/modules/leave-tracker/utils/classifier-input';
+import { formatClassifierInput } from '../src/modules/leave-tracker/utils/classifier-input';
 import {
   planLeaveRequest,
   type LeavePlan,
@@ -43,14 +40,11 @@ interface Fixture {
   name: string;
   text: string;
   postedAt: string;
-  context?: Array<
-    Omit<ClassifierContextMessage, 'postedAt'> & { postedAt: string }
-  >;
+  threadParent?: { text: string; postedAt: string };
   expect: {
     intent: LeaveRequestClassification['intent'];
     // "YYYY-MM-DD kind portion"; kind may be "*" when either reading is acceptable.
     marks?: string[];
-    reverts?: string[];
   };
 }
 
@@ -267,16 +261,15 @@ const FIXTURES: Fixture[] = [
     name: 'same-day wfh cancel',
     text: 'Cancelling WFH, feeling better',
     postedAt: '2026-10-07T09:20:00+05:30',
-    expect: { intent: 'cancel', reverts: ['2026-10-07'] },
+    expect: { intent: 'ignore' },
   },
   {
-    name: 'cancel and replace',
+    name: 'cancel and replace marks only the new dates',
     text: "There's a change of plan, something came up, so I'll cancel my leave on the 15th and 16th and instead take leave on 21st and 22nd.",
     postedAt: '2026-10-06T19:39:00+05:30',
     expect: {
-      intent: 'cancel_and_mark',
+      intent: 'mark',
       marks: ['2026-10-21 earned full', '2026-10-22 earned full'],
-      reverts: ['2026-10-15', '2026-10-16'],
     },
   },
   {
@@ -313,28 +306,20 @@ const FIXTURES: Fixture[] = [
     name: 'thread reply cancels own post',
     text: 'This is cancelled. Might take sick leave or WFH depending upon health.',
     postedAt: '2026-10-06T21:55:00+05:30',
-    context: [
-      {
-        heading:
-          'This message is a reply in a thread. The thread starts with written by the same author.',
-        text: 'Will be on leave tomorrow.',
-        postedAt: '2026-10-06T18:00:00+05:30',
-      },
-    ],
-    expect: { intent: 'cancel', reverts: ['2026-10-07'] },
+    threadParent: {
+      text: 'Will be on leave tomorrow.',
+      postedAt: '2026-10-06T18:00:00+05:30',
+    },
+    expect: { intent: 'ignore' },
   },
   {
     name: 'answer to clarification',
     text: '7th to 9th',
     postedAt: '2026-10-07T09:28:00+05:30',
-    context: [
-      {
-        heading:
-          'This message is a reply in a thread. The thread starts with written by the same author.',
-        text: 'My grandmother is unwell and I need to travel to my hometown urgently. I may need to take leave for the next 2–3 days, depending on the situation.',
-        postedAt: '2026-10-07T09:25:00+05:30',
-      },
-    ],
+    threadParent: {
+      text: 'My grandmother is unwell and I need to travel to my hometown urgently. I may need to take leave for the next 2–3 days, depending on the situation.',
+      postedAt: '2026-10-07T09:25:00+05:30',
+    },
     expect: {
       intent: 'mark',
       marks: ['2026-10-07 * full', '2026-10-08 * full', '2026-10-09 * full'],
@@ -385,16 +370,10 @@ const FIXTURES: Fixture[] = [
   },
 ];
 
-function planToStrings(plan: LeavePlan): {
-  marks: string[];
-  reverts: string[];
-} {
-  return {
-    marks: plan.marks.map(
-      ({ date, kind, portion }) => `${date} ${kind} ${portion}`,
-    ),
-    reverts: plan.reverts.map(({ date }) => date),
-  };
+function planToStrings(plan: LeavePlan): string[] {
+  return plan.marks.map(
+    ({ date, kind, portion }) => `${date} ${kind} ${portion}`,
+  );
 }
 
 function marksMatch(actual: string[], expected: string[]): boolean {
@@ -425,10 +404,12 @@ async function main(): Promise<void> {
       authorName: 'Employee',
       authorUserId: AUTHOR_ID,
       text: fixture.text,
-      contextMessages: (fixture.context ?? []).map((context) => ({
-        ...context,
-        postedAt: new Date(context.postedAt),
-      })),
+      threadParent: fixture.threadParent
+        ? {
+            text: fixture.threadParent.text,
+            postedAt: new Date(fixture.threadParent.postedAt),
+          }
+        : null,
     });
     const { output } = (await agent.generate({
       messages: [{ role: 'user', content: input }],
@@ -452,19 +433,17 @@ async function main(): Promise<void> {
     const { output, plan } = await classify(fixture);
     const actual = planToStrings(plan);
     const expectedMarks = fixture.expect.marks ?? [];
-    const expectedReverts = fixture.expect.reverts ?? [];
     const ok =
       output.intent === fixture.expect.intent &&
-      marksMatch(actual.marks, expectedMarks) &&
-      JSON.stringify(actual.reverts) === JSON.stringify(expectedReverts);
+      marksMatch(actual, expectedMarks);
     if (ok) passed++;
     console.log(`\n[${ok ? 'PASS' : 'FAIL'}] ${fixture.name}`);
     if (!ok) {
       console.log(
-        `  expected: ${fixture.expect.intent} marks=${JSON.stringify(expectedMarks)} reverts=${JSON.stringify(expectedReverts)}`,
+        `  expected: ${fixture.expect.intent} marks=${JSON.stringify(expectedMarks)}`,
       );
       console.log(
-        `  got:      ${output.intent} marks=${JSON.stringify(actual.marks)} reverts=${JSON.stringify(actual.reverts)}`,
+        `  got:      ${output.intent} marks=${JSON.stringify(actual)}`,
       );
       console.log(`  reason:   ${output.reason}`);
     }
