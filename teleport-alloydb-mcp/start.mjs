@@ -58,21 +58,45 @@ async function waitForIdentity() {
 await waitForIdentity();
 console.log("tbot identity ready, starting MCP proxy...");
 
-const { spawn: spawnProxy } = await import("node:child_process");
+// `tsh mcp db start` reads the identity file once at startup and keeps
+// running indefinitely — it never notices tbot rewriting that file every
+// 20 minutes, so its in-memory Teleport cert eventually hits the 1h TTL
+// and every query starts failing with "Teleport session expired". Restart
+// the child process on a cadence shorter than the TTL so it always picks
+// up a fresh identity.
+const RESTART_INTERVAL_MS = 35 * 60 * 1000;
+
 const dbUriEscaped = TELEPORT_DB_URI.replace(/'/g, `'\\''`);
 const childCommand = `tsh mcp db start -i '${identityDir}/identity' --proxy '${TELEPORT_PROXY}' '${dbUriEscaped}'`;
-const proxy = spawnProxy(
-  "npx",
-  [
-    "mcp-proxy",
-    "--port",
-    PORT,
-    "--apiKey",
-    MCP_PROXY_API_KEY,
-    "--shell",
-    childCommand,
-  ],
-  { stdio: "inherit" },
-);
 
-proxy.on("exit", (code) => process.exit(code ?? 1));
+function startProxy() {
+  const proxy = spawn(
+    "npx",
+    [
+      "mcp-proxy",
+      "--port",
+      PORT,
+      "--apiKey",
+      MCP_PROXY_API_KEY,
+      "--shell",
+      childCommand,
+    ],
+    { stdio: "inherit" },
+  );
+
+  const restartTimer = setTimeout(() => {
+    console.log("Restarting MCP proxy to refresh Teleport credentials...");
+    proxy.kill();
+  }, RESTART_INTERVAL_MS);
+
+  proxy.on("exit", (code, signal) => {
+    clearTimeout(restartTimer);
+    if (signal) {
+      startProxy();
+      return;
+    }
+    process.exit(code ?? 1);
+  });
+}
+
+startProxy();
