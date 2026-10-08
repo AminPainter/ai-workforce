@@ -39,7 +39,6 @@ interface CompanyLeaveTypeCodes {
 const GLOMOPAY_SOFTWARE_PRIVATE_LIMITED_COMPANY_ID = 337931;
 const GLOMO_PAYMENTS_IFSC_PRIVATE_LIMITED_COMPANY_ID = 337936;
 
-// IFSC's 0, 1, 7 and 8 were verified against live records; the rest are assumed to match.
 const SHARED_LEAVE_TYPE_CODES: CompanyLeaveTypeCodes = {
   leave: {
     [LeaveKind.Earned]: 0,
