@@ -11,6 +11,13 @@ import {
   type LeaveMessageJob,
 } from './queues/leave-tracker.queue';
 
+const EMPLOYEES_NOT_ON_RAZORPAYX_PAYROLL = new Set<string>([
+  'U09LZ4M5F6J', // Dhruvi Dolia
+  'U09ME40GB4H', // Shivani B
+  'U09NYEMLT9N', // Ashutosh
+  'U09HF87HMFD', // Harsh Singh
+]);
+
 @Injectable()
 export class LeaveTrackerListener {
   private readonly logger = new Logger(LeaveTrackerListener.name);
@@ -23,6 +30,7 @@ export class LeaveTrackerListener {
   @OnEvent(SLACK_LEAVES_MESSAGE_EVENT)
   async onLeavesMessage({ message }: SlackLeavesEvent): Promise<void> {
     if (message.author.isBot === true || message.author.isMe) return;
+    if (EMPLOYEES_NOT_ON_RAZORPAYX_PAYROLL.has(message.author.userId)) return;
     const text = message.text?.trim();
     if (!text) return;
 
