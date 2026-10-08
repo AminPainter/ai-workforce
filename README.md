@@ -73,9 +73,10 @@ Leave bot (#leaves → RazorpayX Payroll attendance, `src/modules/leave-tracker`
   `message.channels` event, and must be a member of the channel.
 - `LEAVES_PEOPLE_PARTNER_SLACK_USER_ID` (required) — Slack user id tagged on failures.
 - `RAZORPAYX_PAYROLL_COMPANIES` (required for the bot to write) — JSON array
-  `[{"id": 337931, "key": "..."}]`, one per payroll company. Leave-type codes
-  per company live in `leave-tracker/constants/leave-kinds.ts`; a company without codes there
-  fails its writes loudly.
+  `[{"id": 337931, "key": "..."}, {"id": 337936, "key": "..."}]`, one per payroll company
+  (337931 Glomopay Software, 337936 Glomo Payments IFSC). Leave-type codes per company live in
+  `leave-tracker/constants/leave-kinds.ts`; a company without codes there fails its writes
+  loudly.
 
 `pnpm leaves:repl` runs the classifier golden set.
 

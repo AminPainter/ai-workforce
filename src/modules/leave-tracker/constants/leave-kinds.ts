@@ -37,23 +37,26 @@ interface CompanyLeaveTypeCodes {
 }
 
 const GLOMOPAY_SOFTWARE_PRIVATE_LIMITED_COMPANY_ID = 337931;
+const GLOMO_PAYMENTS_IFSC_PRIVATE_LIMITED_COMPANY_ID = 337936;
 
-// TODO: add Glomo Payments IFSC Private Limited (GIFT City).
-const LEAVE_TYPE_CODES_BY_COMPANY: Record<number, CompanyLeaveTypeCodes> = {
-  [GLOMOPAY_SOFTWARE_PRIVATE_LIMITED_COMPANY_ID]: {
-    leave: {
-      [LeaveKind.Earned]: 0,
-      [LeaveKind.Sick]: 1,
-      [LeaveKind.Maternity]: 2,
-      [LeaveKind.Paternity]: 3,
-      [LeaveKind.Bereavement]: 4,
-      [LeaveKind.Marriage]: 5,
-      [LeaveKind.Period]: 6,
-      [LeaveKind.Optional]: 7,
-    },
-    wfhFullDay: 8,
-    wfhHalfDay: 9,
+const SHARED_LEAVE_TYPE_CODES: CompanyLeaveTypeCodes = {
+  leave: {
+    [LeaveKind.Earned]: 0,
+    [LeaveKind.Sick]: 1,
+    [LeaveKind.Maternity]: 2,
+    [LeaveKind.Paternity]: 3,
+    [LeaveKind.Bereavement]: 4,
+    [LeaveKind.Marriage]: 5,
+    [LeaveKind.Period]: 6,
+    [LeaveKind.Optional]: 7,
   },
+  wfhFullDay: 8,
+  wfhHalfDay: 9,
+};
+
+const LEAVE_TYPE_CODES_BY_COMPANY: Record<number, CompanyLeaveTypeCodes> = {
+  [GLOMOPAY_SOFTWARE_PRIVATE_LIMITED_COMPANY_ID]: SHARED_LEAVE_TYPE_CODES,
+  [GLOMO_PAYMENTS_IFSC_PRIVATE_LIMITED_COMPANY_ID]: SHARED_LEAVE_TYPE_CODES,
 };
 
 export const RAZORPAYX_STATUS_CODE_BY_STATUS: Partial<
