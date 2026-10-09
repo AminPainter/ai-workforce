@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SlackBotService } from '../../slack/services/slack-bot.service';
+import { LeavesSlackBotService } from '../../slack/services/leaves-slack-bot.service';
 import type { LeaveMessageJob } from '../queues/leave-tracker.queue';
 import {
   formatClassifierInput,
@@ -19,7 +19,7 @@ export interface LeaveMessageContext {
 
 @Injectable()
 export class LeaveMessageContextService {
-  constructor(private readonly slackBotService: SlackBotService) {}
+  constructor(private readonly leavesSlackBotService: LeavesSlackBotService) {}
 
   async build(job: LeaveMessageJob, now: Date): Promise<LeaveMessageContext> {
     const author = await this.lookupAuthor(job.userId);
@@ -38,7 +38,7 @@ export class LeaveMessageContextService {
   }
 
   private async lookupAuthor(userId: string): Promise<SlackPerson> {
-    const { name, email } = await this.slackBotService.fetchUser(userId);
+    const { name, email } = await this.leavesSlackBotService.fetchUser(userId);
     return { name: name ?? userId, email };
   }
 
@@ -48,7 +48,7 @@ export class LeaveMessageContextService {
     const threadTs = threadTsOf(job);
     if (threadTs === job.messageId) return null;
 
-    const parent = await this.slackBotService.fetchMessage(
+    const parent = await this.leavesSlackBotService.fetchMessage(
       job.threadId,
       threadTs,
     );

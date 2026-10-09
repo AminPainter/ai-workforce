@@ -56,6 +56,10 @@ services:
       # #leaves → RazorpayX Payroll leave bot.
       - key: LEAVES_SLACK_CHANNEL
         sync: false
+      - key: LEAVES_SLACK_BOT_TOKEN
+        sync: false
+      - key: LEAVES_SLACK_SIGNING_SECRET
+        sync: false
       - key: LEAVES_PEOPLE_PARTNER_SLACK_USER_ID
         sync: false
       - key: RAZORPAYX_PAYROLL_COMPANIES

@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { SlackBotService } from '../../slack/services/slack-bot.service';
+import { LeavesSlackBotService } from '../../slack/services/leaves-slack-bot.service';
 import { toIstDateString } from '../../../common/utils/date.util';
 import { LEAVE_REQUEST_CLASSIFIER } from '../agents/leave-request-classifier.agent';
 import type { LeaveRequestClassification } from '../agents/leave-request-classifier.schema';
@@ -28,7 +28,7 @@ export class LeaveTrackerProcessor extends WorkerHost {
     private readonly agentRegistry: AgentRegistry,
     private readonly leaveMessageContextService: LeaveMessageContextService,
     private readonly leaveAttendanceService: LeaveAttendanceService,
-    private readonly slackBotService: SlackBotService,
+    private readonly leavesSlackBotService: LeavesSlackBotService,
     private readonly configService: ConfigService,
   ) {
     super();
@@ -134,9 +134,9 @@ export class LeaveTrackerProcessor extends WorkerHost {
     text: string,
     reaction: string | null,
   ): Promise<void> {
-    await this.slackBotService.postToThread(job.threadId, text);
+    await this.leavesSlackBotService.postToThread(job.threadId, text);
     if (reaction)
-      await this.slackBotService.addReaction(
+      await this.leavesSlackBotService.addReaction(
         job.threadId,
         job.messageId,
         reaction,
