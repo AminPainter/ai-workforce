@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
@@ -11,9 +6,9 @@ import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assi
 import { formatIstDateTime } from '../../../common/utils/date.util';
 import {
   SLACK_BAKAR_MESSAGE_EVENT,
-  SLACK_LEAVES_MESSAGE_EVENT,
   type SlackChannelMessageEvent,
 } from '../slack.events';
+import { SlackChatBot } from './slack-chat-bot.base';
 
 const ALLOWED_SLACK_USER_IDS = new Set<string>([
   'U0857R1RB9Q', // Amin
@@ -34,20 +29,17 @@ const GENERATION_FAILED_MESSAGE =
   'Having a bad headache. Not able to respond right now. [INTERNAL_SERVER_ERROR]';
 
 @Injectable()
-export class SlackBotService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(SlackBotService.name);
-  private bot!: import('chat').Chat;
-  private slackAdapter!: import('@chat-adapter/slack').SlackAdapter;
-  private emoji!: typeof import('chat').emoji;
+export class SlackBotService extends SlackChatBot implements OnModuleInit {
+  protected readonly logger = new Logger(SlackBotService.name);
   private readonly maxContextMessages: number;
-  private readonly leavesChannelId?: string;
   private readonly channelMessageEvents = new Map<string, string>();
 
   constructor(
     private readonly agentRegistry: AgentRegistry,
-    private readonly configService: ConfigService,
+    configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
   ) {
+    super(configService);
     this.maxContextMessages = Number(
       this.configService.get('EMPLOYEE_ASSISTANT_MAX_CONTEXT_MESSAGES') ?? 50,
     );
@@ -55,39 +47,18 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
       `slack:${this.configService.getOrThrow<string>('BAKAR_SLACK_CHANNEL')}`,
       SLACK_BAKAR_MESSAGE_EVENT,
     );
-    const leavesChannel = this.configService.get<string>(
-      'LEAVES_SLACK_CHANNEL',
-    );
-    if (leavesChannel) {
-      this.leavesChannelId = `slack:${leavesChannel}`;
-      this.channelMessageEvents.set(
-        this.leavesChannelId,
-        SLACK_LEAVES_MESSAGE_EVENT,
-      );
-    }
   }
 
   async onModuleInit(): Promise<void> {
-    const { Chat, emoji } = await import('chat');
-    const { createSlackAdapter } = await import('@chat-adapter/slack');
-    const { createRedisState } = await import('@chat-adapter/state-redis');
-
-    this.emoji = emoji;
-    this.slackAdapter = createSlackAdapter();
-
-    this.bot = new Chat({
+    await this.initChat({
       userName: 'glomopay-bot',
-      adapters: { slack: this.slackAdapter },
-      state: createRedisState({
-        url: this.configService.getOrThrow<string>('REDIS_URL'),
-      }),
+      botToken: this.configService.getOrThrow<string>('SLACK_BOT_TOKEN'),
+      signingSecret: this.configService.getOrThrow<string>(
+        'SLACK_SIGNING_SECRET',
+      ),
     });
 
     this.bot.onNewMention(async (thread, message) => {
-      if (thread.channelId === this.leavesChannelId) {
-        this.emitChannelMessage(thread, message);
-        return;
-      }
       if (!this.isMessageAuthorAllowedToInteract(message)) {
         this.logger.warn(`ignored mention from ${message.author.userId}`);
         await thread.post(UNAUTHORIZED_MESSAGE);
@@ -101,77 +72,6 @@ export class SlackBotService implements OnModuleInit, OnModuleDestroy {
     this.bot.onNewMessage(/[\s\S]/, (thread, message) => {
       this.emitChannelMessage(thread, message);
     });
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    await this.bot?.shutdown();
-  }
-
-  get slackWebhook() {
-    return this.bot.webhooks.slack;
-  }
-
-  async postToChannel(
-    channelId: string,
-    message: string | import('chat').ChatElement,
-  ): Promise<void> {
-    const qualifiedChannelId = channelId.includes(':')
-      ? channelId
-      : `slack:${channelId}`;
-    await this.bot.channel(qualifiedChannelId).post(message);
-  }
-
-  async postToThread(
-    threadId: string,
-    message: string | import('chat').ChatElement,
-  ): Promise<void> {
-    await this.bot.thread(threadId).post(message);
-  }
-
-  async addReaction(
-    threadId: string,
-    messageId: string,
-    emojiName: string,
-  ): Promise<void> {
-    try {
-      await this.slackAdapter.addReaction(threadId, messageId, emojiName);
-    } catch (error) {
-      this.logger.warn(`failed to add ${emojiName} reaction: ${error}`);
-    }
-  }
-
-  // Bypasses the adapter's 8-day user cache, which can hold entries fetched
-  // before the users:read.email scope was granted.
-  async fetchUser(
-    userId: string,
-  ): Promise<{ name: string | null; email: string | null }> {
-    const { user } = await this.slackAdapter.webClient.users.info({
-      user: userId,
-    });
-    return {
-      name:
-        user?.real_name ||
-        user?.profile?.real_name ||
-        user?.profile?.display_name ||
-        user?.name ||
-        null,
-      email: user?.profile?.email || null,
-    };
-  }
-
-  async fetchMessage(
-    threadId: string,
-    messageId: string,
-  ): Promise<import('chat').Message | null> {
-    if (!this.slackAdapter.fetchMessage) return null;
-    try {
-      return await this.slackAdapter.fetchMessage(threadId, messageId);
-    } catch (error) {
-      this.logger.warn(
-        `failed to fetch message ${messageId} in ${threadId}: ${error}`,
-      );
-      return null;
-    }
   }
 
   private emitChannelMessage(
