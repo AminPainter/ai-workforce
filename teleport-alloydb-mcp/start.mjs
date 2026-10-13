@@ -44,7 +44,7 @@ tbot.on("exit", (code) => {
   process.exit(1);
 });
 
-// Wait for tbot's first successful join before starting the MCP bridge.
+// wait for tbot's first successful join before starting the MCP bridge
 async function waitForIdentity() {
   const { existsSync } = await import("node:fs");
   const identityFile = `${identityDir}/identity`;
@@ -58,25 +58,9 @@ async function waitForIdentity() {
 await waitForIdentity();
 console.log("tbot identity ready, starting MCP proxy...");
 
-// `tsh mcp db start` reads the identity file once at process startup and
-// keeps the resulting Teleport session in memory for as long as it runs.
-// tbot rewrites that file on disk every 20 minutes, but mcp-proxy only
-// spawns this child once (confirmed: it reuses the same process across
-// requests even with --stateless) — the long-lived tsh process never
-// notices the file changed, keeps using the cert it loaded at boot, and
-// that cert eventually crosses the 1h TTL. Every query then fails with
-// "Teleport session expired".
-//
-// So we still need to restart the process periodically. The problem with
-// doing that alone is that mcp-proxy's default *stateful* mode keeps a
-// live MCP session per client in memory — killing the process orphans
-// any session a client had open, which surfaces as "No valid session ID
-// provided" on its next call, with no cert issue at all.
-//
-// --stateless removes that risk: it drops HTTP session tracking entirely
-// (confirmed: tools/call succeeds with no Mcp-Session-Id header at all),
-// so a restart just means the next request pays a brief reconnect cost —
-// there is no session state left to lose.
+// tsh holds the Teleport cert in memory and never reloads it, so we
+// restart the proxy periodically to pick up tbot's refreshed identity.
+// --stateless avoids orphaning client sessions when that restart happens.
 const RESTART_INTERVAL_MS = 35 * 60 * 1000;
 
 const dbUriEscaped = TELEPORT_DB_URI.replace(/'/g, `'\\''`);
