@@ -58,12 +58,25 @@ async function waitForIdentity() {
 await waitForIdentity();
 console.log("tbot identity ready, starting MCP proxy...");
 
-// `tsh mcp db start` reads the identity file once at startup and keeps
-// running indefinitely — it never notices tbot rewriting that file every
-// 20 minutes, so its in-memory Teleport cert eventually hits the 1h TTL
-// and every query starts failing with "Teleport session expired". Restart
-// the child process on a cadence shorter than the TTL so it always picks
-// up a fresh identity.
+// `tsh mcp db start` reads the identity file once at process startup and
+// keeps the resulting Teleport session in memory for as long as it runs.
+// tbot rewrites that file on disk every 20 minutes, but mcp-proxy only
+// spawns this child once (confirmed: it reuses the same process across
+// requests even with --stateless) — the long-lived tsh process never
+// notices the file changed, keeps using the cert it loaded at boot, and
+// that cert eventually crosses the 1h TTL. Every query then fails with
+// "Teleport session expired".
+//
+// So we still need to restart the process periodically. The problem with
+// doing that alone is that mcp-proxy's default *stateful* mode keeps a
+// live MCP session per client in memory — killing the process orphans
+// any session a client had open, which surfaces as "No valid session ID
+// provided" on its next call, with no cert issue at all.
+//
+// --stateless removes that risk: it drops HTTP session tracking entirely
+// (confirmed: tools/call succeeds with no Mcp-Session-Id header at all),
+// so a restart just means the next request pays a brief reconnect cost —
+// there is no session state left to lose.
 const RESTART_INTERVAL_MS = 35 * 60 * 1000;
 
 const dbUriEscaped = TELEPORT_DB_URI.replace(/'/g, `'\\''`);
@@ -78,6 +91,7 @@ function startProxy() {
       PORT,
       "--apiKey",
       MCP_PROXY_API_KEY,
+      "--stateless",
       "--shell",
       childCommand,
     ],
