@@ -16,7 +16,7 @@
     "repl": "nest start --entryFile repl",
     "cs:repl": "ts-node -r tsconfig-paths/register scripts/customer-support-repl.ts",
     "f9:repl": "ts-node -r tsconfig-paths/register scripts/form9-repl.ts",
-    "leaves:repl": "ts-node -r tsconfig-paths/register scripts/leaves-repl.ts",
+    "leaves:eval": "DEEPEVAL_TELEMETRY_OPT_OUT=1 DEEPEVAL_DISABLE_DOTENV=1 DEEPEVAL_EVAL_MODE=llm deepeval test run src/modules/leave-tracker/evals",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -62,6 +62,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",
+    "deepeval": "0.9.22",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -75,7 +76,8 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^4.1.11"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -98,6 +100,9 @@
     "onlyBuiltDependencies": [
       "msgpackr-extract",
       "unrs-resolver"
-    ]
+    ],
+    "patchedDependencies": {
+      "deepeval@0.9.22": "patches/deepeval@0.9.22.patch"
+    }
   }
 }
