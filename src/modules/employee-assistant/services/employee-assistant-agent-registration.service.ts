@@ -39,7 +39,6 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
         this.skillsService,
         this.snacksLedgerService,
         this.configService,
-        this.agentRegistry,
       ),
     );
   }

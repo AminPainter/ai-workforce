@@ -10,11 +10,7 @@ import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
 import { createMarkSnacksFulfilledTool } from '../../snack-tracker/tools/mark-snacks-fulfilled.tool';
-import {
-  AgentRegistry,
-  RegisteredAgent,
-} from '../../agents/services/agent-registry.service';
-import { createGlomopayAgentTool } from '../../glomopay-agent/tools/glomopay-agent.tool';
+import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
 export const EMPLOYEE_ASSISTANT = 'employee-assistant';
@@ -28,7 +24,6 @@ export function createEmployeeAssistant(
   skillsService: SkillsService,
   snacksLedgerService: SnacksLedgerService,
   configService: ConfigService,
-  agentRegistry: AgentRegistry,
 ): RegisteredAgent {
   const skills = skillsService.buildAgentSkills([
     resolve(__dirname, '../skills/sentry-root-cause'),
@@ -48,7 +43,6 @@ export function createEmployeeAssistant(
       ...atlassianMcpService.getTools(),
       ...alloyDbMcpService.getTools(),
       ...skills.tools,
-      glomopayAgent: createGlomopayAgentTool(agentRegistry),
       snacksLedger: createSnacksLedgerTool(snacksLedgerService),
       markSnacksFulfilled: createMarkSnacksFulfilledTool(
         snacksLedgerService,

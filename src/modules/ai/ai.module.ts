@@ -3,7 +3,6 @@ import { AiService } from './services/ai.service';
 import { SentryMcpService } from './services/sentry-mcp.service';
 import { GitHubMcpService } from './services/github-mcp.service';
 import { AtlassianMcpService } from './services/atlassian-mcp.service';
-import { GlomopayMcpService } from './services/glomopay-mcp.service';
 import { AlloyDbMcpService } from './services/alloydb-mcp.service';
 
 @Module({
@@ -12,7 +11,6 @@ import { AlloyDbMcpService } from './services/alloydb-mcp.service';
     SentryMcpService,
     GitHubMcpService,
     AtlassianMcpService,
-    GlomopayMcpService,
     AlloyDbMcpService,
   ],
   exports: [
@@ -20,7 +18,6 @@ import { AlloyDbMcpService } from './services/alloydb-mcp.service';
     SentryMcpService,
     GitHubMcpService,
     AtlassianMcpService,
-    GlomopayMcpService,
     AlloyDbMcpService,
   ],
 })
