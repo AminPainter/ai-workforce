@@ -1,6 +1,6 @@
 import { BaseMetric } from 'deepeval/metrics';
 import type { LLMTestCase } from 'deepeval/test-case';
-import type { LeaveClassifierMetadata } from './leave-classifier-metadata';
+import { metadataOf } from './leave-classifier-metadata';
 
 export class LeaveIntentMetric extends BaseMetric {
   constructor() {
@@ -8,8 +8,7 @@ export class LeaveIntentMetric extends BaseMetric {
   }
 
   measure(testCase: LLMTestCase): number {
-    const { actual, expected } =
-      testCase.additionalMetadata as LeaveClassifierMetadata;
+    const { actual, expected } = metadataOf(testCase);
     this.score = actual.intent === expected.intent ? 1 : 0;
     this.reason = `Expected intent "${expected.intent}", got "${actual.intent}".`;
     this.success = this.isSuccessful();
