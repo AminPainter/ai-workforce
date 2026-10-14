@@ -9,13 +9,13 @@ import { createLeaveRequestClassifier } from '../agents/leave-request-classifier
 import type { LeaveRequestClassification } from '../agents/leave-request-classifier.schema';
 import { formatClassifierInput } from '../utils/classifier-input';
 import { planLeaveRequest } from '../utils/leave-plan';
+import { ClarificationQualityMetric } from './metrics/clarification-quality.metric';
 import {
-  createClarificationQualityMetric,
   type LeaveClassifierMetadata,
   type LeaveClassifierResult,
-  LeaveIntentMetric,
-  LeaveMarksMetric,
-} from './leave-request-classifier.metrics';
+} from './metrics/leave-classifier-metadata';
+import { LeaveIntentMetric } from './metrics/leave-intent.metric';
+import { LeaveMarksMetric } from './metrics/leave-marks.metric';
 
 process.loadEnvFile();
 
@@ -64,7 +64,7 @@ const LEAVE_CLASSIFIER_CASES: LeaveClassifierCase[] = [
     expected: { intent: 'clarify', marks: [] },
     metrics: () => [
       new LeaveIntentMetric(),
-      createClarificationQualityMetric(judge),
+      new ClarificationQualityMetric(judge),
     ],
   },
 ];
