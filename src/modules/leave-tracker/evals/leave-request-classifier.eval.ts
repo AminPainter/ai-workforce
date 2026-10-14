@@ -22,7 +22,6 @@ process.loadEnvFile();
 // Wednesday 2026-10-07, 09:30 IST.
 const EVAL_NOW = new Date('2026-10-07T09:30:00+05:30');
 const AUTHOR_ID = 'U0AUTHOR01';
-// A different model family from the classifier, to avoid self-preference.
 const JUDGE_MODEL = 'kimi-k3';
 
 const aiService = new AiService(new ConfigService());
