@@ -17,14 +17,6 @@ import {
   LeaveMarksMetric,
 } from './leave-request-classifier.metrics';
 
-// deepeval only adds the toPass type to vitest's ESM types, but this CommonJS project
-// uses vitest's CommonJS types, so TypeScript can't see toPass without this.
-declare module 'vitest' {
-  interface Assertion<T> {
-    toPass(metrics: BaseMetric[]): Promise<T>;
-  }
-}
-
 process.loadEnvFile();
 
 // Wednesday 2026-10-07, 09:30 IST.
