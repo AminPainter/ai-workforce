@@ -1,0 +1,6 @@
+diff --git a/dist/telemetry.d.ts b/dist/telemetry.d.ts
+deleted file mode 100644
+index e96978bbaf6da70926e3c34126d55c38897348d9..0000000000000000000000000000000000000000
+diff --git a/dist/telemetry.js b/dist/telemetry.js
+deleted file mode 100644
+index 6c18c413d30c4622199c364a39fc76447276b553..0000000000000000000000000000000000000000

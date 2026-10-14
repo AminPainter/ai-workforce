@@ -8,6 +8,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build
@@ -17,6 +18,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 RUN pnpm install --prod --frozen-lockfile
 
 FROM searxng/searxng:latest AS runtime
