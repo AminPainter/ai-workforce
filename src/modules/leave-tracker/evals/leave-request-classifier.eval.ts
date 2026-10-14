@@ -1,10 +1,3 @@
-/**
- * DeepEval suite for the #leaves classifier + deterministic planner.
- *
- * Run: pnpm leaves:eval
- * Env: AI_GATEWAY_API_KEY, AI_GATEWAY_BASE_URL, AI_GATEWAY_MODEL.
- * Test cases are anonymized paraphrases of real #leaves phrasing.
- */
 import { ConfigService } from '@nestjs/config';
 import { type BaseMetric } from 'deepeval/metrics';
 import { AISDKModel } from 'deepeval/models';
