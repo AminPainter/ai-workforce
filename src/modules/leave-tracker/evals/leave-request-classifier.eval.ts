@@ -2,8 +2,7 @@
  * DeepEval suite for the #leaves classifier + deterministic planner.
  *
  * Run: pnpm leaves:eval
- * Env: AI_GATEWAY_API_KEY, AI_GATEWAY_BASE_URL, AI_GATEWAY_MODEL,
- * optional LEAVES_EVAL_JUDGE_MODEL (defaults to kimi-k3).
+ * Env: AI_GATEWAY_API_KEY, AI_GATEWAY_BASE_URL, AI_GATEWAY_MODEL.
  * Test cases are anonymized paraphrases of real #leaves phrasing.
  */
 import { ConfigService } from '@nestjs/config';
@@ -38,15 +37,12 @@ process.loadEnvFile();
 const EVAL_NOW = new Date('2026-10-07T09:30:00+05:30');
 const AUTHOR_ID = 'U0AUTHOR01';
 // A different model family from the classifier, to avoid self-preference.
-const DEFAULT_JUDGE_MODEL = 'kimi-k3';
+const JUDGE_MODEL = 'kimi-k3';
 
-const config = new ConfigService();
-const aiService = new AiService(config);
+const aiService = new AiService(new ConfigService());
 const classifier = createLeaveRequestClassifier(aiService);
 const judge = new AISDKModel({
-  model: aiService.model(
-    config.get<string>('LEAVES_EVAL_JUDGE_MODEL') ?? DEFAULT_JUDGE_MODEL,
-  ),
+  model: aiService.model(JUDGE_MODEL),
 });
 
 interface LeaveClassifierCase {
