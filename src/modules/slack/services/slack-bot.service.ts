@@ -10,21 +10,6 @@ import {
 } from '../slack.events';
 import { SlackChatBot } from './slack-chat-bot.base';
 
-const ALLOWED_SLACK_USER_IDS = new Set<string>([
-  'U0857R1RB9Q', // Amin
-  'U072S2RLD4G', // Shreyas
-  'U07BD5PE4DQ', // Prabhat
-  'U066TUAMKND', // Sahil
-  'U09R63QP27J', // Arjun
-  'U097N9HA2LF', // Yash
-  'U093L589891', // Sahil Yadav
-  'U09ME40GB4H', // Shivani
-  'U0BACHM9NF5', // Mohan
-]);
-
-const UNAUTHORIZED_MESSAGE =
-  'I respond only to Master Amin and his product manager Shreyas';
-
 const GENERATION_FAILED_MESSAGE =
   'Having a bad headache. Not able to respond right now. [INTERNAL_SERVER_ERROR]';
 
@@ -59,11 +44,6 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     });
 
     this.bot.onNewMention(async (thread, message) => {
-      if (!this.isMessageAuthorAllowedToInteract(message)) {
-        this.logger.warn(`ignored mention from ${message.author.userId}`);
-        await thread.post(UNAUTHORIZED_MESSAGE);
-        return;
-      }
       this.logger.log(`mention: ${message.text}`);
       await this.addSeenReaction(message);
       await this.answer(thread, message.author.userId);
@@ -153,12 +133,6 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
       else await thread.post(GENERATION_FAILED_MESSAGE);
       return '';
     }
-  }
-
-  private isMessageAuthorAllowedToInteract(
-    message: import('chat').Message,
-  ): boolean {
-    return ALLOWED_SLACK_USER_IDS.has(message.author.userId);
   }
 
   private datePrefix(): string {
