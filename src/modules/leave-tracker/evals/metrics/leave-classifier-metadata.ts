@@ -1,4 +1,3 @@
-import type { LLMTestCase } from 'deepeval/test-case';
 import type { LeaveRequestClassification } from '../../agents/leave-request-classifier.schema';
 
 export interface LeaveClassifierResult {
@@ -10,8 +9,4 @@ export interface LeaveClassifierResult {
 export interface LeaveClassifierMetadata {
   actual: LeaveClassifierResult;
   expected: LeaveClassifierResult;
-}
-
-export function metadataOf(testCase: LLMTestCase): LeaveClassifierMetadata {
-  return testCase.additionalMetadata as LeaveClassifierMetadata;
 }

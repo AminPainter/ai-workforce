@@ -1,6 +1,6 @@
 import { BaseMetric } from 'deepeval/metrics';
 import type { LLMTestCase } from 'deepeval/test-case';
-import { metadataOf } from './leave-classifier-metadata';
+import type { LeaveClassifierMetadata } from './leave-classifier-metadata';
 
 export class LeaveMarksMetric extends BaseMetric {
   constructor() {
@@ -8,7 +8,8 @@ export class LeaveMarksMetric extends BaseMetric {
   }
 
   measure(testCase: LLMTestCase): number {
-    const { actual, expected } = metadataOf(testCase);
+    const { actual, expected } =
+      testCase.additionalMetadata as LeaveClassifierMetadata;
     const unmatched = [...actual.marks];
     const missing: string[] = [];
     for (const want of expected.marks) {
