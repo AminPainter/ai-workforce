@@ -1,12 +1,19 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { ConfigService } from '@nestjs/config';
+import { Golden } from 'deepeval/dataset';
 import { type BaseMetric } from 'deepeval/metrics';
 import { AISDKModel } from 'deepeval/models';
 import { LLMTestCase } from 'deepeval/test-case';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { toIstDateString } from '../../../common/utils/date.util';
 import { AiService } from '../../ai/services/ai.service';
 import { createLeaveRequestClassifier } from '../agents/leave-request-classifier.agent';
-import type { LeaveRequestClassification } from '../agents/leave-request-classifier.schema';
+import {
+  leaveRequestClassificationSchema,
+  type LeaveRequestClassification,
+} from '../agents/leave-request-classifier.schema';
 import { formatClassifierInput } from '../utils/classifier-input';
 import { planLeaveRequest } from '../utils/leave-plan';
 import { ClarificationQualityMetric } from './metrics/clarification-quality.metric';
@@ -30,59 +37,51 @@ const judge = new AISDKModel({
   model: aiService.model(JUDGE_MODEL),
 });
 
-interface LeaveClassifierCase {
-  name: string;
-  text: string;
-  postedAt: string;
-  threadParent?: { text: string; postedAt: string };
-  expected: LeaveClassifierResult;
-  metrics: () => BaseMetric[];
+const goldenMetadataSchema = z.object({
+  postedAt: z.iso.datetime({ offset: true }),
+  threadParent: z
+    .object({
+      text: z.string(),
+      postedAt: z.iso.datetime({ offset: true }),
+    })
+    .optional(),
+  expected: z.object({
+    intent: leaveRequestClassificationSchema.shape.intent,
+    marks: z.array(z.string()),
+  }),
+});
+
+const goldens = (
+  JSON.parse(
+    readFileSync(
+      join(__dirname, 'goldens/leave-request-classifier.json'),
+      'utf8',
+    ),
+  ) as ConstructorParameters<typeof Golden>[0][]
+).map((record) => new Golden(record));
+
+function metricsFor(expected: LeaveClassifierResult): BaseMetric[] {
+  const metrics: BaseMetric[] = [
+    new LeaveIntentMetric(),
+    new LeaveMarksMetric(),
+  ];
+  if (expected.intent === 'clarify')
+    metrics.push(new ClarificationQualityMetric(judge));
+  return metrics;
 }
 
-const LEAVE_CLASSIFIER_CASES: LeaveClassifierCase[] = [
-  {
-    name: 'range plus half day',
-    text: 'Will be on leave from Oct 19 to 23.\n\nAnd 2nd half leave on Oct 16.\n\ncc @Team',
-    postedAt: '2026-10-05T11:30:00+05:30',
-    expected: {
-      intent: 'mark',
-      marks: [
-        '2026-10-16 earned second_half',
-        '2026-10-19 earned full',
-        '2026-10-20 earned full',
-        '2026-10-21 earned full',
-        '2026-10-22 earned full',
-        '2026-10-23 earned full',
-      ],
-    },
-    metrics: () => [new LeaveIntentMetric(), new LeaveMarksMetric()],
-  },
-  {
-    name: 'conditional wfh',
-    text: "my car is not starting, will reach by 11.30 if it's battery issue else will do WFH",
-    postedAt: '2026-10-07T08:49:00+05:30',
-    expected: { intent: 'clarify', marks: [] },
-    metrics: () => [
-      new LeaveIntentMetric(),
-      new ClarificationQualityMetric(judge),
-    ],
-  },
-];
-
 async function runClassifier(
-  testCase: LeaveClassifierCase,
+  golden: Golden,
+  { postedAt, threadParent, expected }: z.infer<typeof goldenMetadataSchema>,
 ): Promise<LLMTestCase> {
   const input = formatClassifierInput({
     now: EVAL_NOW,
-    postedAt: new Date(testCase.postedAt),
+    postedAt: new Date(postedAt),
     authorName: 'Employee',
     authorUserId: AUTHOR_ID,
-    text: testCase.text,
-    threadParent: testCase.threadParent
-      ? {
-          text: testCase.threadParent.text,
-          postedAt: new Date(testCase.threadParent.postedAt),
-        }
+    text: golden.input,
+    threadParent: threadParent
+      ? { text: threadParent.text, postedAt: new Date(threadParent.postedAt) }
       : null,
   });
   const { output } = (await classifier.generate({
@@ -96,24 +95,24 @@ async function runClassifier(
       ({ date, kind, portion }) => `${date} ${kind} ${portion}`,
     ),
   };
-  const metadata: LeaveClassifierMetadata = {
-    actual,
-    expected: testCase.expected,
-  };
+  const metadata: LeaveClassifierMetadata = { actual, expected };
   return new LLMTestCase({
-    name: testCase.name,
+    name: golden.name,
     input,
     actualOutput: JSON.stringify({
       ...actual,
       clarificationQuestion: output.clarificationQuestion,
     }),
-    expectedOutput: JSON.stringify(testCase.expected),
+    expectedOutput: JSON.stringify(expected),
     additionalMetadata: metadata,
   });
 }
 
 describe('leave request classifier', () => {
-  it.each(LEAVE_CLASSIFIER_CASES)('$name', async (testCase) => {
-    await expect(await runClassifier(testCase)).toPass(testCase.metrics());
+  it.each(goldens)('$name', async (golden) => {
+    const metadata = goldenMetadataSchema.parse(golden.additionalMetadata);
+    await expect(await runClassifier(golden, metadata)).toPass(
+      metricsFor(metadata.expected),
+    );
   });
 });
