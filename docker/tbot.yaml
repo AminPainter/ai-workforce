@@ -1,0 +1,36 @@
+# Teleport Machine ID (tbot) config.
+#
+# One tbot daemon, one bound-keypair identity, N local tunnels. It joins the cluster with
+# a bound-keypair static key (private key via the base64-encoded $TBOT_BOUND_KEYPAIR_STATIC_KEY
+# env var — never on disk) and exposes each Teleport-fronted app on its own plaintext
+# 127.0.0.1 listener. Callers reach an app via its localhost port; Teleport handles identity
+# and routing. tbot renews the short-lived cert in the background.
+#
+# To add another Teleport app (e.g. Metabase):
+#   1. add an `application-tunnel` entry below on the next free port (convention: 808x;
+#      8080 = SearXNG, 8081 = Chatwoot);
+#   2. grant the bot's role access to that app on the cluster (add its label to app_labels);
+#   3. point the consumer at http://127.0.0.1:<port> via a Render env var.
+# start.sh derives its readiness checks from the listen ports here, so no change is needed there.
+#
+# Placeholders to verify against the cluster before deploy (`tsh apps ls` / `tctl`):
+#   proxy_server     -> public proxy address:443
+#   onboarding.token -> bound-keypair token name (`tctl bots`/`tctl tokens ls`)
+#   app_name         -> exact Teleport app name per app
+# Requires Teleport >= 18.2.0 for bound-keypair static keys.
+version: v2
+proxy_server: teleport.glomopay-eng.com:443
+onboarding:
+  join_method: bound_keypair
+  token: chatwoot-ai
+storage:
+  # Render containers are ephemeral (storage: memory); insecure-recovery static-key
+  # mode keeps no client-side join state, so in-memory storage is correct here.
+  type: memory
+services:
+  - type: application-tunnel
+    app_name: production-chatwoot
+    listen: tcp://127.0.0.1:8081
+  # - type: application-tunnel
+  #   app_name: production-metabase
+  #   listen: tcp://127.0.0.1:8082
