@@ -387,10 +387,13 @@
     "input": "This is cancelled. Might take sick leave or WFH depending upon health.",
     "additionalMetadata": {
       "postedAt": "2026-10-06T21:55:00+05:30",
-      "threadParent": {
-        "text": "Will be on leave tomorrow.",
-        "postedAt": "2026-10-06T18:00:00+05:30"
-      },
+      "thread": [
+        {
+          "sender": "author",
+          "text": "Will be on leave tomorrow.",
+          "postedAt": "2026-10-06T18:00:00+05:30"
+        }
+      ],
       "expected": {
         "intent": "ignore",
         "marks": []
@@ -402,10 +405,13 @@
     "input": "nothing. just need some more time to build it. Will build it once i have some free time",
     "additionalMetadata": {
       "postedAt": "2026-10-07T10:15:00+05:30",
-      "threadParent": {
-        "text": "I will be working from home tomorrow",
-        "postedAt": "2026-10-07T09:00:00+05:30"
-      },
+      "thread": [
+        {
+          "sender": "author",
+          "text": "I will be working from home tomorrow",
+          "postedAt": "2026-10-07T09:00:00+05:30"
+        }
+      ],
       "expected": {
         "intent": "ignore",
         "marks": []
@@ -417,10 +423,13 @@
     "input": "7th to 9th",
     "additionalMetadata": {
       "postedAt": "2026-10-07T09:28:00+05:30",
-      "threadParent": {
-        "text": "My grandmother is unwell and I need to travel to my hometown urgently. I may need to take leave for the next 2–3 days, depending on the situation.",
-        "postedAt": "2026-10-07T09:25:00+05:30"
-      },
+      "thread": [
+        {
+          "sender": "author",
+          "text": "My grandmother is unwell and I need to travel to my hometown urgently. I may need to take leave for the next 2–3 days, depending on the situation.",
+          "postedAt": "2026-10-07T09:25:00+05:30"
+        }
+      ],
       "expected": {
         "intent": "mark",
         "marks": ["2026-10-07 * full", "2026-10-08 * full", "2026-10-09 * full"]
@@ -503,6 +512,132 @@
       "expected": {
         "intent": "mark",
         "marks": ["2026-10-09 earned full"]
+      }
+    }
+  },
+  {
+    "name": "+1 joins the only leave in the thread",
+    "input": "+1 for me.",
+    "additionalMetadata": {
+      "postedAt": "2026-10-06T19:46:00+05:30",
+      "thread": [
+        {
+          "sender": "other",
+          "name": "Rohan Mehta",
+          "text": "Hi Team, taking leave 2nd half tomorrow.",
+          "postedAt": "2026-10-06T19:45:00+05:30"
+        },
+        {
+          "sender": "bot",
+          "text": "@Rohan Marked in RazorpayX:\n• Earned Leave (half day, 2nd half): Wed 7 Oct",
+          "postedAt": "2026-10-06T19:45:30+05:30"
+        }
+      ],
+      "expected": {
+        "intent": "mark",
+        "marks": ["2026-10-07 earned second_half"]
+      }
+    }
+  },
+  {
+    "name": "me too resolves dates against the announcement",
+    "input": "same here",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T08:10:00+05:30",
+      "thread": [
+        {
+          "sender": "other",
+          "name": "Ananya Rao",
+          "text": "Will be WFH tomorrow, plumber visiting.",
+          "postedAt": "2026-10-06T21:30:00+05:30"
+        },
+        {
+          "sender": "bot",
+          "text": "@Ananya Marked in RazorpayX:\n• WFH: Wed 7 Oct",
+          "postedAt": "2026-10-06T21:30:30+05:30"
+        }
+      ],
+      "expected": {
+        "intent": "mark",
+        "marks": ["2026-10-07 wfh full"]
+      }
+    }
+  },
+  {
+    "name": "+1 with several leaves in the thread asks which one",
+    "input": "+1",
+    "additionalMetadata": {
+      "postedAt": "2026-10-06T20:30:00+05:30",
+      "thread": [
+        {
+          "sender": "other",
+          "name": "Rohan Mehta",
+          "text": "Hi Team, taking leave 2nd half tomorrow.",
+          "postedAt": "2026-10-06T19:45:00+05:30"
+        },
+        {
+          "sender": "bot",
+          "text": "@Rohan Marked in RazorpayX:\n• Earned Leave (half day, 2nd half): Wed 7 Oct",
+          "postedAt": "2026-10-06T19:45:30+05:30"
+        },
+        {
+          "sender": "other",
+          "name": "Kavya Iyer",
+          "text": "I'll be on leave on Friday.",
+          "postedAt": "2026-10-06T20:10:00+05:30"
+        },
+        {
+          "sender": "bot",
+          "text": "@Kavya Marked in RazorpayX:\n• Earned Leave: Fri 9 Oct",
+          "postedAt": "2026-10-06T20:10:30+05:30"
+        }
+      ],
+      "expected": {
+        "intent": "clarify",
+        "marks": []
+      }
+    }
+  },
+  {
+    "name": "get well soon on someone else's sick leave",
+    "input": "Take care, get well soon!",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T08:00:00+05:30",
+      "thread": [
+        {
+          "sender": "other",
+          "name": "Rohan Mehta",
+          "text": "Down with fever, taking sick leave today.",
+          "postedAt": "2026-10-07T07:30:00+05:30"
+        },
+        {
+          "sender": "bot",
+          "text": "@Rohan Marked in RazorpayX:\n• Sick Leave: Wed 7 Oct",
+          "postedAt": "2026-10-07T07:30:30+05:30"
+        }
+      ],
+      "expected": {
+        "intent": "ignore",
+        "marks": []
+      }
+    }
+  },
+  {
+    "name": "+1 on a non-leave thread",
+    "input": "+1",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T09:00:00+05:30",
+      "thread": [
+        {
+          "sender": "other",
+          "name": "HR",
+          "text": "Reminder: please post planned leaves for Diwali week here by Friday so we can plan coverage.",
+          "postedAt": "2026-10-07T08:30:00+05:30"
+        }
+      ],
+      "expected": {
+        "intent": "ignore",
+        "marks": []
       }
     }
   }

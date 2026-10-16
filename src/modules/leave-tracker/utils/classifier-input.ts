@@ -3,7 +3,13 @@ import {
   toIstDateString,
 } from '../../../common/utils/date.util';
 
-export interface ThreadParentMessage {
+export const THREAD_MESSAGE_SENDERS = ['author', 'other', 'bot'] as const;
+
+export type ThreadMessageSender = (typeof THREAD_MESSAGE_SENDERS)[number];
+
+export interface ThreadMessage {
+  sender: ThreadMessageSender;
+  name: string;
   text: string;
   postedAt: Date;
 }
@@ -14,7 +20,7 @@ export interface ClassifierInputArgs {
   authorName: string;
   authorUserId: string;
   text: string;
-  threadParent: ThreadParentMessage | null;
+  earlierThreadMessages: ThreadMessage[];
 }
 
 export function formatClassifierInput(args: ClassifierInputArgs): string {
@@ -29,16 +35,26 @@ export function formatClassifierInput(args: ClassifierInputArgs): string {
     '"""',
   ];
 
-  if (args.threadParent)
+  if (args.earlierThreadMessages.length > 0)
     lines.push(
       '',
-      `Context: this message is a reply in a thread the author started with the message below, posted at ${describeMoment(args.threadParent.postedAt)}:`,
-      '"""',
-      args.threadParent.text,
-      '"""',
+      'Context: this message is a reply in a Slack thread. Earlier messages in the thread, oldest first:',
+      ...args.earlierThreadMessages.flatMap((message, index) => [
+        '',
+        `[${index + 1}] ${describeSender(message)}, posted at ${describeMoment(message.postedAt)}:`,
+        '"""',
+        message.text,
+        '"""',
+      ]),
     );
 
   return lines.join('\n');
+}
+
+function describeSender({ sender, name }: ThreadMessage): string {
+  if (sender === 'author') return `${name} (the author)`;
+  if (sender === 'bot') return 'Leaves bot (this system)';
+  return `${name} (another person)`;
 }
 
 function describeMoment(date: Date): string {

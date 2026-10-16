@@ -72,18 +72,19 @@ export abstract class SlackChatBot implements OnModuleDestroy {
     };
   }
 
-  async fetchMessage(
+  async fetchThreadMessages(
     threadId: string,
-    messageId: string,
-  ): Promise<import('chat').Message | null> {
-    if (!this.slackAdapter.fetchMessage) return null;
+    limit: number,
+  ): Promise<import('chat').Message[]> {
     try {
-      return await this.slackAdapter.fetchMessage(threadId, messageId);
+      const { messages } = await this.slackAdapter.fetchMessages(threadId, {
+        direction: 'forward',
+        limit,
+      });
+      return messages;
     } catch (error) {
-      this.logger.warn(
-        `failed to fetch message ${messageId} in ${threadId}: ${error}`,
-      );
-      return null;
+      this.logger.warn(`failed to fetch messages in ${threadId}: ${error}`);
+      return [];
     }
   }
 
