@@ -39,10 +39,10 @@ export class CodingTaskProcessor extends WorkerHost {
     const { threadId, repo, task } = job.data;
     const sessionId = this.codingSessionRepository.sessionId(threadId);
     const rootDir = this.codingSessionRepository.rootDir(sessionId);
-    const repoDir = join(rootDir, REPO_DIR);
+    const cloningDirectory = join(rootDir, REPO_DIR);
     const codingSession =
       (await this.codingSessionRepository.find(sessionId)) ??
-      (await this.startSession(sessionId, repo, repoDir));
+      (await this.startSession(sessionId, repo, cloningDirectory));
 
     const harnessSession = await this.codingAgent.createSession({
       sessionId,
@@ -57,13 +57,13 @@ export class CodingTaskProcessor extends WorkerHost {
 
     await this.gitWorkspaceService.push(
       codingSession.repo,
-      repoDir,
+      cloningDirectory,
       codingSession.branch,
     );
     if (
       !codingSession.pullRequestUrl &&
       (await this.gitWorkspaceService.hasCommitsAhead(
-        repoDir,
+        cloningDirectory,
         codingSession.baseBranch,
       ))
     )
@@ -86,12 +86,12 @@ export class CodingTaskProcessor extends WorkerHost {
   private async startSession(
     sessionId: string,
     repo: string,
-    repoDir: string,
+    cloningDirectory: string,
   ): Promise<CodingSession> {
     const branch = `coding-agent/${sessionId}`;
     const baseBranch = await this.gitWorkspaceService.clone(
       repo,
-      repoDir,
+      cloningDirectory,
       branch,
     );
     return { repo, baseBranch, branch };
