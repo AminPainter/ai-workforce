@@ -3,7 +3,15 @@ import {
   toIstDateString,
 } from '../../../common/utils/date.util';
 
-export interface ThreadParentMessage {
+export enum ThreadMessageSender {
+  Author = 'author',
+  Other = 'other',
+  Bot = 'bot',
+}
+
+export interface ThreadMessage {
+  sender: ThreadMessageSender;
+  name: string;
   text: string;
   postedAt: Date;
 }
@@ -14,7 +22,7 @@ export interface ClassifierInputArgs {
   authorName: string;
   authorUserId: string;
   text: string;
-  threadParent: ThreadParentMessage | null;
+  earlierThreadMessages: ThreadMessage[];
 }
 
 export function formatClassifierInput(args: ClassifierInputArgs): string {
@@ -29,16 +37,26 @@ export function formatClassifierInput(args: ClassifierInputArgs): string {
     '"""',
   ];
 
-  if (args.threadParent)
+  if (args.earlierThreadMessages.length > 0)
     lines.push(
       '',
-      `Context: this message is a reply in a thread the author started with the message below, posted at ${describeMoment(args.threadParent.postedAt)}:`,
-      '"""',
-      args.threadParent.text,
-      '"""',
+      'Context: this message is a reply in a Slack thread. Earlier messages in the thread, oldest first:',
+      ...args.earlierThreadMessages.flatMap((message, index) => [
+        '',
+        `[${index + 1}] ${describeSender(message)}, posted at ${describeMoment(message.postedAt)}:`,
+        '"""',
+        message.text,
+        '"""',
+      ]),
     );
 
   return lines.join('\n');
+}
+
+function describeSender({ sender, name }: ThreadMessage): string {
+  if (sender === ThreadMessageSender.Author) return `${name} (the author)`;
+  if (sender === ThreadMessageSender.Bot) return 'Leaves bot (this system)';
+  return `${name} (another person)`;
 }
 
 function describeMoment(date: Date): string {

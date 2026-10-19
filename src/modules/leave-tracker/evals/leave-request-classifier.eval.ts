@@ -14,7 +14,10 @@ import {
   leaveRequestClassificationSchema,
   type LeaveRequestClassification,
 } from '../agents/leave-request-classifier.schema';
-import { formatClassifierInput } from '../utils/classifier-input';
+import {
+  formatClassifierInput,
+  ThreadMessageSender,
+} from '../utils/classifier-input';
 import { planLeaveRequest } from '../utils/leave-plan';
 import { ClarificationQualityMetric } from './metrics/clarification-quality.metric';
 import {
@@ -39,12 +42,16 @@ const judge = new AISDKModel({
 
 const goldenMetadataSchema = z.object({
   postedAt: z.iso.datetime({ offset: true }),
-  threadParent: z
-    .object({
-      text: z.string(),
-      postedAt: z.iso.datetime({ offset: true }),
-    })
-    .optional(),
+  thread: z
+    .array(
+      z.object({
+        sender: z.enum(ThreadMessageSender),
+        name: z.string().default('Employee'),
+        text: z.string(),
+        postedAt: z.iso.datetime({ offset: true }),
+      }),
+    )
+    .default([]),
   expected: z.object({
     intent: leaveRequestClassificationSchema.shape.intent,
     marks: z.array(z.string()),
@@ -72,7 +79,7 @@ function metricsFor(expected: LeaveClassifierResult): BaseMetric[] {
 
 async function runClassifier(
   golden: Golden,
-  { postedAt, threadParent, expected }: z.infer<typeof goldenMetadataSchema>,
+  { postedAt, thread, expected }: z.infer<typeof goldenMetadataSchema>,
 ): Promise<LLMTestCase> {
   const input = formatClassifierInput({
     now: EVAL_NOW,
@@ -80,9 +87,10 @@ async function runClassifier(
     authorName: 'Employee',
     authorUserId: AUTHOR_ID,
     text: golden.input,
-    threadParent: threadParent
-      ? { text: threadParent.text, postedAt: new Date(threadParent.postedAt) }
-      : null,
+    earlierThreadMessages: thread.map((message) => ({
+      ...message,
+      postedAt: new Date(message.postedAt),
+    })),
   });
   const { output } = (await classifier.generate({
     messages: [{ role: 'user', content: input }],

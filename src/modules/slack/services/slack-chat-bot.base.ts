@@ -72,18 +72,23 @@ export abstract class SlackChatBot implements OnModuleDestroy {
     };
   }
 
-  async fetchMessage(
+  // The Slack adapter sends a backward cursor as conversations.replies
+  // `latest` with `inclusive: false`, so a message ts works as the cursor.
+  async fetchThreadMessagesBefore(
     threadId: string,
     messageId: string,
-  ): Promise<import('chat').Message | null> {
-    if (!this.slackAdapter.fetchMessage) return null;
+    limit: number,
+  ): Promise<import('chat').Message[]> {
     try {
-      return await this.slackAdapter.fetchMessage(threadId, messageId);
+      const { messages } = await this.slackAdapter.fetchMessages(threadId, {
+        direction: 'backward',
+        cursor: messageId,
+        limit,
+      });
+      return messages;
     } catch (error) {
-      this.logger.warn(
-        `failed to fetch message ${messageId} in ${threadId}: ${error}`,
-      );
-      return null;
+      this.logger.warn(`failed to fetch messages in ${threadId}: ${error}`);
+      return [];
     }
   }
 
