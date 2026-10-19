@@ -7,7 +7,7 @@ import {
 } from '../queues/coding-agent.queue';
 
 @Processor(CODING_AGENT_REPLIES_QUEUE)
-export class CodingReplyProcessor extends WorkerHost {
+export class CodingTaskSlackSummaryProcessor extends WorkerHost {
   constructor(private readonly slackBotService: SlackBotService) {
     super();
   }
