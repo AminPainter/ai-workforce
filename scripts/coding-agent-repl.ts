@@ -69,7 +69,7 @@ async function main(): Promise<void> {
     logger: ['error', 'warn'],
   });
   const codingSessionRepository = app.get(CodingSessionRepository);
-  const sessionId = codingSessionRepository.sessionId(threadId);
+  const sessionId = codingSessionRepository.createSessionId(threadId);
   console.log(`threadId:  ${threadId}`);
   console.log(`workspace: ${codingSessionRepository.rootDir(sessionId)}`);
   console.log(`branch:    coding-agent/${sessionId}`);

@@ -24,7 +24,7 @@ export class CodingSessionRepository {
       join(tmpdir(), 'coding-agent');
   }
 
-  sessionId(threadId: string): string {
+  createSessionId(threadId: string): string {
     return createHash('sha256').update(threadId).digest('hex').slice(0, 16);
   }
 
