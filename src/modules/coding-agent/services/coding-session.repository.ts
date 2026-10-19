@@ -28,7 +28,7 @@ export class CodingSessionRepository {
     return createHash('sha256').update(threadId).digest('hex').slice(0, 16);
   }
 
-  rootDir(sessionId: string): string {
+  getRootDir(sessionId: string): string {
     return join(this.workspacesDir, sessionId);
   }
 
@@ -44,6 +44,6 @@ export class CodingSessionRepository {
   }
 
   private sessionFile(sessionId: string): string {
-    return join(this.rootDir(sessionId), 'session.json');
+    return join(this.getRootDir(sessionId), 'session.json');
   }
 }

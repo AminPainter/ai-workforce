@@ -38,7 +38,7 @@ export class CodingTaskProcessor extends WorkerHost {
   async process(job: Job<CodingTaskJob>): Promise<void> {
     const { threadId, repo, task } = job.data;
     const sessionId = this.codingSessionRepository.createSessionId(threadId);
-    const rootDir = this.codingSessionRepository.rootDir(sessionId);
+    const rootDir = this.codingSessionRepository.getRootDir(sessionId);
     const cloningDirectory = join(rootDir, REPO_DIR);
     const codingSession =
       (await this.codingSessionRepository.find(sessionId)) ??
