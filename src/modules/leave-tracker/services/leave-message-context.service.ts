@@ -29,7 +29,7 @@ export class LeaveMessageContextService {
     const author = await this.lookupAuthor(job.userId);
     return {
       author,
-      isThreadReply: threadTsOf(job) !== job.messageId,
+      isThreadReply: threadTimestampOf(job) !== job.messageId,
       classifierInput: formatClassifierInput({
         now,
         postedAt: new Date(job.postedAt),
@@ -50,7 +50,7 @@ export class LeaveMessageContextService {
     job: LeaveMessageJob,
     author: SlackPerson,
   ): Promise<ThreadMessage[]> {
-    if (threadTsOf(job) === job.messageId) return [];
+    if (threadTimestampOf(job) === job.messageId) return [];
 
     const postedAt = new Date(job.postedAt);
     const earlier = (
@@ -90,7 +90,7 @@ function senderOf(
   return message.author.userId === authorUserId ? 'author' : 'other';
 }
 
-function threadTsOf(job: LeaveMessageJob): string {
-  const [, , threadTs] = job.threadId.split(':');
-  return threadTs;
+function threadTimestampOf(job: LeaveMessageJob): string {
+  const [, , threadTimestamp] = job.threadId.split(':');
+  return threadTimestamp;
 }
