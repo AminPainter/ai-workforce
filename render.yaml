@@ -66,6 +66,34 @@ services:
         sync: false
       # Add SLACK_APP_TOKEN / *_MCP_URL as sync:false only if the populated .env needs them.
 
+  - type: worker
+    name: glomo-coding-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile.worker
+    region: singapore
+    plan: standard # Pi + git + repo toolchains need more than starter's 512 MB
+    autoDeployTrigger: "off" # a deploy kills the coding turn in progress
+    disk:
+      name: coding-workspaces
+      mountPath: /var/data
+      sizeGB: 20
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: glomo-ai-workforce-redis
+          property: connectionString
+      - key: CODING_AGENT_WORKSPACES_DIR
+        value: /var/data/coding
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: AI_GATEWAY_BASE_URL
+        sync: false
+      - key: AI_GATEWAY_MODEL
+        sync: false
+      - key: GITHUB_PAT
+        sync: false
+
   - type: keyvalue
     name: glomo-ai-workforce-redis
     region: singapore # match the web service region

@@ -117,6 +117,7 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
             channelId: thread.channelId,
             requesterUserId,
           },
+          delegateCodingTask: { threadId: thread.id },
         },
       });
       sentMessage = await thread.post(result.stream);

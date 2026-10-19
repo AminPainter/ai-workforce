@@ -10,6 +10,8 @@ import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
 import { createMarkSnacksFulfilledTool } from '../../snack-tracker/tools/mark-snacks-fulfilled.tool';
+import { CodingTaskService } from '../../coding-agent/services/coding-task.service';
+import { createDelegateCodingTaskTool } from '../../coding-agent/tools/delegate-coding-task.tool';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
@@ -24,6 +26,7 @@ export function createEmployeeAssistant(
   skillsService: SkillsService,
   snacksLedgerService: SnacksLedgerService,
   configService: ConfigService,
+  codingTaskService: CodingTaskService,
 ): RegisteredAgent {
   const skills = skillsService.buildAgentSkills([
     resolve(__dirname, '../skills/sentry-root-cause'),
@@ -48,10 +51,12 @@ export function createEmployeeAssistant(
         snacksLedgerService,
         bakarChannelId,
       ),
+      delegateCodingTask: createDelegateCodingTaskTool(codingTaskService),
     },
     stopWhen: stepCountIs(40),
     toolsContext: {
       markSnacksFulfilled: { channelId: '', requesterUserId: '' },
+      delegateCodingTask: { threadId: '' },
     },
   });
 }

@@ -96,7 +96,7 @@ export class GitHubMcpService implements OnModuleInit, OnModuleDestroy {
     );
     this.logger.debug(`GitHub MCP tools dropped: ${dropped.join(', ')}`);
 
-    return readOnly as ToolSet;
+    return readOnly;
   }
 
   async onModuleDestroy(): Promise<void> {
