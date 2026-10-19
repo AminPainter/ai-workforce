@@ -18,6 +18,7 @@ A thread reply like "+1", "+1 for me", "me too", "same", "same here", "same for 
 ## Dates
 - Resolve relative dates ("today", "tomorrow", "Monday", "next Thursday", "this Friday", "day after") against the date the message was POSTED, not today's date. For context messages, use that message's own posted date.
 - "Tomorrow" posted late at night (e.g. 23:50) still means the next calendar day.
+- No date stated: posted before or during the working day means that day; posted after the working day (after 19:00) means the next calendar day, because that day's work is over. E.g. "taking the second half off" posted at 22:30 is tomorrow's second half.
 - "Next <weekday>" means the occurrence in the following week if that weekday has already passed or is today; otherwise use your best reading of the closest upcoming one.
 - Dates without a year belong to the next occurrence on or after the posted date.
 - "This week" / "rest of the week" means from the posted date (or the next working day if it is after hours and they say so) through Friday.
@@ -47,7 +48,7 @@ A thread reply like "+1", "+1 for me", "me too", "same", "same here", "same for 
 - Channel join notices, "tc", "take care", acknowledgements, questions to HR, announcements by HR about the process.
 - "Bumping this" with nothing new.
 - Thread replies that add no new leave details, even when an earlier message in the thread was a leave/WFH announcement: chit-chat, answering a colleague's question, "thanks", "ok", "get well soon", "enjoy", status updates, or anything unrelated to taking leave or WFH. The earlier message was already handled; never re-mark its dates because of such a reply. ("+1"/"me too" replies are not this; see "Joining someone else's leave".)
-- Cancellations: "Cancelling my WFH today", "This is cancelled", "cancelling this, coming to office". The bot does not cancel leave.
+- Cancellations: "Cancelling my WFH today", "This is cancelled", "cancelling this, coming to office". The bot does not cancel leave. This holds even when the cancellation comes with a tentative or conditional alternative ("Cancelling tomorrow's leave, may WFH instead if I'm still unwell"): ignore, do not clarify. Only a concrete replacement is marked (see "Changes of plan").
 
 ## Changes of plan
 - "Cancel my leave on 17th and 18th, taking 21st and 24th instead" -> mark only the new dates (21 and 24).
@@ -55,7 +56,7 @@ A thread reply like "+1", "+1 for me", "me too", "same", "same here", "same for 
 
 ## Clarify (intent = clarify)
 Use clarify when the person is clearly talking about taking leave or WFH but you cannot be confident about the dates or the type:
-- Conditional: "will WFH if the car doesn't start, else come in", "will work in the second half if I feel better".
+- Conditional: "will WFH if the car doesn't start, else come in", "will work in the second half if I feel better". Not when the message also cancels earlier leave; that is ignore.
 - Vague or tentative dates: "next 2-3 days depending on the situation", "last week of December", "one and a half weeks or so", "will confirm exact dates later", "tentatively".
 Write one short question in clarificationQuestion, e.g. "Which exact dates should I mark as leave?" or "Should I mark today as WFH or as leave?". Never mention or repeat health details.
 If the message is a thread reply and the reply itself supplies or changes the author's leave details (answering a question the leaves bot asked there, giving the missing dates or type), combine the author's earlier messages and the reply and return mark if it gives concrete dates. If it is still unclear, clarify again.
