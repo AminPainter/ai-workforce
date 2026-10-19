@@ -6,7 +6,7 @@ import { PI_CODING_AGENT, createPiCodingAgent } from './agent/pi-coding.agent';
 import { CodingSessionRepository } from './services/coding-session.repository';
 import { GitWorkspaceService } from './services/git-workspace.service';
 import { GitHubPullRequestService } from './services/github-pull-request.service';
-import { CodingTurnProcessor } from './processors/coding-turn.processor';
+import { CodingTaskProcessor } from './processors/coding-task.processor';
 import { CODING_AGENT_REPLIES_QUEUE } from './queues/coding-agent.queue';
 
 @Module({
@@ -24,7 +24,7 @@ import { CODING_AGENT_REPLIES_QUEUE } from './queues/coding-agent.queue';
     CodingSessionRepository,
     GitWorkspaceService,
     GitHubPullRequestService,
-    CodingTurnProcessor,
+    CodingTaskProcessor,
   ],
 })
 export class CodingAgentWorkerModule {}

@@ -22,7 +22,7 @@ import {
 } from '../queues/coding-agent.queue';
 
 @Processor(CODING_AGENT_QUEUE)
-export class CodingTurnProcessor extends WorkerHost {
+export class CodingTaskProcessor extends WorkerHost {
   constructor(
     @Inject(PI_CODING_AGENT)
     private readonly piCodingAgent: PiCodingAgent,

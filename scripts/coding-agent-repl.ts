@@ -2,7 +2,7 @@
  * Standalone harness for the Pi coding agent worker.
  *
  * Boots the worker's providers without BullMQ or Slack and calls
- * CodingTurnProcessor.process directly, printing the Slack reply instead of
+ * CodingTaskProcessor.process directly, printing the Slack reply instead of
  * queueing it. Clone, Pi turn, push and draft PR are all real.
  *
  * Run:
@@ -26,7 +26,7 @@ import {
 import { CodingSessionRepository } from '../src/modules/coding-agent/services/coding-session.repository';
 import { GitWorkspaceService } from '../src/modules/coding-agent/services/git-workspace.service';
 import { GitHubPullRequestService } from '../src/modules/coding-agent/services/github-pull-request.service';
-import { CodingTurnProcessor } from '../src/modules/coding-agent/processors/coding-turn.processor';
+import { CodingTaskProcessor } from '../src/modules/coding-agent/processors/coding-task.processor';
 import {
   CODING_AGENT_REPLIES_QUEUE,
   type CodingReplyJob,
@@ -51,7 +51,7 @@ import {
     CodingSessionRepository,
     GitWorkspaceService,
     GitHubPullRequestService,
-    CodingTurnProcessor,
+    CodingTaskProcessor,
   ],
 })
 class ReplModule {}
@@ -73,7 +73,7 @@ async function main(): Promise<void> {
   console.log(`branch:    pi/${sessionId}`);
 
   await app
-    .get(CodingTurnProcessor)
+    .get(CodingTaskProcessor)
     .process({ data: { threadId, repo, task } } as Job<CodingTurnJob>);
   await app.close();
 }
