@@ -43,7 +43,7 @@ export class LocalSandboxSession implements SandboxSession {
   }
 
   async readBinaryFile({ path }: ReadOptions): Promise<Uint8Array | null> {
-    return readFile(this.resolve(path)).catch(() => null);
+    return readFile(this.resolvePath(path)).catch(() => null);
   }
 
   async readTextFile({
@@ -69,7 +69,7 @@ export class LocalSandboxSession implements SandboxSession {
   }
 
   async writeBinaryFile({ path, content }: WriteOptions): Promise<void> {
-    const target = this.resolve(path);
+    const target = this.resolvePath(path);
     await mkdir(dirname(target), { recursive: true });
     await writeFile(target, content);
   }
@@ -92,7 +92,7 @@ export class LocalSandboxSession implements SandboxSession {
     abortSignal,
   }: ProcessOptions): Promise<Experimental_SandboxProcess> {
     const child = spawn('bash', ['-c', command], {
-      cwd: this.resolve(workingDirectory),
+      cwd: this.resolvePath(workingDirectory),
       env: { ...this.env, ...env },
     });
     abortSignal?.addEventListener('abort', () => child.kill());
@@ -119,7 +119,7 @@ export class LocalSandboxSession implements SandboxSession {
     return { exitCode, stdout, stderr };
   }
 
-  private resolve(path: string): string {
+  private resolvePath(path: string): string {
     return resolve(this.rootDir, path);
   }
 }
