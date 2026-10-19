@@ -1,16 +1,16 @@
 import { ConfigService } from '@nestjs/config';
 import { HarnessAgent } from '@ai-sdk/harness/agent';
 import { createPi } from '@ai-sdk/harness-pi';
-import { PI_CODING_AGENT_SYSTEM_PROMPT } from './pi-coding.prompt';
+import { CODING_AGENT_SYSTEM_PROMPT } from './coding.prompt';
 
-export const PI_CODING_AGENT = 'pi-coding-agent';
+export const CODING_AGENT = 'coding-agent';
 export const REPO_DIR = 'repo';
 
 const PROVIDER_ID = 'glomo';
 const MODEL_CONTEXT_WINDOW = 128000;
 const MODEL_MAX_TOKENS = 16384;
 
-export function createPiCodingAgent(configService: ConfigService) {
+export function createCodingAgent(configService: ConfigService) {
   const modelId = configService.getOrThrow<string>('AI_GATEWAY_MODEL');
 
   return new HarnessAgent({
@@ -35,9 +35,9 @@ export function createPiCodingAgent(configService: ConfigService) {
       },
     }),
     model: `${PROVIDER_ID}/${modelId}`,
-    instructions: PI_CODING_AGENT_SYSTEM_PROMPT,
+    instructions: CODING_AGENT_SYSTEM_PROMPT,
     sandboxConfig: { workDir: REPO_DIR },
   });
 }
 
-export type PiCodingAgent = ReturnType<typeof createPiCodingAgent>;
+export type CodingAgent = ReturnType<typeof createCodingAgent>;

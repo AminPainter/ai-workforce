@@ -3,10 +3,10 @@ import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { join } from 'path';
 import {
-  PI_CODING_AGENT,
+  CODING_AGENT,
   REPO_DIR,
-  type PiCodingAgent,
-} from '../agent/pi-coding.agent';
+  type CodingAgent,
+} from '../agent/coding.agent';
 import { LocalSandboxSession } from '../sandbox/local-sandbox-session';
 import {
   CodingSessionRepository,
@@ -24,8 +24,8 @@ import {
 @Processor(CODING_AGENT_QUEUE)
 export class CodingTaskProcessor extends WorkerHost {
   constructor(
-    @Inject(PI_CODING_AGENT)
-    private readonly piCodingAgent: PiCodingAgent,
+    @Inject(CODING_AGENT)
+    private readonly codingAgent: CodingAgent,
     private readonly codingSessionRepository: CodingSessionRepository,
     private readonly gitWorkspaceService: GitWorkspaceService,
     private readonly gitHubPullRequestService: GitHubPullRequestService,
@@ -44,12 +44,12 @@ export class CodingTaskProcessor extends WorkerHost {
       (await this.codingSessionRepository.find(sessionId)) ??
       (await this.startSession(sessionId, repo, repoDir));
 
-    const harnessSession = await this.piCodingAgent.createSession({
+    const harnessSession = await this.codingAgent.createSession({
       sessionId,
       sandboxSession: new LocalSandboxSession(rootDir),
       resumeFrom: codingSession.resumeState,
     });
-    const { text } = await this.piCodingAgent.generate({
+    const { text } = await this.codingAgent.generate({
       session: harnessSession,
       prompt: task,
     });
@@ -88,7 +88,7 @@ export class CodingTaskProcessor extends WorkerHost {
     repo: string,
     repoDir: string,
   ): Promise<CodingSession> {
-    const branch = `pi/${sessionId}`;
+    const branch = `coding-agent/${sessionId}`;
     const baseBranch = await this.gitWorkspaceService.clone(
       repo,
       repoDir,

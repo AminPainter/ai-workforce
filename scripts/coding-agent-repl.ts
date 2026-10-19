@@ -1,9 +1,9 @@
 /**
- * Standalone harness for the Pi coding agent worker.
+ * Standalone harness for the coding agent worker.
  *
  * Boots the worker's providers without BullMQ or Slack and calls
  * CodingTaskProcessor.process directly, printing the Slack reply instead of
- * queueing it. Clone, Pi turn, push and draft PR are all real.
+ * queueing it. Clone, agent turn, push and draft PR are all real.
  *
  * Run:
  *   pnpm coding:repl <owner/repo> "<task>" [threadId]
@@ -20,9 +20,9 @@ import { NestFactory } from '@nestjs/core';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import {
-  PI_CODING_AGENT,
-  createPiCodingAgent,
-} from '../src/modules/coding-agent/agent/pi-coding.agent';
+  CODING_AGENT,
+  createCodingAgent,
+} from '../src/modules/coding-agent/agent/coding.agent';
 import { CodingSessionRepository } from '../src/modules/coding-agent/services/coding-session.repository';
 import { GitWorkspaceService } from '../src/modules/coding-agent/services/git-workspace.service';
 import { GitHubPullRequestService } from '../src/modules/coding-agent/services/github-pull-request.service';
@@ -37,8 +37,8 @@ import {
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   providers: [
     {
-      provide: PI_CODING_AGENT,
-      useFactory: createPiCodingAgent,
+      provide: CODING_AGENT,
+      useFactory: createCodingAgent,
       inject: [ConfigService],
     },
     {
@@ -70,7 +70,7 @@ async function main(): Promise<void> {
   const sessionId = codingSessionRepository.sessionId(threadId);
   console.log(`threadId:  ${threadId}`);
   console.log(`workspace: ${codingSessionRepository.rootDir(sessionId)}`);
-  console.log(`branch:    pi/${sessionId}`);
+  console.log(`branch:    coding-agent/${sessionId}`);
 
   await app
     .get(CodingTaskProcessor)

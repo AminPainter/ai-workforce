@@ -71,7 +71,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile.worker
     region: singapore
-    plan: standard # Pi + git + repo toolchains need more than starter's 512 MB
+    plan: standard # coding harness + git + repo toolchains need more than starter's 512 MB
     autoDeployTrigger: "off" # a deploy kills the coding turn in progress
     disk:
       name: coding-workspaces
