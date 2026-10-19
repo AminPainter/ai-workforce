@@ -74,7 +74,7 @@ export class SentryMcpService implements OnModuleInit, OnModuleDestroy {
     );
     this.logger.debug(`Sentry MCP tools dropped: ${dropped.join(', ')}`);
 
-    return readOnly as ToolSet;
+    return readOnly;
   }
 
   async onModuleDestroy(): Promise<void> {

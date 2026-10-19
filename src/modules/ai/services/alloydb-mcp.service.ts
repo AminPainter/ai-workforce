@@ -24,7 +24,7 @@ export class AlloyDbMcpService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     try {
       await this.connect();
-      this.tools = (await this.client!.tools()) as ToolSet;
+      this.tools = await this.client!.tools();
       this.logger.log(
         `AlloyDB MCP connected. Loaded ${Object.keys(this.tools).length} tools: ${Object.keys(this.tools).join(', ')}`,
       );

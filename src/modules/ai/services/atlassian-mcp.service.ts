@@ -86,7 +86,7 @@ export class AtlassianMcpService implements OnModuleInit, OnModuleDestroy {
     );
     this.logger.debug(`Atlassian MCP tools dropped: ${dropped.join(', ')}`);
 
-    return allowed as ToolSet;
+    return allowed;
   }
 
   async onModuleDestroy(): Promise<void> {

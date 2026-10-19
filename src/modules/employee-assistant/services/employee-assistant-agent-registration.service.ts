@@ -8,6 +8,7 @@ import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service';
 import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
+import { CodingTaskService } from '../../coding-agent/services/coding-task.service';
 import {
   EMPLOYEE_ASSISTANT,
   createEmployeeAssistant,
@@ -25,6 +26,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
     private readonly snacksLedgerService: SnacksLedgerService,
     private readonly configService: ConfigService,
     private readonly agentRegistry: AgentRegistry,
+    private readonly codingTaskService: CodingTaskService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -39,6 +41,7 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
         this.skillsService,
         this.snacksLedgerService,
         this.configService,
+        this.codingTaskService,
       ),
     );
   }
