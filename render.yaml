@@ -67,7 +67,7 @@ services:
       # Add SLACK_APP_TOKEN / *_MCP_URL as sync:false only if the populated .env needs them.
 
   - type: worker
-    name: glomo-coding-agent
+    name: glomo-ai-workforce-coding-agent
     runtime: docker
     dockerfilePath: ./Dockerfile.worker
     region: singapore
