@@ -3,12 +3,12 @@
  *
  * Boots the worker's providers without BullMQ or Slack and calls
  * CodingTaskProcessor.process directly, printing the Slack reply instead of
- * queueing it. Clone, agent turn, push and draft PR are all real.
+ * queueing it. Clone, coding task, push and draft PR are all real.
  *
  * Run:
  *   pnpm coding:repl <owner/repo> "<task>" [threadId]
  *
- * Reuse the threadId to send a follow-up turn into the same session.
+ * Reuse the threadId to send a follow-up task into the same session.
  *
  * Env required: AI_GATEWAY_BASE_URL, AI_GATEWAY_API_KEY, AI_GATEWAY_MODEL, GITHUB_PAT.
  * CODING_AGENT_WORKSPACES_DIR is optional and defaults to $TMPDIR/coding-agent.
@@ -30,7 +30,7 @@ import { CodingTaskProcessor } from '../src/modules/coding-agent/processors/codi
 import {
   CODING_AGENT_REPLIES_QUEUE,
   type CodingReplyJob,
-  type CodingTurnJob,
+  type CodingTaskJob,
 } from '../src/modules/coding-agent/queues/coding-agent.queue';
 
 @Module({
@@ -74,7 +74,7 @@ async function main(): Promise<void> {
 
   await app
     .get(CodingTaskProcessor)
-    .process({ data: { threadId, repo, task } } as Job<CodingTurnJob>);
+    .process({ data: { threadId, repo, task } } as Job<CodingTaskJob>);
   await app.close();
 }
 

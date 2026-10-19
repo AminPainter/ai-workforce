@@ -72,7 +72,7 @@ services:
     dockerfilePath: ./Dockerfile.worker
     region: singapore
     plan: standard # coding harness + git + repo toolchains need more than starter's 512 MB
-    autoDeployTrigger: "off" # a deploy kills the coding turn in progress
+    autoDeployTrigger: "off" # a deploy kills the coding task in progress
     disk:
       name: coding-workspaces
       mountPath: /var/data

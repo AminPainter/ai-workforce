@@ -3,17 +3,17 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import {
   CODING_AGENT_QUEUE,
-  type CodingTurnJob,
+  type CodingTaskJob,
 } from '../queues/coding-agent.queue';
 
 @Injectable()
 export class CodingTaskService {
   constructor(
     @InjectQueue(CODING_AGENT_QUEUE)
-    private readonly codingAgentQueue: Queue<CodingTurnJob>,
+    private readonly codingAgentQueue: Queue<CodingTaskJob>,
   ) {}
 
-  async delegate(job: CodingTurnJob): Promise<void> {
-    await this.codingAgentQueue.add('turn', job);
+  async delegate(job: CodingTaskJob): Promise<void> {
+    await this.codingAgentQueue.add('task', job);
   }
 }

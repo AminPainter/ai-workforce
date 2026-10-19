@@ -18,7 +18,7 @@ import {
   CODING_AGENT_QUEUE,
   CODING_AGENT_REPLIES_QUEUE,
   type CodingReplyJob,
-  type CodingTurnJob,
+  type CodingTaskJob,
 } from '../queues/coding-agent.queue';
 
 @Processor(CODING_AGENT_QUEUE)
@@ -35,7 +35,7 @@ export class CodingTaskProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<CodingTurnJob>): Promise<void> {
+  async process(job: Job<CodingTaskJob>): Promise<void> {
     const { threadId, repo, task } = job.data;
     const sessionId = this.codingSessionRepository.sessionId(threadId);
     const rootDir = this.codingSessionRepository.rootDir(sessionId);
