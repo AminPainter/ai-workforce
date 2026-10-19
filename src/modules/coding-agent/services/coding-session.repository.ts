@@ -8,10 +8,7 @@ import { type HarnessAgentResumeSessionState } from '@ai-sdk/harness/agent';
 
 export interface CodingSession {
   repo: string;
-  baseBranch: string;
-  branch: string;
   resumeState?: HarnessAgentResumeSessionState;
-  pullRequestUrl?: string;
 }
 
 @Injectable()

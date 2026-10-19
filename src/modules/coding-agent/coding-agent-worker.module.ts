@@ -4,8 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import { QueueModule } from '../queue/queue.module';
 import { CODING_AGENT, createCodingAgent } from './agent/coding.agent';
 import { CodingSessionRepository } from './services/coding-session.repository';
-import { GitWorkspaceService } from './services/git-workspace.service';
-import { GitHubPullRequestService } from './services/github-pull-request.service';
 import { CodingTaskProcessor } from './processors/coding-task.processor';
 import { CODING_TASK_SLACK_SUMMARY_QUEUE } from './queues/coding-agent.queue';
 
@@ -22,8 +20,6 @@ import { CODING_TASK_SLACK_SUMMARY_QUEUE } from './queues/coding-agent.queue';
       inject: [ConfigService],
     },
     CodingSessionRepository,
-    GitWorkspaceService,
-    GitHubPullRequestService,
     CodingTaskProcessor,
   ],
 })

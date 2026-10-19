@@ -22,18 +22,31 @@ const GIT_IDENTITY = {
   GIT_COMMITTER_EMAIL: 'coding-agent@glomo.one',
 };
 
+const GITHUB_CREDENTIAL_HELPER = {
+  GIT_CONFIG_COUNT: '1',
+  GIT_CONFIG_KEY_0: 'credential.https://github.com.helper',
+  GIT_CONFIG_VALUE_0:
+    '!f() { echo username=x-access-token; echo "password=$GITHUB_PAT"; }; f',
+};
+
 export class LocalSandboxSession implements SandboxSession {
   readonly description: string;
   private readonly env: Record<string, string>;
 
-  constructor(private readonly rootDir: string) {
+  constructor(
+    private readonly rootDir: string,
+    githubToken: string,
+  ) {
     this.description = `Host directory ${rootDir}. Commands run directly on the host.`;
     this.env = {
       PATH: process.env.PATH!,
       HOME: rootDir,
       LANG: 'C.UTF-8',
       GIT_TERMINAL_PROMPT: '0',
+      GITHUB_PAT: githubToken,
+      GH_TOKEN: githubToken,
       ...GIT_IDENTITY,
+      ...GITHUB_CREDENTIAL_HELPER,
     };
   }
 

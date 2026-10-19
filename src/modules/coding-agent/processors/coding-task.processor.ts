@@ -1,6 +1,8 @@
 import { Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
+import { mkdir } from 'fs/promises';
 import { join } from 'path';
 import {
   CODING_AGENT,
@@ -8,12 +10,7 @@ import {
   type CodingAgent,
 } from '../agent/coding.agent';
 import { LocalSandboxSession } from '../sandbox/local-sandbox-session';
-import {
-  CodingSessionRepository,
-  type CodingSession,
-} from '../services/coding-session.repository';
-import { GitWorkspaceService } from '../services/git-workspace.service';
-import { GitHubPullRequestService } from '../services/github-pull-request.service';
+import { CodingSessionRepository } from '../services/coding-session.repository';
 import {
   CODING_AGENT_QUEUE,
   CODING_TASK_SLACK_SUMMARY_QUEUE,
@@ -23,77 +20,49 @@ import {
 
 @Processor(CODING_AGENT_QUEUE)
 export class CodingTaskProcessor extends WorkerHost {
+  private readonly githubToken: string;
+
   constructor(
     @Inject(CODING_AGENT)
     private readonly codingAgent: CodingAgent,
     private readonly codingSessionRepository: CodingSessionRepository,
-    private readonly gitWorkspaceService: GitWorkspaceService,
-    private readonly gitHubPullRequestService: GitHubPullRequestService,
     @InjectQueue(CODING_TASK_SLACK_SUMMARY_QUEUE)
     private readonly codingTaskSlackSummaryQueue: Queue<CodingTaskSlackSummaryJob>,
+    configService: ConfigService,
   ) {
     super();
+    this.githubToken = configService.getOrThrow<string>('GITHUB_PAT');
   }
 
   async process(job: Job<CodingTaskJob>): Promise<void> {
     const { threadId, repo, task } = job.data;
     const sessionId = this.codingSessionRepository.createSessionId(threadId);
     const rootDir = this.codingSessionRepository.getRootDir(sessionId);
-    const cloningDirectory = join(rootDir, REPO_DIR);
-    const codingSession =
-      (await this.codingSessionRepository.find(sessionId)) ??
-      (await this.startSession(sessionId, repo, cloningDirectory));
+    await mkdir(join(rootDir, REPO_DIR), { recursive: true });
+    const codingSession = (await this.codingSessionRepository.find(
+      sessionId,
+    )) ?? { repo };
 
     const harnessSession = await this.codingAgent.createSession({
       sessionId,
-      sandboxSession: new LocalSandboxSession(rootDir),
+      sandboxSession: new LocalSandboxSession(rootDir, this.githubToken),
       resumeFrom: codingSession.resumeState,
     });
     const { text } = await this.codingAgent.generate({
       session: harnessSession,
-      prompt: task,
+      prompt: [
+        `Repository: ${codingSession.repo}`,
+        `Working branch: coding-agent/${sessionId}`,
+        '',
+        task,
+      ].join('\n'),
     });
     codingSession.resumeState = await harnessSession.stop();
-
-    await this.gitWorkspaceService.push(
-      codingSession.repo,
-      cloningDirectory,
-      codingSession.branch,
-    );
-    if (
-      !codingSession.pullRequestUrl &&
-      (await this.gitWorkspaceService.hasCommitsAhead(
-        cloningDirectory,
-        codingSession.baseBranch,
-      ))
-    )
-      codingSession.pullRequestUrl =
-        await this.gitHubPullRequestService.createDraft({
-          repo: codingSession.repo,
-          head: codingSession.branch,
-          base: codingSession.baseBranch,
-          title: task.split('\n')[0].slice(0, 72),
-          body: text,
-        });
 
     await this.codingSessionRepository.save(sessionId, codingSession);
     await this.codingTaskSlackSummaryQueue.add('slack-summary', {
       threadId,
-      text: [text, codingSession.pullRequestUrl].join('\n\n'),
+      text,
     });
-  }
-
-  private async startSession(
-    sessionId: string,
-    repo: string,
-    cloningDirectory: string,
-  ): Promise<CodingSession> {
-    const branch = `coding-agent/${sessionId}`;
-    const baseBranch = await this.gitWorkspaceService.clone(
-      repo,
-      cloningDirectory,
-      branch,
-    );
-    return { repo, baseBranch, branch };
   }
 }

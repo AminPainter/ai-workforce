@@ -3,7 +3,7 @@
  *
  * Boots the worker's providers without BullMQ or Slack and calls
  * CodingTaskProcessor.process directly, printing the Slack summary instead of
- * queueing it. Clone, coding task, push and draft PR are all real.
+ * queueing it. The agent clones, pushes and opens the draft PR for real.
  *
  * Run:
  *   pnpm coding:repl <owner/repo> "<task>" [threadId]
@@ -24,8 +24,6 @@ import {
   createCodingAgent,
 } from '../src/modules/coding-agent/agent/coding.agent';
 import { CodingSessionRepository } from '../src/modules/coding-agent/services/coding-session.repository';
-import { GitWorkspaceService } from '../src/modules/coding-agent/services/git-workspace.service';
-import { GitHubPullRequestService } from '../src/modules/coding-agent/services/github-pull-request.service';
 import { CodingTaskProcessor } from '../src/modules/coding-agent/processors/coding-task.processor';
 import {
   CODING_TASK_SLACK_SUMMARY_QUEUE,
@@ -51,8 +49,6 @@ import {
       },
     },
     CodingSessionRepository,
-    GitWorkspaceService,
-    GitHubPullRequestService,
     CodingTaskProcessor,
   ],
 })

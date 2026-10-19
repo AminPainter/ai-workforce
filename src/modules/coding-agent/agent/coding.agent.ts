@@ -9,6 +9,7 @@ export const REPO_DIR = 'repo';
 const PROVIDER_ID = 'glomo';
 const MODEL_CONTEXT_WINDOW = 128000;
 const MODEL_MAX_TOKENS = 16384;
+const GITHUB_MCP_URL = 'https://api.githubcopilot.com/mcp/';
 
 export function createCodingAgent(configService: ConfigService) {
   const modelId = configService.getOrThrow<string>('AI_GATEWAY_MODEL');
@@ -31,6 +32,21 @@ export function createCodingAgent(configService: ConfigService) {
               maxTokens: MODEL_MAX_TOKENS,
             },
           ],
+        },
+      },
+      mcpServers: {
+        github: {
+          type: 'http',
+          url: GITHUB_MCP_URL,
+          headers: {
+            Authorization: `Bearer ${configService.getOrThrow<string>('GITHUB_PAT')}`,
+          },
+          exposure: 'hidden',
+          toolExposure: {
+            create_pull_request: 'direct',
+            list_pull_requests: 'direct',
+            pull_request_read: 'direct',
+          },
         },
       },
     }),
