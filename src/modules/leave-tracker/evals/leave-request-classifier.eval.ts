@@ -16,7 +16,7 @@ import {
 } from '../agents/leave-request-classifier.schema';
 import {
   formatClassifierInput,
-  THREAD_MESSAGE_SENDERS,
+  ThreadMessageSender,
 } from '../utils/classifier-input';
 import { planLeaveRequest } from '../utils/leave-plan';
 import { ClarificationQualityMetric } from './metrics/clarification-quality.metric';
@@ -45,7 +45,7 @@ const goldenMetadataSchema = z.object({
   thread: z
     .array(
       z.object({
-        sender: z.enum(THREAD_MESSAGE_SENDERS),
+        sender: z.enum(ThreadMessageSender),
         name: z.string().default('Employee'),
         text: z.string(),
         postedAt: z.iso.datetime({ offset: true }),

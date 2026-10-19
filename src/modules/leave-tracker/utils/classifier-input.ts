@@ -3,9 +3,11 @@ import {
   toIstDateString,
 } from '../../../common/utils/date.util';
 
-export const THREAD_MESSAGE_SENDERS = ['author', 'other', 'bot'] as const;
-
-export type ThreadMessageSender = (typeof THREAD_MESSAGE_SENDERS)[number];
+export enum ThreadMessageSender {
+  Author = 'author',
+  Other = 'other',
+  Bot = 'bot',
+}
 
 export interface ThreadMessage {
   sender: ThreadMessageSender;
@@ -52,8 +54,8 @@ export function formatClassifierInput(args: ClassifierInputArgs): string {
 }
 
 function describeSender({ sender, name }: ThreadMessage): string {
-  if (sender === 'author') return `${name} (the author)`;
-  if (sender === 'bot') return 'Leaves bot (this system)';
+  if (sender === ThreadMessageSender.Author) return `${name} (the author)`;
+  if (sender === ThreadMessageSender.Bot) return 'Leaves bot (this system)';
   return `${name} (another person)`;
 }
 

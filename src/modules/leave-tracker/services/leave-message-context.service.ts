@@ -4,7 +4,7 @@ import type { LeaveMessageJob } from '../queues/leave-tracker.queue';
 import {
   formatClassifierInput,
   type ThreadMessage,
-  type ThreadMessageSender,
+  ThreadMessageSender,
 } from '../utils/classifier-input';
 
 const THREAD_FETCH_LIMIT = 100;
@@ -29,7 +29,7 @@ export class LeaveMessageContextService {
     const author = await this.lookupAuthor(job.userId);
     return {
       author,
-      isThreadReply: threadTimestampOf(job) !== job.messageId,
+      isThreadReply: getThreadTimestamp(job) !== job.messageId,
       classifierInput: formatClassifierInput({
         now,
         postedAt: new Date(job.postedAt),
@@ -50,27 +50,21 @@ export class LeaveMessageContextService {
     job: LeaveMessageJob,
     author: SlackPerson,
   ): Promise<ThreadMessage[]> {
-    if (threadTimestampOf(job) === job.messageId) return [];
+    if (getThreadTimestamp(job) === job.messageId) return [];
 
-    const postedAt = new Date(job.postedAt);
     const earlier = (
-      await this.leavesSlackBotService.fetchThreadMessages(
+      await this.leavesSlackBotService.fetchThreadMessagesBefore(
         job.threadId,
+        job.messageId,
         THREAD_FETCH_LIMIT,
       )
-    ).filter(
-      (message) =>
-        message.id !== job.messageId &&
-        message.metadata.dateSent <= postedAt &&
-        (message.author.isMe || message.author.isBot !== true) &&
-        message.text.trim(),
-    );
+    ).filter((message) => !isFromOtherBot(message) && message.text.trim());
     const [root, ...replies] = earlier;
     if (!root) return [];
 
     return [root, ...replies.slice(-MAX_EARLIER_THREAD_REPLIES)].map(
       (message) => ({
-        sender: senderOf(message, job.userId),
+        sender: getMessageSenderType(message, job.userId),
         name:
           message.author.userId === job.userId
             ? author.name
@@ -82,15 +76,21 @@ export class LeaveMessageContextService {
   }
 }
 
-function senderOf(
+function isFromOtherBot(message: import('chat').Message): boolean {
+  return message.author.isBot === true && !message.author.isMe;
+}
+
+function getMessageSenderType(
   message: import('chat').Message,
   authorUserId: string,
 ): ThreadMessageSender {
-  if (message.author.isMe) return 'bot';
-  return message.author.userId === authorUserId ? 'author' : 'other';
+  if (message.author.isMe) return ThreadMessageSender.Bot;
+  return message.author.userId === authorUserId
+    ? ThreadMessageSender.Author
+    : ThreadMessageSender.Other;
 }
 
-function threadTimestampOf(job: LeaveMessageJob): string {
+function getThreadTimestamp(job: LeaveMessageJob): string {
   const [, , threadTimestamp] = job.threadId.split(':');
   return threadTimestamp;
 }
