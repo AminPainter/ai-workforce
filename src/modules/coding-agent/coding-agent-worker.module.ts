@@ -7,13 +7,13 @@ import { CodingSessionRepository } from './services/coding-session.repository';
 import { GitWorkspaceService } from './services/git-workspace.service';
 import { GitHubPullRequestService } from './services/github-pull-request.service';
 import { CodingTaskProcessor } from './processors/coding-task.processor';
-import { CODING_AGENT_REPLIES_QUEUE } from './queues/coding-agent.queue';
+import { CODING_TASK_SLACK_SUMMARY_QUEUE } from './queues/coding-agent.queue';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     QueueModule,
-    BullModule.registerQueue({ name: CODING_AGENT_REPLIES_QUEUE }),
+    BullModule.registerQueue({ name: CODING_TASK_SLACK_SUMMARY_QUEUE }),
   ],
   providers: [
     {

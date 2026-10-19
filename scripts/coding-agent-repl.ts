@@ -2,7 +2,7 @@
  * Standalone harness for the coding agent worker.
  *
  * Boots the worker's providers without BullMQ or Slack and calls
- * CodingTaskProcessor.process directly, printing the Slack reply instead of
+ * CodingTaskProcessor.process directly, printing the Slack summary instead of
  * queueing it. Clone, coding task, push and draft PR are all real.
  *
  * Run:
@@ -28,8 +28,8 @@ import { GitWorkspaceService } from '../src/modules/coding-agent/services/git-wo
 import { GitHubPullRequestService } from '../src/modules/coding-agent/services/github-pull-request.service';
 import { CodingTaskProcessor } from '../src/modules/coding-agent/processors/coding-task.processor';
 import {
-  CODING_AGENT_REPLIES_QUEUE,
-  type CodingReplyJob,
+  CODING_TASK_SLACK_SUMMARY_QUEUE,
+  type CodingTaskSlackSummaryJob,
   type CodingTaskJob,
 } from '../src/modules/coding-agent/queues/coding-agent.queue';
 
@@ -42,10 +42,12 @@ import {
       inject: [ConfigService],
     },
     {
-      provide: getQueueToken(CODING_AGENT_REPLIES_QUEUE),
+      provide: getQueueToken(CODING_TASK_SLACK_SUMMARY_QUEUE),
       useValue: {
-        add: (_name: string, reply: CodingReplyJob) =>
-          console.log(`\n--- reply for ${reply.threadId} ---\n${reply.text}`),
+        add: (_name: string, summary: CodingTaskSlackSummaryJob) =>
+          console.log(
+            `\n--- Slack summary for ${summary.threadId} ---\n${summary.text}`,
+          ),
       },
     },
     CodingSessionRepository,

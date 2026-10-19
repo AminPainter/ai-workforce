@@ -16,8 +16,8 @@ import { GitWorkspaceService } from '../services/git-workspace.service';
 import { GitHubPullRequestService } from '../services/github-pull-request.service';
 import {
   CODING_AGENT_QUEUE,
-  CODING_AGENT_REPLIES_QUEUE,
-  type CodingReplyJob,
+  CODING_TASK_SLACK_SUMMARY_QUEUE,
+  type CodingTaskSlackSummaryJob,
   type CodingTaskJob,
 } from '../queues/coding-agent.queue';
 
@@ -29,8 +29,8 @@ export class CodingTaskProcessor extends WorkerHost {
     private readonly codingSessionRepository: CodingSessionRepository,
     private readonly gitWorkspaceService: GitWorkspaceService,
     private readonly gitHubPullRequestService: GitHubPullRequestService,
-    @InjectQueue(CODING_AGENT_REPLIES_QUEUE)
-    private readonly codingAgentRepliesQueue: Queue<CodingReplyJob>,
+    @InjectQueue(CODING_TASK_SLACK_SUMMARY_QUEUE)
+    private readonly codingTaskSlackSummaryQueue: Queue<CodingTaskSlackSummaryJob>,
   ) {
     super();
   }
@@ -77,7 +77,7 @@ export class CodingTaskProcessor extends WorkerHost {
         });
 
     await this.codingSessionRepository.save(sessionId, codingSession);
-    await this.codingAgentRepliesQueue.add('reply', {
+    await this.codingTaskSlackSummaryQueue.add('slack-summary', {
       threadId,
       text: [text, codingSession.pullRequestUrl].join('\n\n'),
     });
