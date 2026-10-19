@@ -60,6 +60,11 @@ services:
         sync: false
       - key: RAZORPAYX_PAYROLL_COMPANIES
         sync: false
+      # glomopay_service routes → kong PR sync. Repos and Slack channel default in code.
+      - key: KONG_ROUTE_SYNC_AUTHOR_DENYLIST
+        sync: false
+      - key: GITHUB_SLACK_USER_MAP
+        sync: false
       # Add SLACK_APP_TOKEN / *_MCP_URL as sync:false only if the populated .env needs them.
 
   - type: worker

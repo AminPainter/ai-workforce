@@ -51,6 +51,21 @@ Queue infra (`src/modules/queue`):
 - `QUEUE_JOB_ATTEMPTS` (optional, default 3) — retry attempts per job.
 - `QUEUE_BACKOFF_MS` (optional, default 5000) — exponential backoff base delay.
 
+Kong route sync (`src/modules/kong-route-sync`): when a `glomopay_service` PR merges to main
+and touches `config/routes.rb` or `config/routes/**/*.rb` (checked deterministically against the
+PR's file list), the coding-agent worker mirrors the route changes into `glomopay/kong`, opens a
+draft PR on `claude/sync-routes-glomopay-pr-<N>`, posts a summary to #pod-card-prs and DMs the PR
+author. Rides on the GitHub `pull_request` webhook above.
+- `KONG_ROUTE_SYNC_AUTHOR_DENYLIST` (optional) — comma-separated GitHub logins to skip, e.g.
+  `dependabot[bot]`.
+- `GITHUB_SLACK_USER_MAP` (optional) — `githubLogin:SlackUserId,...`. Checked before the commit
+  email → Slack `users.lookupByEmail` fallback; needed for anyone committing with a GitHub
+  noreply email. No match means no DM (logged).
+- `KONG_ROUTE_SYNC_SOURCE_REPO` / `KONG_ROUTE_SYNC_TARGET_REPO` / `KONG_ROUTE_SYNC_SLACK_CHANNEL`
+  (optional) — default to `glomopay/glomopay_service`, `glomopay/kong` and `C0AJRNHQ7B2`.
+- `GITHUB_PAT` needs Contents + Pull requests read/write on `glomopay/kong`. The main Slack app
+  needs `chat:write`, `users:read.email` and `im:write`, and must be in #pod-card-prs.
+
 Leave bot (#leaves → RazorpayX Payroll attendance, `src/modules/leave-tracker`):
 The leave bot runs as its own Slack app, separate from the main bot, with its own Chat
 instance (Redis key prefix `chat-sdk-leaves`). Point that app's Event Subscriptions request URL

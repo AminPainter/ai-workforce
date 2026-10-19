@@ -7,6 +7,7 @@ import { AiModule } from '../ai/ai.module';
 import { AgentsModule } from '../agents/agents.module';
 import { SlackModule } from '../slack/slack.module';
 import { GitHubModule } from '../github/github.module';
+import { KongRouteSyncModule } from '../kong-route-sync/kong-route-sync.module';
 import { EmployeeAssistantModule } from '../employee-assistant/employee-assistant.module';
 import { SnackTrackerModule } from '../snack-tracker/snack-tracker.module';
 import { LeaveTrackerModule } from '../leave-tracker/leave-tracker.module';
@@ -24,6 +25,7 @@ import { QueueModule } from '../queue/queue.module';
     AgentsModule,
     SlackModule,
     GitHubModule,
+    KongRouteSyncModule,
     EmployeeAssistantModule,
     SnackTrackerModule,
     LeaveTrackerModule,
