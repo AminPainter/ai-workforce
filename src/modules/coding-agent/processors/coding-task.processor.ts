@@ -14,7 +14,6 @@ import {
   REPO_DIR,
   type CodingAgent,
 } from '../agent/coding.agent';
-import { CodingTaskLogger } from '../logging/coding-task-logger';
 import { LocalSandboxSession } from '../sandbox/local-sandbox-session';
 import { CodingSessionRepository } from '../services/coding-session.repository';
 import {
@@ -23,6 +22,8 @@ import {
   type CodingTaskSlackSummaryJob,
   type CodingTaskJob,
 } from '../queues/coding-agent.queue';
+
+const PREVIEW_LENGTH = 300;
 
 @Processor(CODING_AGENT_QUEUE)
 export class CodingTaskProcessor extends WorkerHost {
@@ -42,106 +43,77 @@ export class CodingTaskProcessor extends WorkerHost {
   }
 
   async process(job: Job<CodingTaskJob>): Promise<void> {
+    const logger = new Logger(`CodingTask job ${job.id}`);
     const { threadId, repo, task } = job.data;
     const sessionId = this.codingSessionRepository.createSessionId(threadId);
-    const codingTaskLogger = new CodingTaskLogger(
-      `job ${job.id} session ${sessionId}`,
-      [this.githubToken],
-    );
-    codingTaskLogger.log(
-      `received task for ${repo} (thread ${threadId}, attempt ${job.attemptsMade + 1}/${job.opts.attempts ?? 1}): ${codingTaskLogger.preview(task)}`,
-    );
-
     const rootDir = this.codingSessionRepository.getRootDir(sessionId);
     await mkdir(join(rootDir, REPO_DIR), { recursive: true });
     const codingSession = (await this.codingSessionRepository.find(
       sessionId,
     )) ?? { repo };
-    codingTaskLogger.log(
-      `${codingSession.resumeState ? 'resuming' : 'starting new'} coding session in ${rootDir}`,
+    logger.log(
+      `${codingSession.resumeState ? 'resuming' : 'starting'} session ${sessionId} for ${repo}: ${this.preview(task)}`,
     );
 
-    const sandboxSession = new LocalSandboxSession(
-      rootDir,
-      this.githubToken,
-      codingTaskLogger,
-    );
-    codingTaskLogger.startHeartbeat(() =>
-      sandboxSession.describeRunningCommands(),
-    );
-    try {
-      const harnessSession = await this.codingAgent.createSession({
-        sessionId,
-        sandboxSession,
-        resumeFrom: codingSession.resumeState,
-      });
-      codingTaskLogger.log(
-        `harness session ready after ${codingTaskLogger.elapsed()}`,
-      );
+    const harnessSession = await this.codingAgent.createSession({
+      sessionId,
+      sandboxSession: new LocalSandboxSession(rootDir, this.githubToken),
+      resumeFrom: codingSession.resumeState,
+    });
+    const { text, steps } = await this.codingAgent.generate({
+      session: harnessSession,
+      prompt: [
+        `Repository: ${codingSession.repo}`,
+        `Working branch: coding-agent/${sessionId}`,
+        '',
+        task,
+      ].join('\n'),
+      onStepStart: ({ stepNumber }) =>
+        logger.log(`step ${stepNumber}: waiting for the model`),
+      onStepEnd: ({ stepNumber, finishReason, text: stepText }) =>
+        logger.log(
+          `step ${stepNumber} done (${finishReason}): ${this.preview(stepText)}`,
+        ),
+      onToolExecutionStart: ({ toolCall }) =>
+        logger.log(
+          `${toolCall.toolName} started: ${this.preview(toolCall.input)}`,
+        ),
+      onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) =>
+        logger.log(
+          `${toolCall.toolName} ${toolOutput.type === 'tool-error' ? 'failed' : 'done'} in ${toolExecutionMs}ms: ${this.preview(toolOutput.type === 'tool-error' ? String(toolOutput.error) : toolOutput.output)}`,
+        ),
+    });
+    logger.log(`agent finished after ${steps.length} steps`);
 
-      const { text, steps, totalUsage } = await this.codingAgent.generate({
-        session: harnessSession,
-        prompt: [
-          `Repository: ${codingSession.repo}`,
-          `Working branch: coding-agent/${sessionId}`,
-          '',
-          task,
-        ].join('\n'),
-        onStepStart: codingTaskLogger.onStepStart,
-        onStepEnd: codingTaskLogger.onStepEnd,
-        onToolExecutionStart: codingTaskLogger.onToolExecutionStart,
-        onToolExecutionEnd: codingTaskLogger.onToolExecutionEnd,
-      });
-      codingTaskLogger.log(
-        `agent finished after ${codingTaskLogger.elapsed()}, ${steps.length} steps, tokens in/out ${totalUsage.inputTokens ?? '?'}/${totalUsage.outputTokens ?? '?'}: ${codingTaskLogger.preview(text)}`,
-      );
-
-      codingSession.resumeState = await harnessSession.stop();
-      await this.codingSessionRepository.save(sessionId, codingSession);
-      codingTaskLogger.log('session state saved');
-
-      await this.codingTaskSlackSummaryQueue.add('slack-summary', {
-        threadId,
-        text,
-      });
-      codingTaskLogger.log('Slack summary queued');
-    } catch (error) {
-      codingTaskLogger.error(
-        `failed after ${codingTaskLogger.elapsed()}`,
-        error,
-      );
-      throw error;
-    } finally {
-      codingTaskLogger.stopHeartbeat();
-    }
-  }
-
-  @OnWorkerEvent('active')
-  onActive(job: Job<CodingTaskJob>): void {
-    this.logger.log(`job ${job.id} picked up`);
-  }
-
-  @OnWorkerEvent('completed')
-  onCompleted(job: Job<CodingTaskJob>): void {
-    this.logger.log(`job ${job.id} completed`);
+    codingSession.resumeState = await harnessSession.stop();
+    await this.codingSessionRepository.save(sessionId, codingSession);
+    await this.codingTaskSlackSummaryQueue.add('slack-summary', {
+      threadId,
+      text,
+    });
   }
 
   @OnWorkerEvent('failed')
   onFailed(job: Job<CodingTaskJob> | undefined, error: Error): void {
     this.logger.error(
-      `job ${job?.id} failed (attempt ${job?.attemptsMade}/${job?.opts.attempts ?? 1}): ${error.message.split(this.githubToken).join('[redacted]')}`,
+      `job ${job?.id} failed: ${this.redact(error.message)}`,
+      error.stack && this.redact(error.stack),
     );
   }
 
   @OnWorkerEvent('stalled')
   onStalled(jobId: string): void {
-    this.logger.warn(
-      `job ${jobId} stalled; its lock expired and BullMQ will retry it`,
-    );
+    this.logger.warn(`job ${jobId} stalled and will be retried`);
   }
 
-  @OnWorkerEvent('error')
-  onError(error: Error): void {
-    this.logger.error(`worker error: ${error.message}`, error.stack);
+  private preview(value: unknown): string {
+    const text = typeof value === 'string' ? value : JSON.stringify(value);
+    return this.redact(text ?? '')
+      .replace(/\s+/g, ' ')
+      .slice(0, PREVIEW_LENGTH);
+  }
+
+  private redact(text: string): string {
+    return text.split(this.githubToken).join('[redacted]');
   }
 }

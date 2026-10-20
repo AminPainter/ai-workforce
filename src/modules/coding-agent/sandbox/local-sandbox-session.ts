@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, resolve } from 'path';
@@ -6,10 +7,6 @@ import {
   type Experimental_SandboxProcess,
   type Experimental_SandboxSession,
 } from 'ai';
-import {
-  type CodingTaskLogger,
-  formatDuration,
-} from '../logging/coding-task-logger';
 
 type SandboxSession = Experimental_SandboxSession;
 type ReadOptions = Parameters<SandboxSession['readBinaryFile']>[0];
@@ -18,9 +15,6 @@ type WriteOptions = Parameters<SandboxSession['writeBinaryFile']>[0];
 type WriteTextOptions = Parameters<SandboxSession['writeTextFile']>[0];
 type WriteStreamOptions = Parameters<SandboxSession['writeFile']>[0];
 type ProcessOptions = Parameters<SandboxSession['run']>[0];
-
-const SLOW_COMMAND_MS = 10_000;
-const STDERR_TAIL_LENGTH = 500;
 
 const GIT_IDENTITY = {
   GIT_AUTHOR_NAME: 'Glomo Coding Agent',
@@ -37,18 +31,13 @@ const GITHUB_CREDENTIAL_HELPER = {
 };
 
 export class LocalSandboxSession implements SandboxSession {
+  private readonly logger = new Logger(LocalSandboxSession.name);
   readonly description: string;
   private readonly env: Record<string, string>;
-  private readonly runningCommands = new Map<
-    number,
-    { command: string; startedAt: number }
-  >();
-  private nextCommandId = 0;
 
   constructor(
     private readonly rootDir: string,
     githubToken: string,
-    private readonly codingTaskLogger: CodingTaskLogger,
   ) {
     this.description = `Host directory ${rootDir}. Commands run directly on the host.`;
     this.env = {
@@ -117,40 +106,17 @@ export class LocalSandboxSession implements SandboxSession {
     env,
     abortSignal,
   }: ProcessOptions): Promise<Experimental_SandboxProcess> {
-    const commandId = this.nextCommandId++;
-    const summary = this.codingTaskLogger.preview(command);
-    const startedAt = Date.now();
-    this.runningCommands.set(commandId, { command: summary, startedAt });
-    this.codingTaskLogger.debug(`$ ${summary} (cwd ${workingDirectory})`);
-
     const child = spawn('bash', ['-c', command], {
       cwd: this.resolvePath(workingDirectory),
       env: { ...this.env, ...env },
     });
-    abortSignal?.addEventListener('abort', () => {
-      this.codingTaskLogger.warn(`aborting command: ${summary}`);
-      child.kill();
-    });
+    abortSignal?.addEventListener('abort', () => child.kill());
     const exited = new Promise<{ exitCode: number }>((resolveExit) => {
       child.on('error', (error) => {
-        this.runningCommands.delete(commandId);
-        this.codingTaskLogger.error(
-          `command failed to start: ${summary}`,
-          error,
-        );
+        this.logger.error(`command failed to start: ${error.message}`);
         resolveExit({ exitCode: 1 });
       });
-      child.on('close', (code, signal) => {
-        this.runningCommands.delete(commandId);
-        const durationMs = Date.now() - startedAt;
-        const message = `command exited ${code ?? signal} after ${formatDuration(durationMs)}: ${summary}`;
-        if (code !== 0) this.codingTaskLogger.warn(message);
-        else if (durationMs >= SLOW_COMMAND_MS)
-          this.codingTaskLogger.log(message);
-        else this.codingTaskLogger.debug(message);
-
-        resolveExit({ exitCode: code ?? 1 });
-      });
+      child.on('close', (code) => resolveExit({ exitCode: code ?? 1 }));
     });
 
     return Promise.resolve({
@@ -169,20 +135,7 @@ export class LocalSandboxSession implements SandboxSession {
       new Response(child.stderr).text(),
       child.wait(),
     ]);
-    if (exitCode !== 0 && stderr)
-      this.codingTaskLogger.warn(
-        `stderr: ${this.codingTaskLogger.preview(stderr.slice(-STDERR_TAIL_LENGTH))}`,
-      );
-
     return { exitCode, stdout, stderr };
-  }
-
-  describeRunningCommands(): string[] {
-    const now = Date.now();
-    return [...this.runningCommands.values()].map(
-      ({ command, startedAt }) =>
-        `${command} (${formatDuration(now - startedAt)})`,
-    );
   }
 
   private resolvePath(path: string): string {
