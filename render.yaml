@@ -19,8 +19,6 @@ services:
         sync: false
       - key: AI_GATEWAY_BASE_URL
         sync: false
-      - key: AI_GATEWAY_MODEL
-        sync: false
       - key: GITHUB_PAT
         sync: false
       - key: GITHUB_WEBHOOK_SECRET
@@ -86,8 +84,6 @@ services:
       - key: AI_GATEWAY_API_KEY
         sync: false
       - key: AI_GATEWAY_BASE_URL
-        sync: false
-      - key: AI_GATEWAY_MODEL
         sync: false
       - key: GITHUB_PAT
         sync: false

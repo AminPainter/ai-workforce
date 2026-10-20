@@ -17,6 +17,8 @@ import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
 export const EMPLOYEE_ASSISTANT = 'employee-assistant';
 
+const MODEL = 'cloudflare/@cf/zai-org/glm-5.2';
+
 export function createEmployeeAssistant(
   aiService: AiService,
   sentryMcpService: SentryMcpService,
@@ -37,7 +39,7 @@ export function createEmployeeAssistant(
   )}`;
 
   return new ToolLoopAgent({
-    model: aiService.model(),
+    model: aiService.model(MODEL),
     instructions: `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`,
     tools: {
       ...aiService.webTools(),

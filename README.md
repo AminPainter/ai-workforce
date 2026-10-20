@@ -30,7 +30,6 @@ Set these in `.env` locally and as `sync: false` dashboard values on Render.
 AI gateway (required):
 - `AI_GATEWAY_API_KEY`
 - `AI_GATEWAY_BASE_URL`
-- `AI_GATEWAY_MODEL`
 
 Slack (required — the bot receives events via webhooks, so the service must be public):
 - `SLACK_BOT_TOKEN`

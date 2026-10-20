@@ -11,7 +11,6 @@ import { createWebFetchTool } from '../tools/web-fetch.tool';
 @Injectable()
 export class AiService {
   private readonly provider: OpenAICompatibleProvider;
-  private readonly defaultModel: string;
 
   constructor(private readonly config: ConfigService) {
     this.provider = createOpenAICompatible({
@@ -20,11 +19,10 @@ export class AiService {
       baseURL: this.config.getOrThrow<string>('AI_GATEWAY_BASE_URL'),
       supportsStructuredOutputs: true,
     });
-    this.defaultModel = this.config.getOrThrow<string>('AI_GATEWAY_MODEL');
   }
 
-  model(modelId?: string): LanguageModel {
-    return this.provider(modelId ?? this.defaultModel);
+  model(modelId: string): LanguageModel {
+    return this.provider(modelId);
   }
 
   webTools() {

@@ -9,7 +9,7 @@
  *   pnpm f9:repl                            # runs the worked-example suite
  *   pnpm f9:repl "subject" "customer msg"   # ad-hoc single ticket
  *
- * Env required: AI_GATEWAY_API_KEY, AI_GATEWAY_BASE_URL, AI_GATEWAY_MODEL.
+ * Env required: AI_GATEWAY_API_KEY, AI_GATEWAY_BASE_URL.
  */
 import 'reflect-metadata';
 import { Module } from '@nestjs/common';
