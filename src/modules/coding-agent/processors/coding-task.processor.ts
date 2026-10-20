@@ -14,7 +14,7 @@ import {
   REPO_DIR,
   type CodingAgent,
 } from '../agent/coding.agent';
-import { CodingTaskLog } from '../logging/coding-task-log';
+import { CodingTaskLogger } from '../logging/coding-task-logger';
 import { LocalSandboxSession } from '../sandbox/local-sandbox-session';
 import { CodingSessionRepository } from '../services/coding-session.repository';
 import {
@@ -44,12 +44,12 @@ export class CodingTaskProcessor extends WorkerHost {
   async process(job: Job<CodingTaskJob>): Promise<void> {
     const { threadId, repo, task } = job.data;
     const sessionId = this.codingSessionRepository.createSessionId(threadId);
-    const codingTaskLog = new CodingTaskLog(
+    const codingTaskLogger = new CodingTaskLogger(
       `job ${job.id} session ${sessionId}`,
       [this.githubToken],
     );
-    codingTaskLog.log(
-      `received task for ${repo} (thread ${threadId}, attempt ${job.attemptsMade + 1}/${job.opts.attempts ?? 1}): ${codingTaskLog.preview(task)}`,
+    codingTaskLogger.log(
+      `received task for ${repo} (thread ${threadId}, attempt ${job.attemptsMade + 1}/${job.opts.attempts ?? 1}): ${codingTaskLogger.preview(task)}`,
     );
 
     const rootDir = this.codingSessionRepository.getRootDir(sessionId);
@@ -57,16 +57,16 @@ export class CodingTaskProcessor extends WorkerHost {
     const codingSession = (await this.codingSessionRepository.find(
       sessionId,
     )) ?? { repo };
-    codingTaskLog.log(
+    codingTaskLogger.log(
       `${codingSession.resumeState ? 'resuming' : 'starting new'} coding session in ${rootDir}`,
     );
 
     const sandboxSession = new LocalSandboxSession(
       rootDir,
       this.githubToken,
-      codingTaskLog,
+      codingTaskLogger,
     );
-    codingTaskLog.startHeartbeat(() =>
+    codingTaskLogger.startHeartbeat(() =>
       sandboxSession.describeRunningCommands(),
     );
     try {
@@ -75,8 +75,8 @@ export class CodingTaskProcessor extends WorkerHost {
         sandboxSession,
         resumeFrom: codingSession.resumeState,
       });
-      codingTaskLog.log(
-        `harness session ready after ${codingTaskLog.elapsed()}`,
+      codingTaskLogger.log(
+        `harness session ready after ${codingTaskLogger.elapsed()}`,
       );
 
       const { text, steps, totalUsage } = await this.codingAgent.generate({
@@ -87,29 +87,32 @@ export class CodingTaskProcessor extends WorkerHost {
           '',
           task,
         ].join('\n'),
-        onStepStart: codingTaskLog.onStepStart,
-        onStepEnd: codingTaskLog.onStepEnd,
-        onToolExecutionStart: codingTaskLog.onToolExecutionStart,
-        onToolExecutionEnd: codingTaskLog.onToolExecutionEnd,
+        onStepStart: codingTaskLogger.onStepStart,
+        onStepEnd: codingTaskLogger.onStepEnd,
+        onToolExecutionStart: codingTaskLogger.onToolExecutionStart,
+        onToolExecutionEnd: codingTaskLogger.onToolExecutionEnd,
       });
-      codingTaskLog.log(
-        `agent finished after ${codingTaskLog.elapsed()}, ${steps.length} steps, tokens in/out ${totalUsage.inputTokens ?? '?'}/${totalUsage.outputTokens ?? '?'}: ${codingTaskLog.preview(text)}`,
+      codingTaskLogger.log(
+        `agent finished after ${codingTaskLogger.elapsed()}, ${steps.length} steps, tokens in/out ${totalUsage.inputTokens ?? '?'}/${totalUsage.outputTokens ?? '?'}: ${codingTaskLogger.preview(text)}`,
       );
 
       codingSession.resumeState = await harnessSession.stop();
       await this.codingSessionRepository.save(sessionId, codingSession);
-      codingTaskLog.log('session state saved');
+      codingTaskLogger.log('session state saved');
 
       await this.codingTaskSlackSummaryQueue.add('slack-summary', {
         threadId,
         text,
       });
-      codingTaskLog.log('Slack summary queued');
+      codingTaskLogger.log('Slack summary queued');
     } catch (error) {
-      codingTaskLog.error(`failed after ${codingTaskLog.elapsed()}`, error);
+      codingTaskLogger.error(
+        `failed after ${codingTaskLogger.elapsed()}`,
+        error,
+      );
       throw error;
     } finally {
-      codingTaskLog.stopHeartbeat();
+      codingTaskLogger.stopHeartbeat();
     }
   }
 

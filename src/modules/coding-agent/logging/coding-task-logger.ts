@@ -34,7 +34,7 @@ export function formatDuration(ms: number): string {
     : `${Math.floor(seconds / 60)}m${seconds % 60}s`;
 }
 
-export class CodingTaskLog {
+export class CodingTaskLogger {
   private readonly logger = new Logger('CodingTask');
   private readonly startedAt = Date.now();
   private lastActivity = 'started';

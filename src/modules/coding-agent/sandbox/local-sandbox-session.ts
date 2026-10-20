@@ -6,7 +6,10 @@ import {
   type Experimental_SandboxProcess,
   type Experimental_SandboxSession,
 } from 'ai';
-import { type CodingTaskLog, formatDuration } from '../logging/coding-task-log';
+import {
+  type CodingTaskLogger,
+  formatDuration,
+} from '../logging/coding-task-logger';
 
 type SandboxSession = Experimental_SandboxSession;
 type ReadOptions = Parameters<SandboxSession['readBinaryFile']>[0];
@@ -45,7 +48,7 @@ export class LocalSandboxSession implements SandboxSession {
   constructor(
     private readonly rootDir: string,
     githubToken: string,
-    private readonly codingTaskLog: CodingTaskLog,
+    private readonly codingTaskLogger: CodingTaskLogger,
   ) {
     this.description = `Host directory ${rootDir}. Commands run directly on the host.`;
     this.env = {
@@ -115,32 +118,36 @@ export class LocalSandboxSession implements SandboxSession {
     abortSignal,
   }: ProcessOptions): Promise<Experimental_SandboxProcess> {
     const commandId = this.nextCommandId++;
-    const summary = this.codingTaskLog.preview(command);
+    const summary = this.codingTaskLogger.preview(command);
     const startedAt = Date.now();
     this.runningCommands.set(commandId, { command: summary, startedAt });
-    this.codingTaskLog.debug(`$ ${summary} (cwd ${workingDirectory})`);
+    this.codingTaskLogger.debug(`$ ${summary} (cwd ${workingDirectory})`);
 
     const child = spawn('bash', ['-c', command], {
       cwd: this.resolvePath(workingDirectory),
       env: { ...this.env, ...env },
     });
     abortSignal?.addEventListener('abort', () => {
-      this.codingTaskLog.warn(`aborting command: ${summary}`);
+      this.codingTaskLogger.warn(`aborting command: ${summary}`);
       child.kill();
     });
     const exited = new Promise<{ exitCode: number }>((resolveExit) => {
       child.on('error', (error) => {
         this.runningCommands.delete(commandId);
-        this.codingTaskLog.error(`command failed to start: ${summary}`, error);
+        this.codingTaskLogger.error(
+          `command failed to start: ${summary}`,
+          error,
+        );
         resolveExit({ exitCode: 1 });
       });
       child.on('close', (code, signal) => {
         this.runningCommands.delete(commandId);
         const durationMs = Date.now() - startedAt;
         const message = `command exited ${code ?? signal} after ${formatDuration(durationMs)}: ${summary}`;
-        if (code !== 0) this.codingTaskLog.warn(message);
-        else if (durationMs >= SLOW_COMMAND_MS) this.codingTaskLog.log(message);
-        else this.codingTaskLog.debug(message);
+        if (code !== 0) this.codingTaskLogger.warn(message);
+        else if (durationMs >= SLOW_COMMAND_MS)
+          this.codingTaskLogger.log(message);
+        else this.codingTaskLogger.debug(message);
 
         resolveExit({ exitCode: code ?? 1 });
       });
@@ -163,8 +170,8 @@ export class LocalSandboxSession implements SandboxSession {
       child.wait(),
     ]);
     if (exitCode !== 0 && stderr)
-      this.codingTaskLog.warn(
-        `stderr: ${this.codingTaskLog.preview(stderr.slice(-STDERR_TAIL_LENGTH))}`,
+      this.codingTaskLogger.warn(
+        `stderr: ${this.codingTaskLogger.preview(stderr.slice(-STDERR_TAIL_LENGTH))}`,
       );
 
     return { exitCode, stdout, stderr };
