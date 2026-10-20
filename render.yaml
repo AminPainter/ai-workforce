@@ -23,8 +23,6 @@ services:
         sync: false
       - key: GITHUB_PAT
         sync: false
-      - key: GITHUB_WEBHOOK_SECRET
-        sync: false
       - key: ATLASSIAN_EMAIL
         sync: false
       - key: ATLASSIAN_API_TOKEN
@@ -45,8 +43,6 @@ services:
         value: "3"
       - key: QUEUE_BACKOFF_MS
         value: "5000"
-      - key: CONTRACT_DRIFT_CONCURRENCY
-        value: "1"
       - key: ALLOYDB_MCP_URL
         value: http://teleport-alloydb-mcp:10000/mcp
       - key: ALLOYDB_MCP_API_KEY
