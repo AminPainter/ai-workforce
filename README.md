@@ -42,6 +42,10 @@ MCP tools (read-only integrations):
 - `ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN` (+ optional `ATLASSIAN_MCP_URL`)
 - `SENTRY_AUTH_TOKEN` (+ optional `SENTRY_MCP_URL`)
 
+GitHub webhook (`POST /webhooks/github`, `src/modules/github`):
+- `GITHUB_WEBHOOK_SECRET` (required) — shared secret used to verify the `X-Hub-Signature-256`
+  HMAC. Merged PRs into `main` are emitted as the `github.pull_request.merged_to_main` event.
+
 Queue infra (`src/modules/queue`):
 - `REDIS_URL` (required) — now load-bearing for the queue as well as Chat SDK state; BullMQ
   opens its own connection to it.
