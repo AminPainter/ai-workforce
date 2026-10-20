@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { CodingAgentWorkerModule } from './modules/coding-agent/coding-agent-worker.module';
 
@@ -6,5 +7,6 @@ async function bootstrap() {
     CodingAgentWorkerModule,
   );
   app.enableShutdownHooks();
+  new Logger('Worker').log('coding agent worker started');
 }
 bootstrap();

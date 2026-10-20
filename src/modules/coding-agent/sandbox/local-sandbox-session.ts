@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, resolve } from 'path';
@@ -30,6 +31,7 @@ const GITHUB_CREDENTIAL_HELPER = {
 };
 
 export class LocalSandboxSession implements SandboxSession {
+  private readonly logger = new Logger(LocalSandboxSession.name);
   readonly description: string;
   private readonly env: Record<string, string>;
 
@@ -109,9 +111,13 @@ export class LocalSandboxSession implements SandboxSession {
       env: { ...this.env, ...env },
     });
     abortSignal?.addEventListener('abort', () => child.kill());
-    const exited = new Promise<{ exitCode: number }>((resolveExit) =>
-      child.on('close', (code) => resolveExit({ exitCode: code ?? 1 })),
-    );
+    const exited = new Promise<{ exitCode: number }>((resolveExit) => {
+      child.on('error', (error) => {
+        this.logger.error(`command failed to start: ${error.message}`);
+        resolveExit({ exitCode: 1 });
+      });
+      child.on('close', (code) => resolveExit({ exitCode: code ?? 1 }));
+    });
 
     return Promise.resolve({
       pid: child.pid,

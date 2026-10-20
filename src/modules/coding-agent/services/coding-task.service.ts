@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import {
@@ -8,12 +8,17 @@ import {
 
 @Injectable()
 export class CodingTaskService {
+  private readonly logger = new Logger(CodingTaskService.name);
+
   constructor(
     @InjectQueue(CODING_AGENT_QUEUE)
     private readonly codingAgentQueue: Queue<CodingTaskJob>,
   ) {}
 
   async delegate(job: CodingTaskJob): Promise<void> {
-    await this.codingAgentQueue.add('task', job);
+    const { id } = await this.codingAgentQueue.add('task', job);
+    this.logger.log(
+      `queued coding task job ${id} for ${job.repo} (thread ${job.threadId})`,
+    );
   }
 }
