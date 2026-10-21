@@ -5,7 +5,7 @@ export const KONG_ROUTE_SYNC_CODING_QUEUE = 'kong-route-sync-coding';
 export const KONG_ROUTE_SYNC_NOTIFICATION_QUEUE =
   'kong-route-sync-notifications';
 
-export interface SourcePullRequest {
+export interface RailsAppPullRequest {
   repo: string;
   number: number;
   url: string;
@@ -21,18 +21,17 @@ export interface RoutesFileChange {
 }
 
 export interface KongRouteSyncJob {
-  pullRequestOnRailsApp: SourcePullRequest;
+  pullRequestOnRailsApp: RailsAppPullRequest;
 }
 
 export interface KongRouteSyncCodingJob {
-  pullRequestOnRailsApp: SourcePullRequest;
+  pullRequestOnRailsApp: RailsAppPullRequest;
   authorEmail: string;
-  targetRepo: string;
   routesFiles: RoutesFileChange[];
 }
 
 export interface KongRouteSyncNotificationJob {
-  pullRequestOnRailsApp: SourcePullRequest;
+  pullRequestOnRailsApp: RailsAppPullRequest;
   authorEmail: string;
   result: KongRouteSyncResult;
 }

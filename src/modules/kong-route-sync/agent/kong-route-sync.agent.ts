@@ -1,6 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { HarnessAgent } from '@ai-sdk/harness/agent';
-import { codingAgentSettings } from '../../coding-agent/agent/coding.agent';
+import { createCodingAgent } from '../../coding-agent/agent/coding.agent';
 import {
   SUBMIT_ROUTE_SYNC_RESULT_TOOL,
   submitRouteSyncResultTool,
@@ -9,9 +8,8 @@ import {
 export const KONG_ROUTE_SYNC_AGENT = 'kong-route-sync-agent';
 
 export function createKongRouteSyncAgent(configService: ConfigService) {
-  return new HarnessAgent({
-    ...codingAgentSettings(configService),
-    tools: { [SUBMIT_ROUTE_SYNC_RESULT_TOOL]: submitRouteSyncResultTool },
+  return createCodingAgent(configService, {
+    [SUBMIT_ROUTE_SYNC_RESULT_TOOL]: submitRouteSyncResultTool,
   });
 }
 

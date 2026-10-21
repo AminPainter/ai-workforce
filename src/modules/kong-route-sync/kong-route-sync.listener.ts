@@ -11,12 +11,11 @@ import {
   KONG_ROUTE_SYNC_QUEUE,
   type KongRouteSyncJob,
 } from './queues/kong-route-sync.queue';
-import { authorDenylist, sourceRepo } from './kong-route-sync.config';
+import { SOURCE_REPO, authorDenylist } from './kong-route-sync.config';
 
 @Injectable()
 export class KongRouteSyncListener {
   private readonly logger = new Logger(KongRouteSyncListener.name);
-  private readonly sourceRepo: string;
   private readonly authorDenylist: Set<string>;
 
   constructor(
@@ -24,7 +23,6 @@ export class KongRouteSyncListener {
     private readonly kongRouteSyncQueue: Queue<KongRouteSyncJob>,
     configService: ConfigService,
   ) {
-    this.sourceRepo = sourceRepo(configService);
     this.authorDenylist = authorDenylist(configService);
   }
 
@@ -34,7 +32,7 @@ export class KongRouteSyncListener {
     payload,
   }: GitHubPullRequestMergedToMainEvent): Promise<void> {
     const pullRequestOnRailsApp = payload.pull_request;
-    if (payload.repository.full_name !== this.sourceRepo) return;
+    if (payload.repository.full_name !== SOURCE_REPO) return;
     if (
       this.authorDenylist.has(pullRequestOnRailsApp.user.login.toLowerCase())
     ) {

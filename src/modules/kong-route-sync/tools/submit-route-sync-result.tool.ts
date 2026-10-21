@@ -4,9 +4,6 @@ import { kongRouteSyncResultSchema } from '../agent/kong-route-sync.schema';
 
 export const SUBMIT_ROUTE_SYNC_RESULT_TOOL = 'submitRouteSyncResult';
 
-// The Pi harness rejects structured output (json responseFormat), so the
-// result comes back as this tool's schema-validated input instead. Anthropic
-// requires an object at the top level of a tool schema, hence the wrapper.
 export const submitRouteSyncResultInputSchema = z.object({
   result: kongRouteSyncResultSchema,
 });

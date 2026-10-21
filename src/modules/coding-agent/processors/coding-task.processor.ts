@@ -9,11 +9,8 @@ import {
 import { Job, Queue } from 'bullmq';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
-import {
-  CODING_AGENT,
-  REPO_DIR,
-  type CodingAgent,
-} from '../agent/coding.agent';
+import { CODING_AGENT, type CodingAgent } from '../agent/coding.agent';
+import { REPO_DIR } from '../agent/coding.settings';
 import { LocalSandboxSession } from '../sandbox/local-sandbox-session';
 import { CodingSessionRepository } from '../services/coding-session.repository';
 import {

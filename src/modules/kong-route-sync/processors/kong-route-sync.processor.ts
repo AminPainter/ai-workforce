@@ -1,31 +1,25 @@
 import { Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Octokit } from '@octokit/rest';
 import { isRoutesFile } from '../utils/routes-files';
-import { targetRepo } from '../kong-route-sync.config';
 import {
   KONG_ROUTE_SYNC_CODING_QUEUE,
   KONG_ROUTE_SYNC_QUEUE,
   type KongRouteSyncCodingJob,
   type KongRouteSyncJob,
-  type SourcePullRequest,
+  type RailsAppPullRequest,
 } from '../queues/kong-route-sync.queue';
 
 @Processor(KONG_ROUTE_SYNC_QUEUE)
 export class KongRouteSyncProcessor extends WorkerHost {
   private readonly logger = new Logger(KongRouteSyncProcessor.name);
-  private readonly targetRepo: string;
-
   constructor(
     private readonly octokit: Octokit,
     @InjectQueue(KONG_ROUTE_SYNC_CODING_QUEUE)
     private readonly kongRouteSyncCodingQueue: Queue<KongRouteSyncCodingJob>,
-    configService: ConfigService,
   ) {
     super();
-    this.targetRepo = targetRepo(configService);
   }
 
   async process(job: Job<KongRouteSyncJob>): Promise<void> {
@@ -54,7 +48,6 @@ export class KongRouteSyncProcessor extends WorkerHost {
       {
         pullRequestOnRailsApp,
         authorEmail: await this.findAuthorEmail(pullRequestOnRailsApp),
-        targetRepo: this.targetRepo,
         routesFiles: routesFiles.map(({ filename, status, patch }) => ({
           filename,
           status,
@@ -66,7 +59,7 @@ export class KongRouteSyncProcessor extends WorkerHost {
   }
 
   private async findAuthorEmail(
-    pullRequestOnRailsApp: SourcePullRequest,
+    pullRequestOnRailsApp: RailsAppPullRequest,
   ): Promise<string> {
     const commits = await this.octokit.paginate(
       this.octokit.rest.pulls.listCommits,
@@ -82,7 +75,7 @@ export class KongRouteSyncProcessor extends WorkerHost {
     )!.commit.author!.email!;
   }
 
-  private repoParams({ repo }: SourcePullRequest) {
+  private repoParams({ repo }: RailsAppPullRequest) {
     const [owner, name] = repo.split('/');
     return { owner, repo: name };
   }

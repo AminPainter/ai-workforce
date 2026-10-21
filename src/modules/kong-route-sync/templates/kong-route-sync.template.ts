@@ -1,9 +1,9 @@
-import type { SourcePullRequest } from '../queues/kong-route-sync.queue';
+import type { RailsAppPullRequest } from '../queues/kong-route-sync.queue';
 
 const OPT_OUT_SLACK_USER_ID = 'U0857R1RB9Q';
 
 export interface KongRouteSyncSummary {
-  pullRequestOnRailsApp: SourcePullRequest;
+  pullRequestOnRailsApp: RailsAppPullRequest;
   kongPrUrl: string;
 }
 

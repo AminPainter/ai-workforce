@@ -9,9 +9,10 @@ import {
 import { Job, Queue } from 'bullmq';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
-import { REPO_DIR } from '../../coding-agent/agent/coding.agent';
+import { REPO_DIR } from '../../coding-agent/agent/coding.settings';
 import { LocalSandboxSession } from '../../coding-agent/sandbox/local-sandbox-session';
 import { CodingSessionRepository } from '../../coding-agent/services/coding-session.repository';
+import { TARGET_REPO } from '../kong-route-sync.config';
 import {
   KONG_ROUTE_SYNC_AGENT,
   type KongRouteSyncAgent,
@@ -49,7 +50,7 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
   }
 
   async process(job: Job<KongRouteSyncCodingJob>): Promise<void> {
-    const { pullRequestOnRailsApp, authorEmail, targetRepo } = job.data;
+    const { pullRequestOnRailsApp, authorEmail } = job.data;
     const sessionId = this.codingSessionRepository.createSessionId(
       `kong-route-sync:${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}`,
     );
@@ -64,7 +65,7 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
       const { text, steps } = await this.kongRouteSyncAgent.generate({
         session: harnessSession,
         prompt: [
-          `Repository: ${targetRepo}`,
+          `Repository: ${TARGET_REPO}`,
           `Working branch: ${kongRouteSyncBranch(pullRequestOnRailsApp.number)}`,
           '',
           buildKongRouteSyncTask(job.data),

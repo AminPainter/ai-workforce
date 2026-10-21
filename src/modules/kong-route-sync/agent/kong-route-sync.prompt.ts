@@ -1,4 +1,5 @@
 import { SUBMIT_ROUTE_SYNC_RESULT_TOOL } from '../tools/submit-route-sync-result.tool';
+import { TARGET_REPO } from '../kong-route-sync.config';
 import type {
   KongRouteSyncCodingJob,
   RoutesFileChange,
@@ -10,10 +11,9 @@ export function kongRouteSyncBranch(prNumber: number): string {
 
 export function buildKongRouteSyncTask({
   pullRequestOnRailsApp,
-  targetRepo,
   routesFiles,
 }: KongRouteSyncCodingJob): string {
-  return `You are a Kong route sync assistant. Your job is to mirror the route changes from a Rails pull request into the ${targetRepo} repository.
+  return `You are a Kong route sync assistant. Your job is to mirror the route changes from a Rails pull request into the ${TARGET_REPO} repository.
 
 ## Context
 
@@ -38,7 +38,7 @@ If there are no net route changes (e.g. only comments or formatting changed), do
 
 ## Step 2 — Understand how Kong routes are managed
 
-In the ${targetRepo} repository, read README.md and DEVELOPER_GUIDE.md carefully before making any changes. They explain the conventions, file structure, and process for adding or removing routes. Follow them exactly.
+In the ${TARGET_REPO} repository, read README.md and DEVELOPER_GUIDE.md carefully before making any changes. They explain the conventions, file structure, and process for adding or removing routes. Follow them exactly.
 
 ## Step 3 — Apply the changes to the kong repository
 

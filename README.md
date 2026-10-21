@@ -58,8 +58,6 @@ draft PR on `amin-ka-bot/sync-routes-glomopay-pr-<N>` and DMs the PR author. Rid
 `pull_request` webhook above.
 - `KONG_ROUTE_SYNC_AUTHOR_DENYLIST` (optional) — comma-separated GitHub logins to skip, e.g.
   `dependabot[bot]`.
-- `KONG_ROUTE_SYNC_SOURCE_REPO` / `KONG_ROUTE_SYNC_TARGET_REPO` (optional) — default to
-  `glomopay/glomopay_service` and `glomopay/kong`.
 - `GITHUB_PAT` needs Contents + Pull requests read/write on `glomopay/kong`. The main Slack app
   needs `chat:write`, `users:read.email` and `im:write`.
 
