@@ -51,12 +51,17 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
 
   async process(job: Job<KongRouteSyncCodingJob>): Promise<void> {
     const { pullRequestOnRailsApp, authorEmail } = job.data;
+    const prRef = `${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}`;
+    const logger = new Logger(`KongRouteSyncCoding ${prRef}`);
     const sessionId = this.codingSessionRepository.createSessionId(
-      `kong-route-sync:${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}`,
+      `kong-route-sync:${prRef}`,
     );
     const rootDir = this.codingSessionRepository.getRootDir(sessionId);
     await mkdir(join(rootDir, REPO_DIR), { recursive: true });
 
+    logger.log(
+      `starting coding agent session ${sessionId} to sync ${job.data.routesFiles.map((file) => file.filename).join(', ')} into ${TARGET_REPO}`,
+    );
     const harnessSession = await this.kongRouteSyncCodingAgent.createSession({
       sessionId,
       sandboxSession: new LocalSandboxSession(rootDir, this.githubToken),
@@ -71,6 +76,7 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
           buildKongRouteSyncTask(job.data),
         ].join('\n'),
       });
+      logger.log(`agent finished after ${steps.length} steps`);
       const submission = steps
         .flatMap((step) => step.toolResults)
         .findLast(
@@ -83,22 +89,26 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
       const { result } = submitRouteSyncResultInputSchema.parse(
         submission.input,
       );
-      this.logger.log(
-        `kong sync for ${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}: ${JSON.stringify(result)}`,
-      );
+      logger.log(`kong sync result: ${JSON.stringify(result)}`);
 
       await this.kongRouteSyncNotificationQueue.add('notify', {
         pullRequestOnRailsApp,
         authorEmail,
         result,
       });
+      logger.log('queued author notification');
     } finally {
       await harnessSession.stop();
     }
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job, err: Error): void {
-    this.logger.error(`job ${job.id} failed: ${err.message}`);
+  onFailed(job: Job<KongRouteSyncCodingJob> | undefined, error: Error): void {
+    this.logger.error(`job ${job?.id} failed: ${error.message}`, error.stack);
+  }
+
+  @OnWorkerEvent('stalled')
+  onStalled(jobId: string): void {
+    this.logger.warn(`job ${jobId} stalled`);
   }
 }

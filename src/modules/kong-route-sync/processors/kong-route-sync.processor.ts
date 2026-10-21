@@ -1,5 +1,10 @@
 import { Logger } from '@nestjs/common';
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
+import {
+  InjectQueue,
+  OnWorkerEvent,
+  Processor,
+  WorkerHost,
+} from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Octokit } from '@octokit/rest';
 import { isRoutesFile } from '../utils/routes-files';
@@ -25,6 +30,7 @@ export class KongRouteSyncProcessor extends WorkerHost {
   async process(job: Job<KongRouteSyncJob>): Promise<void> {
     const { pullRequestOnRailsApp } = job.data;
     const prRef = `${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}`;
+    this.logger.log(`checking ${prRef} for routes file changes`);
 
     const files = await this.octokit.paginate(
       this.octokit.rest.pulls.listFiles,
@@ -56,6 +62,12 @@ export class KongRouteSyncProcessor extends WorkerHost {
       },
       { jobId: prRef, attempts: 1 },
     );
+    this.logger.log(`queued kong sync coding job ${prRef}`);
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job<KongRouteSyncJob> | undefined, error: Error): void {
+    this.logger.error(`job ${job?.id} failed: ${error.message}`, error.stack);
   }
 
   private async findAuthorEmail(
