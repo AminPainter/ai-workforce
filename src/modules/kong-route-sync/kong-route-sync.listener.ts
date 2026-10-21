@@ -51,7 +51,7 @@ export class KongRouteSyncListener {
             number: pullRequestOnRailsApp.number,
             url: pullRequestOnRailsApp.html_url,
             title: pullRequestOnRailsApp.title,
-            authorLogin: pullRequestOnRailsApp.user.login,
+            authorUsername: pullRequestOnRailsApp.user.login,
             mergeSha: pullRequestOnRailsApp.merge_commit_sha,
           },
         },

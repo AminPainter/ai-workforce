@@ -10,7 +10,7 @@ export interface RailsAppPullRequest {
   number: number;
   url: string;
   title: string;
-  authorLogin: string;
+  authorUsername: string;
   mergeSha: string | null;
 }
 

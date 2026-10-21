@@ -6,7 +6,7 @@ export const TARGET_REPO = 'glomopay/kong';
 export function authorDenylist(configService: ConfigService): Set<string> {
   return new Set(
     splitList(configService.get('KONG_ROUTE_SYNC_AUTHOR_DENYLIST')).map(
-      (login) => login.toLowerCase(),
+      (username) => username.toLowerCase(),
     ),
   );
 }

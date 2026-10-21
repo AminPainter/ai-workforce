@@ -69,9 +69,9 @@ export class KongRouteSyncProcessor extends WorkerHost {
         per_page: 100,
       },
     );
-    const login = pullRequestOnRailsApp.authorLogin.toLowerCase();
+    const authorUsername = pullRequestOnRailsApp.authorUsername.toLowerCase();
     return commits.find(
-      (commit) => commit.author?.login.toLowerCase() === login,
+      (commit) => commit.author?.login.toLowerCase() === authorUsername,
     )!.commit.author!.email!;
   }
 

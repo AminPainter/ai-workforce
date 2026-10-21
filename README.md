@@ -56,7 +56,7 @@ and touches `config/routes.rb` or `config/routes/**/*.rb` (checked deterministic
 PR's file list), the coding-agent worker mirrors the route changes into `glomopay/kong`, opens a
 draft PR on `amin-ka-bot/sync-routes-glomopay-pr-<N>` and DMs the PR author. Rides on the GitHub
 `pull_request` webhook above.
-- `KONG_ROUTE_SYNC_AUTHOR_DENYLIST` (optional) — comma-separated GitHub logins to skip, e.g.
+- `KONG_ROUTE_SYNC_AUTHOR_DENYLIST` (optional) — comma-separated GitHub usernames to skip, e.g.
   `dependabot[bot]`.
 - `GITHUB_PAT` needs Contents + Pull requests read/write on `glomopay/kong`. The main Slack app
   needs `chat:write`, `users:read.email` and `im:write`.
