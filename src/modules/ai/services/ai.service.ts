@@ -7,6 +7,7 @@ import {
 import { type LanguageModel } from 'ai';
 import { createWebSearchTool } from '../tools/web-search.tool';
 import { createWebFetchTool } from '../tools/web-fetch.tool';
+import { AiModel } from '../constants/ai-models';
 
 @Injectable()
 export class AiService {
@@ -21,8 +22,8 @@ export class AiService {
     });
   }
 
-  model(modelId: string): LanguageModel {
-    return this.provider(modelId);
+  model(aiModel: AiModel): LanguageModel {
+    return this.provider(aiModel);
   }
 
   webTools() {

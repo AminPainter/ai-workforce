@@ -2,6 +2,7 @@ import { ToolLoopAgent, stepCountIs } from 'ai';
 import { ConfigService } from '@nestjs/config';
 import { resolve } from 'path';
 import { AiService } from '../../ai/services/ai.service';
+import { AiModel } from '../../ai/constants/ai-models';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
@@ -16,8 +17,6 @@ import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
 export const EMPLOYEE_ASSISTANT = 'employee-assistant';
-
-const MODEL = 'cloudflare/@cf/zai-org/glm-5.2';
 
 export function createEmployeeAssistant(
   aiService: AiService,
@@ -39,7 +38,7 @@ export function createEmployeeAssistant(
   )}`;
 
   return new ToolLoopAgent({
-    model: aiService.model(MODEL),
+    model: aiService.model(AiModel.Glm52),
     instructions: `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`,
     tools: {
       ...aiService.webTools(),

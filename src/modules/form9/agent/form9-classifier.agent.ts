@@ -1,16 +1,15 @@
 import { ToolLoopAgent, stepCountIs, Output } from 'ai';
 import { AiService } from '../../ai/services/ai.service';
+import { AiModel } from '../../ai/constants/ai-models';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { FORM9_CLASSIFIER_SYSTEM_PROMPT } from './form9-classifier.prompt';
 import { form9TaxonomySchema } from './form9-classifier.schema';
 
 export const FORM9_CLASSIFIER = 'form9-classifier';
 
-const MODEL = 'claude-haiku-4-5';
-
 export function createForm9Classifier(aiService: AiService): RegisteredAgent {
   return new ToolLoopAgent({
-    model: aiService.model(MODEL),
+    model: aiService.model(AiModel.ClaudeHaiku45),
     instructions: FORM9_CLASSIFIER_SYSTEM_PROMPT,
     tools: {},
     stopWhen: stepCountIs(1),

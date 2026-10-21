@@ -1,5 +1,6 @@
 import { ToolLoopAgent, stepCountIs } from 'ai';
 import { AiService } from '../../ai/services/ai.service';
+import { AiModel } from '../../ai/constants/ai-models';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service';
@@ -8,8 +9,6 @@ import { CUSTOMER_SUPPORT_SYSTEM_PROMPT } from './customer-support.prompt';
 
 export const CUSTOMER_SUPPORT = 'customer-support';
 
-const MODEL = 'cloudflare/@cf/zai-org/glm-5.2';
-
 export function createCustomerSupport(
   aiService: AiService,
   gitHubMcpService: GitHubMcpService,
@@ -17,7 +16,7 @@ export function createCustomerSupport(
   alloyDbMcpService: AlloyDbMcpService,
 ): RegisteredAgent {
   return new ToolLoopAgent({
-    model: aiService.model(MODEL),
+    model: aiService.model(AiModel.Glm52),
     instructions: CUSTOMER_SUPPORT_SYSTEM_PROMPT,
     tools: {
       ...aiService.webTools(),
