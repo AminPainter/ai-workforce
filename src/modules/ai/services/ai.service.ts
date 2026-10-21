@@ -17,7 +17,7 @@ export class AiService {
     this.provider = createOpenAICompatible({
       name: 'ai-gateway',
       apiKey: this.config.getOrThrow<string>('AI_GATEWAY_API_KEY'),
-      baseURL: this.config.getOrThrow<string>('AI_GATEWAY_BASE_URL'),
+      baseURL: `${this.config.getOrThrow<string>('AI_GATEWAY_BASE_URL')}/v1`,
       supportsStructuredOutputs: true,
     });
   }

@@ -17,10 +17,7 @@ export function createCodingAgent(configService: ConfigService) {
     harness: createPi({
       providers: {
         [PROVIDER_ID]: {
-          // Pi's Anthropic client appends /v1/messages itself.
-          baseUrl: configService
-            .getOrThrow<string>('AI_GATEWAY_BASE_URL')
-            .replace(/\/v1\/?$/, ''),
+          baseUrl: configService.getOrThrow<string>('AI_GATEWAY_BASE_URL'),
           apiKey: configService.getOrThrow<string>('AI_GATEWAY_API_KEY'),
           api: 'anthropic-messages',
           models: [
