@@ -17,14 +17,18 @@ export function createCodingAgent(configService: ConfigService) {
     harness: createPi({
       providers: {
         [PROVIDER_ID]: {
-          baseUrl: configService.getOrThrow<string>('AI_GATEWAY_BASE_URL'),
+          // Pi's Anthropic client appends /v1/messages itself.
+          baseUrl: configService
+            .getOrThrow<string>('AI_GATEWAY_BASE_URL')
+            .replace(/\/v1\/?$/, ''),
           apiKey: configService.getOrThrow<string>('AI_GATEWAY_API_KEY'),
-          api: 'openai-completions',
+          api: 'anthropic-messages',
           models: [
             {
               id: AiModel.CLAUDE_OPUS_5_5,
               name: AiModel.CLAUDE_OPUS_5_5,
-              reasoning: false,
+              reasoning: true,
+              compat: { forceAdaptiveThinking: true },
               input: ['text'],
               cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
               contextWindow: MODEL_CONTEXT_WINDOW,
@@ -33,6 +37,8 @@ export function createCodingAgent(configService: ConfigService) {
           ],
         },
       },
+      thinkingLevel: 'high',
+      cacheRetention: 'long',
       mcpServers: {
         github: {
           type: 'http',
