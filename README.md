@@ -51,10 +51,9 @@ Queue infra (`src/modules/queue`):
 - `QUEUE_JOB_ATTEMPTS` (optional, default 3) — retry attempts per job.
 - `QUEUE_BACKOFF_MS` (optional, default 5000) — exponential backoff base delay.
 
-Kong route sync (`src/modules/kong-route-sync`): when a `glomopay_service` PR is opened against
-main (temporarily, for testing; it moves back to merge to main later) and touches
-`config/routes.rb` or `config/routes/**/*.rb` (checked deterministically against the PR's file
-list), the coding-agent worker mirrors the route changes into `glomopay/kong`, opens a
+Kong route sync (`src/modules/kong-route-sync`): when a `glomopay_service` PR merges to main
+and touches `config/routes.rb` or `config/routes/**/*.rb` (checked deterministically against the
+PR's file list), the coding-agent worker mirrors the route changes into `glomopay/kong`, opens a
 draft PR on `amin-ka-bot/sync-routes-glomopay-pr-<N>` and DMs the PR author. Rides on the GitHub
 `pull_request` webhook above.
 - `KONG_ROUTE_SYNC_AUTHOR_DENYLIST` (optional) — comma-separated GitHub usernames to skip, e.g.
