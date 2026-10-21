@@ -33,7 +33,7 @@ export class KongRouteSyncNotifierService {
     summary: KongRouteSyncSummary,
     authorEmail: string | null,
   ): Promise<void> {
-    const { authorLogin } = summary.pullRequest;
+    const { authorLogin } = summary.pullRequestOnRailsApp;
     const slackUserId =
       this.githubSlackUserMap.get(authorLogin.toLowerCase()) ??
       (authorEmail &&

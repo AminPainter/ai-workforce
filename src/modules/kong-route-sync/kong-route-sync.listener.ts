@@ -33,11 +33,13 @@ export class KongRouteSyncListener {
     id,
     payload,
   }: GitHubPullRequestMergedToMainEvent): Promise<void> {
-    const pullRequest = payload.pull_request;
+    const pullRequestOnRailsApp = payload.pull_request;
     if (payload.repository.full_name !== this.sourceRepo) return;
-    if (this.authorDenylist.has(pullRequest.user.login.toLowerCase())) {
+    if (
+      this.authorDenylist.has(pullRequestOnRailsApp.user.login.toLowerCase())
+    ) {
       this.logger.log(
-        `skipping PR #${pullRequest.number}: author ${pullRequest.user.login} is deny-listed`,
+        `skipping PR #${pullRequestOnRailsApp.number}: author ${pullRequestOnRailsApp.user.login} is deny-listed`,
       );
       return;
     }
@@ -46,13 +48,13 @@ export class KongRouteSyncListener {
       await this.kongRouteSyncQueue.add(
         'detect',
         {
-          pullRequest: {
+          pullRequestOnRailsApp: {
             repo: payload.repository.full_name,
-            number: pullRequest.number,
-            url: pullRequest.html_url,
-            title: pullRequest.title,
-            authorLogin: pullRequest.user.login,
-            mergeSha: pullRequest.merge_commit_sha,
+            number: pullRequestOnRailsApp.number,
+            url: pullRequestOnRailsApp.html_url,
+            title: pullRequestOnRailsApp.title,
+            authorLogin: pullRequestOnRailsApp.user.login,
+            mergeSha: pullRequestOnRailsApp.merge_commit_sha,
           },
         },
         { jobId: id },

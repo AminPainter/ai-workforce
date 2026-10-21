@@ -46,9 +46,9 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
   }
 
   async process(job: Job<KongRouteSyncCodingJob>): Promise<void> {
-    const { pullRequest, authorEmail, targetRepo } = job.data;
+    const { pullRequestOnRailsApp, authorEmail, targetRepo } = job.data;
     const sessionId = this.codingSessionRepository.createSessionId(
-      `kong-route-sync:${pullRequest.repo}#${pullRequest.number}`,
+      `kong-route-sync:${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}`,
     );
     const rootDir = this.codingSessionRepository.getRootDir(sessionId);
     await mkdir(join(rootDir, REPO_DIR), { recursive: true });
@@ -62,18 +62,18 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
         session: harnessSession,
         prompt: [
           `Repository: ${targetRepo}`,
-          `Working branch: ${kongRouteSyncBranch(pullRequest.number)}`,
+          `Working branch: ${kongRouteSyncBranch(pullRequestOnRailsApp.number)}`,
           '',
           buildKongRouteSyncTask(job.data),
         ].join('\n'),
       });
       const result = parseKongRouteSyncResult(text);
       this.logger.log(
-        `kong sync for ${pullRequest.repo}#${pullRequest.number}: ${JSON.stringify(result)}`,
+        `kong sync for ${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}: ${JSON.stringify(result)}`,
       );
 
       await this.kongRouteSyncNotificationQueue.add('notify', {
-        pullRequest,
+        pullRequestOnRailsApp,
         authorEmail,
         result,
       });

@@ -21,18 +21,18 @@ export interface RoutesFileChange {
 }
 
 export interface KongRouteSyncJob {
-  pullRequest: SourcePullRequest;
+  pullRequestOnRailsApp: SourcePullRequest;
 }
 
 export interface KongRouteSyncCodingJob {
-  pullRequest: SourcePullRequest;
+  pullRequestOnRailsApp: SourcePullRequest;
   authorEmail: string | null;
   targetRepo: string;
   routesFiles: RoutesFileChange[];
 }
 
 export interface KongRouteSyncNotificationJob {
-  pullRequest: SourcePullRequest;
+  pullRequestOnRailsApp: SourcePullRequest;
   authorEmail: string | null;
   result: KongRouteSyncResult;
 }

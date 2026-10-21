@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { GitHubApiService } from '../../github/services/github-api.service';
+import { Octokit } from '@octokit/rest';
 import { isRoutesFile } from '../utils/routes-files';
 import { targetRepo } from '../kong-route-sync.config';
 import {
@@ -21,7 +21,7 @@ export class KongRouteSyncProcessor extends WorkerHost {
   private readonly targetRepo: string;
 
   constructor(
-    private readonly gitHubApiService: GitHubApiService,
+    private readonly octokit: Octokit,
     @InjectQueue(KONG_ROUTE_SYNC_CODING_QUEUE)
     private readonly kongRouteSyncCodingQueue: Queue<KongRouteSyncCodingJob>,
     configService: ConfigService,
@@ -31,12 +31,16 @@ export class KongRouteSyncProcessor extends WorkerHost {
   }
 
   async process(job: Job<KongRouteSyncJob>): Promise<void> {
-    const { pullRequest } = job.data;
-    const prRef = `${pullRequest.repo}#${pullRequest.number}`;
+    const { pullRequestOnRailsApp } = job.data;
+    const prRef = `${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}`;
 
-    const files = await this.gitHubApiService.listPullRequestFiles(
-      pullRequest.repo,
-      pullRequest.number,
+    const files = await this.octokit.paginate(
+      this.octokit.rest.pulls.listFiles,
+      {
+        ...this.repoParams(pullRequestOnRailsApp),
+        pull_number: pullRequestOnRailsApp.number,
+        per_page: 100,
+      },
     );
     const routesFiles = files.filter(isRoutesFile);
     if (routesFiles.length === 0) {
@@ -50,8 +54,8 @@ export class KongRouteSyncProcessor extends WorkerHost {
     await this.kongRouteSyncCodingQueue.add(
       'sync',
       {
-        pullRequest,
-        authorEmail: await this.findAuthorEmail(pullRequest),
+        pullRequestOnRailsApp,
+        authorEmail: await this.findAuthorEmail(pullRequestOnRailsApp),
         targetRepo: this.targetRepo,
         routesFiles: routesFiles.map(({ filename, status, patch }) => ({
           filename,
@@ -64,17 +68,26 @@ export class KongRouteSyncProcessor extends WorkerHost {
   }
 
   private async findAuthorEmail(
-    pullRequest: SourcePullRequest,
+    pullRequestOnRailsApp: SourcePullRequest,
   ): Promise<string | null> {
-    const commits = await this.gitHubApiService.listPullRequestCommits(
-      pullRequest.repo,
-      pullRequest.number,
+    const commits = await this.octokit.paginate(
+      this.octokit.rest.pulls.listCommits,
+      {
+        ...this.repoParams(pullRequestOnRailsApp),
+        pull_number: pullRequestOnRailsApp.number,
+        per_page: 100,
+      },
     );
-    const login = pullRequest.authorLogin.toLowerCase();
+    const login = pullRequestOnRailsApp.authorLogin.toLowerCase();
     const email = commits
       .filter((commit) => commit.author?.login.toLowerCase() === login)
       .map((commit) => commit.commit.author?.email)
       .find((email) => email && !GITHUB_NOREPLY_EMAIL.test(email));
     return email ?? null;
+  }
+
+  private repoParams({ repo }: SourcePullRequest) {
+    const [owner, name] = repo.split('/');
+    return { owner, repo: name };
   }
 }

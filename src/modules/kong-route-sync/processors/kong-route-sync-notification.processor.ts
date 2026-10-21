@@ -18,16 +18,16 @@ export class KongRouteSyncNotificationProcessor extends WorkerHost {
   }
 
   async process(job: Job<KongRouteSyncNotificationJob>): Promise<void> {
-    const { pullRequest, authorEmail, result } = job.data;
+    const { pullRequestOnRailsApp, authorEmail, result } = job.data;
     if (result.status === 'no-route-changes') {
       this.logger.log(
-        `${pullRequest.repo}#${pullRequest.number} has no net route changes; not notifying`,
+        `${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number} has no net route changes; not notifying`,
       );
       return;
     }
 
     const summary = {
-      pullRequest,
+      pullRequestOnRailsApp,
       routesAdded: result.routesAdded,
       routesRemoved: result.routesRemoved,
       kongPrUrl: result.kongPrUrl,
@@ -38,7 +38,7 @@ export class KongRouteSyncNotificationProcessor extends WorkerHost {
       .notifyAuthor(summary, authorEmail)
       .catch((error) =>
         this.logger.warn(
-          `failed to DM ${pullRequest.authorLogin} about their kong PR: ${error}`,
+          `failed to DM ${pullRequestOnRailsApp.authorLogin} about their kong PR: ${error}`,
         ),
       );
   }

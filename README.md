@@ -54,7 +54,7 @@ Queue infra (`src/modules/queue`):
 Kong route sync (`src/modules/kong-route-sync`): when a `glomopay_service` PR merges to main
 and touches `config/routes.rb` or `config/routes/**/*.rb` (checked deterministically against the
 PR's file list), the coding-agent worker mirrors the route changes into `glomopay/kong`, opens a
-draft PR on `claude/sync-routes-glomopay-pr-<N>`, posts a summary to #pod-card-prs and DMs the PR
+draft PR on `amin-ka-bot/sync-routes-glomopay-pr-<N>`, posts a summary to #pod-card-prs and DMs the PR
 author. Rides on the GitHub `pull_request` webhook above.
 - `KONG_ROUTE_SYNC_AUTHOR_DENYLIST` (optional) — comma-separated GitHub logins to skip, e.g.
   `dependabot[bot]`.
