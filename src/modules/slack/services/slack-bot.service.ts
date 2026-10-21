@@ -41,6 +41,7 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
       signingSecret: this.configService.getOrThrow<string>(
         'SLACK_SIGNING_SECRET',
       ),
+      agentView: true,
     });
 
     this.bot.onNewMention(async (thread, message) => {
@@ -76,9 +77,8 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     thread: import('chat').Thread,
     requesterUserId: string,
   ): Promise<void> {
-    const history = await this.readThreadHistory(thread);
-    const messages = await this.buildModelMessages(history);
-    const text = await this.streamReply(thread, messages, requesterUserId);
+    await thread.startTyping();
+    const text = await this.streamReply(thread, requesterUserId);
     if (text.trim().length > 0)
       this.logger.log(`answered: ${text.length} chars`);
   }
@@ -105,13 +105,15 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
 
   private async streamReply(
     thread: import('chat').Thread,
-    messages: import('chat/ai').AiMessage[],
     requesterUserId: string,
   ): Promise<string> {
     let sentMessage: import('chat').SentMessage | undefined;
     try {
+      const history = await this.readThreadHistory(thread);
+      const messages = await this.buildModelMessages(history);
       const result = await this.agentRegistry.get(EMPLOYEE_ASSISTANT).stream({
         messages,
+        abortSignal: thread.signal,
         toolsContext: {
           markSnacksFulfilled: {
             channelId: thread.channelId,
@@ -122,6 +124,10 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
       });
       sentMessage = await thread.post(result.stream);
       const text = await result.text;
+      if (thread.signal.aborted) {
+        this.logger.log('reply stopped by user');
+        return text;
+      }
       if (text.trim().length === 0) {
         this.logger.warn('agent produced an empty response');
         await sentMessage.edit(GENERATION_FAILED_MESSAGE);
@@ -129,6 +135,10 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
       }
       return text;
     } catch (error) {
+      if (thread.signal.aborted) {
+        this.logger.log('reply stopped by user');
+        return '';
+      }
       this.logger.error(`agent reply failed: ${error}`);
       if (sentMessage) await sentMessage.edit(GENERATION_FAILED_MESSAGE);
       else await thread.post(GENERATION_FAILED_MESSAGE);

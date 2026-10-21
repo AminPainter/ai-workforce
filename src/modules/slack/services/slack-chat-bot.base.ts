@@ -6,6 +6,7 @@ export interface SlackChatOptions {
   botToken: string;
   signingSecret: string;
   keyPrefix?: string;
+  agentView?: boolean;
 }
 
 export abstract class SlackChatBot implements OnModuleDestroy {
@@ -97,13 +98,18 @@ export abstract class SlackChatBot implements OnModuleDestroy {
     botToken,
     signingSecret,
     keyPrefix,
+    agentView,
   }: SlackChatOptions): Promise<void> {
     const { Chat, emoji } = await import('chat');
     const { createSlackAdapter } = await import('@chat-adapter/slack');
     const { createRedisState } = await import('@chat-adapter/state-redis');
 
     this.emoji = emoji;
-    this.slackAdapter = createSlackAdapter({ botToken, signingSecret });
+    this.slackAdapter = createSlackAdapter({
+      botToken,
+      signingSecret,
+      agentView,
+    });
     this.bot = new Chat({
       userName,
       adapters: { slack: this.slackAdapter },
