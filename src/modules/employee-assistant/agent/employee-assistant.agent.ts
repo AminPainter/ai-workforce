@@ -2,6 +2,7 @@ import { ToolLoopAgent, stepCountIs } from 'ai';
 import { ConfigService } from '@nestjs/config';
 import { resolve } from 'path';
 import { AiService } from '../../ai/services/ai.service';
+import { AiModel } from '../../ai/constants/ai-models';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
@@ -37,7 +38,7 @@ export function createEmployeeAssistant(
   )}`;
 
   return new ToolLoopAgent({
-    model: aiService.model(),
+    model: aiService.model(AiModel.GROK_4_6),
     instructions: `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`,
     tools: {
       ...aiService.webTools(),

@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { toIstDateString } from '../../../common/utils/date.util';
 import { AiService } from '../../ai/services/ai.service';
+import { AiModel } from '../../ai/constants/ai-models';
 import { createLeaveRequestClassifier } from '../agents/leave-request-classifier.agent';
 import {
   leaveRequestClassificationSchema,
@@ -32,12 +33,11 @@ process.loadEnvFile();
 // Wednesday 2026-10-07, 09:30 IST.
 const EVAL_NOW = new Date('2026-10-07T09:30:00+05:30');
 const AUTHOR_ID = 'U0AUTHOR01';
-const JUDGE_MODEL = 'kimi-k3';
 
 const aiService = new AiService(new ConfigService());
 const classifier = createLeaveRequestClassifier(aiService);
 const judge = new AISDKModel({
-  model: aiService.model(JUDGE_MODEL),
+  model: aiService.model(AiModel.KIMI_K3),
 });
 
 const goldenMetadataSchema = z.object({

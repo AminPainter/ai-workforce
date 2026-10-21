@@ -10,7 +10,7 @@
  *
  * Reuse the threadId to send a follow-up task into the same session.
  *
- * Env required: AI_GATEWAY_BASE_URL, AI_GATEWAY_API_KEY, AI_GATEWAY_MODEL, GITHUB_PAT.
+ * Env required: AI_GATEWAY_BASE_URL, AI_GATEWAY_API_KEY, GITHUB_PAT.
  * CODING_AGENT_WORKSPACES_DIR is optional and defaults to $TMPDIR/coding-agent.
  */
 import 'reflect-metadata';

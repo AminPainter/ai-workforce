@@ -1,31 +1,31 @@
 import { ConfigService } from '@nestjs/config';
 import { HarnessAgent } from '@ai-sdk/harness/agent';
 import { createPi } from '@ai-sdk/harness-pi';
+import { AiModel } from '../../ai/constants/ai-models';
 import { CODING_AGENT_SYSTEM_PROMPT } from './coding.prompt';
 
 export const CODING_AGENT = 'coding-agent';
 export const REPO_DIR = 'repo';
 
 const PROVIDER_ID = 'glomo';
-const MODEL_CONTEXT_WINDOW = 128000;
-const MODEL_MAX_TOKENS = 16384;
+const MODEL_CONTEXT_WINDOW = 1000000;
+const MODEL_MAX_TOKENS = 128000;
 const GITHUB_MCP_URL = 'https://api.githubcopilot.com/mcp/';
 
 export function createCodingAgent(configService: ConfigService) {
-  const modelId = configService.getOrThrow<string>('AI_GATEWAY_MODEL');
-
   return new HarnessAgent({
     harness: createPi({
       providers: {
         [PROVIDER_ID]: {
           baseUrl: configService.getOrThrow<string>('AI_GATEWAY_BASE_URL'),
           apiKey: configService.getOrThrow<string>('AI_GATEWAY_API_KEY'),
-          api: 'openai-completions',
+          api: 'anthropic-messages',
           models: [
             {
-              id: modelId,
-              name: modelId,
-              reasoning: false,
+              id: AiModel.CLAUDE_OPUS_5_5,
+              name: AiModel.CLAUDE_OPUS_5_5,
+              reasoning: true,
+              compat: { forceAdaptiveThinking: true },
               input: ['text'],
               cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
               contextWindow: MODEL_CONTEXT_WINDOW,
@@ -34,6 +34,8 @@ export function createCodingAgent(configService: ConfigService) {
           ],
         },
       },
+      thinkingLevel: 'high',
+      cacheRetention: 'long',
       mcpServers: {
         github: {
           type: 'http',
@@ -50,7 +52,7 @@ export function createCodingAgent(configService: ConfigService) {
         },
       },
     }),
-    model: `${PROVIDER_ID}/${modelId}`,
+    model: `${PROVIDER_ID}/${AiModel.CLAUDE_OPUS_5_5}`,
     instructions: CODING_AGENT_SYSTEM_PROMPT,
     sandboxConfig: { workDir: REPO_DIR },
   });
