@@ -77,7 +77,7 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     thread: import('chat').Thread,
     requesterUserId: string,
   ): Promise<void> {
-    if (thread.isDM) await thread.startTyping();
+    await thread.startTyping();
     const text = await this.streamReply(thread, requesterUserId);
     if (text.trim().length > 0)
       this.logger.log(`answered: ${text.length} chars`);
