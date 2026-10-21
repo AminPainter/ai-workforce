@@ -32,14 +32,6 @@ export class KongRouteSyncNotificationProcessor extends WorkerHost {
       routesRemoved: result.routesRemoved,
       kongPrUrl: result.kongPrUrl,
     };
-    await this.kongRouteSyncNotifierService.notifyChannel(summary);
-    // Swallowed so a DM failure never retries the job and double-posts to the channel.
-    await this.kongRouteSyncNotifierService
-      .notifyAuthor(summary, authorEmail)
-      .catch((error) =>
-        this.logger.warn(
-          `failed to DM ${pullRequestOnRailsApp.authorLogin} about their kong PR: ${error}`,
-        ),
-      );
+    await this.kongRouteSyncNotifierService.notifyAuthor(summary, authorEmail);
   }
 }

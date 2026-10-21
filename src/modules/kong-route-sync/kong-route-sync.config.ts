@@ -2,7 +2,6 @@ import { ConfigService } from '@nestjs/config';
 
 const DEFAULT_SOURCE_REPO = 'glomopay/glomopay_service';
 const DEFAULT_TARGET_REPO = 'glomopay/kong';
-const DEFAULT_SLACK_CHANNEL = 'C0AJRNHQ7B2';
 
 export function sourceRepo(configService: ConfigService): string {
   return (
@@ -13,12 +12,6 @@ export function sourceRepo(configService: ConfigService): string {
 export function targetRepo(configService: ConfigService): string {
   return (
     configService.get('KONG_ROUTE_SYNC_TARGET_REPO') ?? DEFAULT_TARGET_REPO
-  );
-}
-
-export function slackChannel(configService: ConfigService): string {
-  return (
-    configService.get('KONG_ROUTE_SYNC_SLACK_CHANNEL') ?? DEFAULT_SLACK_CHANNEL
   );
 }
 

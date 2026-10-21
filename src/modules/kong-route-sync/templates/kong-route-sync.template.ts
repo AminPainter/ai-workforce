@@ -7,23 +7,6 @@ export interface KongRouteSyncSummary {
   kongPrUrl: string;
 }
 
-export function buildKongRouteSyncChannelMessage({
-  pullRequestOnRailsApp,
-  routesAdded,
-  routesRemoved,
-  kongPrUrl,
-}: KongRouteSyncSummary): string {
-  return `Hey team! I've synced route changes from glomopay_service PR #${pullRequestOnRailsApp.number} into the kong repo.
-
-Routes added: ${formatRoutes(routesAdded)}
-Routes removed: ${formatRoutes(routesRemoved)}
-
-Kong PR: ${kongPrUrl}
-Source PR: ${pullRequestOnRailsApp.url}
-
-Would appreciate a review when you get a chance. Thanks!`;
-}
-
 export function buildKongRouteSyncDirectMessage({
   pullRequestOnRailsApp,
   routesAdded,

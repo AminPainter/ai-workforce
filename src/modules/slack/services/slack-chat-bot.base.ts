@@ -25,16 +25,6 @@ export abstract class SlackChatBot implements OnModuleDestroy {
     return this.bot.webhooks.slack;
   }
 
-  async postToChannel(
-    channelId: string,
-    message: string | import('chat').ChatElement,
-  ): Promise<void> {
-    const qualifiedChannelId = channelId.includes(':')
-      ? channelId
-      : `slack:${channelId}`;
-    await this.bot.channel(qualifiedChannelId).post(message);
-  }
-
   async postToThread(
     threadId: string,
     message: string | import('chat').ChatElement,
