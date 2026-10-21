@@ -58,6 +58,10 @@ export class GitHubWebhookService {
     event: string | undefined,
     deliveryId: string | undefined,
   ): void {
+    this.logger.log(
+      `received github webhook ${event} (delivery ${deliveryId})`,
+    );
+
     if (!rawBody || !signature || !event) {
       this.logger.warn('missing body, signature, or event header');
       return;
