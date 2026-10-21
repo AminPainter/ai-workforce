@@ -26,12 +26,9 @@ export class KongRouteSyncNotificationProcessor extends WorkerHost {
       return;
     }
 
-    const summary = {
-      pullRequestOnRailsApp,
-      routesAdded: result.routesAdded,
-      routesRemoved: result.routesRemoved,
-      kongPrUrl: result.kongPrUrl,
-    };
-    await this.kongRouteSyncNotifierService.notifyAuthor(summary, authorEmail);
+    await this.kongRouteSyncNotifierService.notifyAuthor(
+      { pullRequestOnRailsApp, kongPrUrl: result.kongPrUrl },
+      authorEmail,
+    );
   }
 }

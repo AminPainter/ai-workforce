@@ -40,16 +40,11 @@ export abstract class SlackChatBot implements OnModuleDestroy {
     await thread.post(message);
   }
 
-  async lookupUserIdByEmail(email: string): Promise<string | null> {
-    try {
-      const { user } = await this.slackAdapter.webClient.users.lookupByEmail({
-        email,
-      });
-      return user?.id ?? null;
-    } catch (error) {
-      this.logger.warn(`no Slack user for email: ${error}`);
-      return null;
-    }
+  async lookupUserIdByEmail(email: string): Promise<string> {
+    const { user } = await this.slackAdapter.webClient.users.lookupByEmail({
+      email,
+    });
+    return user!.id!;
   }
 
   async addReaction(

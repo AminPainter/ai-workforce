@@ -26,13 +26,13 @@ export interface KongRouteSyncJob {
 
 export interface KongRouteSyncCodingJob {
   pullRequestOnRailsApp: SourcePullRequest;
-  authorEmail: string | null;
+  authorEmail: string;
   targetRepo: string;
   routesFiles: RoutesFileChange[];
 }
 
 export interface KongRouteSyncNotificationJob {
   pullRequestOnRailsApp: SourcePullRequest;
-  authorEmail: string | null;
+  authorEmail: string;
   result: KongRouteSyncResult;
 }

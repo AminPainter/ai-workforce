@@ -23,19 +23,6 @@ export function authorDenylist(configService: ConfigService): Set<string> {
   );
 }
 
-export function githubSlackUserMap(
-  configService: ConfigService,
-): Map<string, string> {
-  return new Map(
-    splitList(configService.get('GITHUB_SLACK_USER_MAP')).flatMap((entry) => {
-      const [login, slackUserId] = entry.split(':').map((part) => part.trim());
-      return login && slackUserId
-        ? [[login.toLowerCase(), slackUserId] as const]
-        : [];
-    }),
-  );
-}
-
 function splitList(value: string | undefined): string[] {
   return (value ?? '')
     .split(',')

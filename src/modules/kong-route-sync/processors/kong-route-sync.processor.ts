@@ -13,8 +13,6 @@ import {
   type SourcePullRequest,
 } from '../queues/kong-route-sync.queue';
 
-const GITHUB_NOREPLY_EMAIL = /@users\.noreply\.github\.com$/i;
-
 @Processor(KONG_ROUTE_SYNC_QUEUE)
 export class KongRouteSyncProcessor extends WorkerHost {
   private readonly logger = new Logger(KongRouteSyncProcessor.name);
@@ -69,7 +67,7 @@ export class KongRouteSyncProcessor extends WorkerHost {
 
   private async findAuthorEmail(
     pullRequestOnRailsApp: SourcePullRequest,
-  ): Promise<string | null> {
+  ): Promise<string> {
     const commits = await this.octokit.paginate(
       this.octokit.rest.pulls.listCommits,
       {
@@ -79,11 +77,9 @@ export class KongRouteSyncProcessor extends WorkerHost {
       },
     );
     const login = pullRequestOnRailsApp.authorLogin.toLowerCase();
-    const email = commits
-      .filter((commit) => commit.author?.login.toLowerCase() === login)
-      .map((commit) => commit.commit.author?.email)
-      .find((email) => email && !GITHUB_NOREPLY_EMAIL.test(email));
-    return email ?? null;
+    return commits.find(
+      (commit) => commit.author?.login.toLowerCase() === login,
+    )!.commit.author!.email!;
   }
 
   private repoParams({ repo }: SourcePullRequest) {
