@@ -11,7 +11,7 @@ export function createSnacksPledgeClassifier(
   aiService: AiService,
 ): RegisteredAgent {
   return new ToolLoopAgent({
-    model: aiService.model(AiModel.CLAUDE_HAIKU_4_5),
+    model: aiService.model(AiModel.GLM_5_2),
     instructions: SNACKS_PLEDGE_CLASSIFIER_SYSTEM_PROMPT,
     tools: {},
     stopWhen: stepCountIs(1),
