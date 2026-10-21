@@ -4,8 +4,8 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import {
-  GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT,
-  type GitHubPullRequestMergedToMainEvent,
+  GITHUB_PULL_REQUEST_OPENED_AGAINST_MAIN_EVENT,
+  type GitHubPullRequestOpenedAgainstMainEvent,
 } from '../github/github.events';
 import {
   KONG_ROUTE_SYNC_QUEUE,
@@ -26,11 +26,12 @@ export class KongRouteSyncListener {
     this.authorDenylist = authorDenylist(configService);
   }
 
-  @OnEvent(GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT)
-  async onPullRequestMergedToMain({
+  // TODO: switch back to GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT once the sync is tested.
+  @OnEvent(GITHUB_PULL_REQUEST_OPENED_AGAINST_MAIN_EVENT)
+  async onPullRequestOpenedAgainstMain({
     id,
     payload,
-  }: GitHubPullRequestMergedToMainEvent): Promise<void> {
+  }: GitHubPullRequestOpenedAgainstMainEvent): Promise<void> {
     const pullRequestOnRailsApp = payload.pull_request;
     if (payload.repository.full_name !== SOURCE_REPO) return;
     if (
