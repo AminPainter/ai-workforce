@@ -1,4 +1,4 @@
-import { KONG_ROUTE_SYNC_RESULT_PREFIX } from './kong-route-sync.schema';
+import { SUBMIT_ROUTE_SYNC_RESULT_TOOL } from '../tools/submit-route-sync-result.tool';
 import type {
   KongRouteSyncCodingJob,
   RoutesFileChange,
@@ -60,12 +60,12 @@ Open the draft pull request against the default branch with:
 
 ## Step 5 — Report the result
 
-This run is unattended: nobody can answer questions, so decide and proceed. This replaces the Slack summary. End your final message with exactly one line, with nothing after it, in one of these forms:
+This run is unattended: nobody can answer questions, so decide and proceed. This replaces the Slack summary. As your final action, call the ${SUBMIT_ROUTE_SYNC_RESULT_TOOL} tool exactly once:
 
-${KONG_ROUTE_SYNC_RESULT_PREFIX} {"status":"pr-opened","routesAdded":["GET /api/v1/payouts"],"routesRemoved":[],"kongPrUrl":"https://github.com/${targetRepo}/pull/123"}
-${KONG_ROUTE_SYNC_RESULT_PREFIX} {"status":"no-route-changes"}
+- status "pr-opened" with routesAdded, routesRemoved and kongPrUrl once the draft pull request is open. List routes as HTTP method + path and use [] when none were added or removed.
+- status "no-route-changes" when Step 1 found no net route changes.
 
-List routes as HTTP method + path. Use [] when none were added or removed.`;
+If the tool rejects your input, fix it and call it again.`;
 }
 
 function formatRoutesFile({ filename, status, patch }: RoutesFileChange) {

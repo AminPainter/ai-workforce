@@ -12,8 +12,8 @@ const MODEL_CONTEXT_WINDOW = 1000000;
 const MODEL_MAX_TOKENS = 128000;
 const GITHUB_MCP_URL = 'https://api.githubcopilot.com/mcp/';
 
-export function createCodingAgent(configService: ConfigService) {
-  return new HarnessAgent({
+export function codingAgentSettings(configService: ConfigService) {
+  return {
     harness: createPi({
       providers: {
         [PROVIDER_ID]: {
@@ -55,7 +55,11 @@ export function createCodingAgent(configService: ConfigService) {
     model: `${PROVIDER_ID}/${AiModel.CLAUDE_OPUS_5_5}`,
     instructions: CODING_AGENT_SYSTEM_PROMPT,
     sandboxConfig: { workDir: REPO_DIR },
-  });
+  };
+}
+
+export function createCodingAgent(configService: ConfigService) {
+  return new HarnessAgent(codingAgentSettings(configService));
 }
 
 export type CodingAgent = ReturnType<typeof createCodingAgent>;

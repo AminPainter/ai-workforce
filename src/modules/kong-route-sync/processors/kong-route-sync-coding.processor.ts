@@ -9,14 +9,17 @@ import {
 import { Job, Queue } from 'bullmq';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
-import {
-  CODING_AGENT,
-  REPO_DIR,
-  type CodingAgent,
-} from '../../coding-agent/agent/coding.agent';
+import { REPO_DIR } from '../../coding-agent/agent/coding.agent';
 import { LocalSandboxSession } from '../../coding-agent/sandbox/local-sandbox-session';
 import { CodingSessionRepository } from '../../coding-agent/services/coding-session.repository';
-import { parseKongRouteSyncResult } from '../agent/kong-route-sync.schema';
+import {
+  KONG_ROUTE_SYNC_AGENT,
+  type KongRouteSyncAgent,
+} from '../agent/kong-route-sync.agent';
+import {
+  SUBMIT_ROUTE_SYNC_RESULT_TOOL,
+  submitRouteSyncResultInputSchema,
+} from '../tools/submit-route-sync-result.tool';
 import {
   buildKongRouteSyncTask,
   kongRouteSyncBranch,
@@ -34,8 +37,8 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
   private readonly githubToken: string;
 
   constructor(
-    @Inject(CODING_AGENT)
-    private readonly codingAgent: CodingAgent,
+    @Inject(KONG_ROUTE_SYNC_AGENT)
+    private readonly kongRouteSyncAgent: KongRouteSyncAgent,
     private readonly codingSessionRepository: CodingSessionRepository,
     @InjectQueue(KONG_ROUTE_SYNC_NOTIFICATION_QUEUE)
     private readonly kongRouteSyncNotificationQueue: Queue<KongRouteSyncNotificationJob>,
@@ -53,12 +56,12 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
     const rootDir = this.codingSessionRepository.getRootDir(sessionId);
     await mkdir(join(rootDir, REPO_DIR), { recursive: true });
 
-    const harnessSession = await this.codingAgent.createSession({
+    const harnessSession = await this.kongRouteSyncAgent.createSession({
       sessionId,
       sandboxSession: new LocalSandboxSession(rootDir, this.githubToken),
     });
     try {
-      const { text } = await this.codingAgent.generate({
+      const { text, steps } = await this.kongRouteSyncAgent.generate({
         session: harnessSession,
         prompt: [
           `Repository: ${targetRepo}`,
@@ -67,7 +70,18 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
           buildKongRouteSyncTask(job.data),
         ].join('\n'),
       });
-      const result = parseKongRouteSyncResult(text);
+      const submission = steps
+        .flatMap((step) => step.toolResults)
+        .findLast(
+          (toolResult) => toolResult.toolName === SUBMIT_ROUTE_SYNC_RESULT_TOOL,
+        );
+      if (!submission)
+        throw new Error(
+          `agent finished without calling ${SUBMIT_ROUTE_SYNC_RESULT_TOOL}: ${text.slice(-500)}`,
+        );
+      const { result } = submitRouteSyncResultInputSchema.parse(
+        submission.input,
+      );
       this.logger.log(
         `kong sync for ${pullRequestOnRailsApp.repo}#${pullRequestOnRailsApp.number}: ${JSON.stringify(result)}`,
       );
