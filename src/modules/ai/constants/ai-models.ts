@@ -1,6 +1,6 @@
 export enum AiModel {
-  Glm52 = 'cloudflare/@cf/zai-org/glm-5.2',
-  ClaudeHaiku45 = 'claude-haiku-4-5',
-  ClaudeOpus55 = 'claude-opus-5-5',
-  KimiK3 = 'kimi-k3',
+  GLM_5_2 = 'cloudflare/@cf/zai-org/glm-5.2',
+  CLAUDE_HAIKU_4_5 = 'claude-haiku-4-5',
+  CLAUDE_OPUS_5_5 = 'claude-opus-5-5',
+  KIMI_K3 = 'kimi-k3',
 }

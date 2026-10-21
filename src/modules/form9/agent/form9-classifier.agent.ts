@@ -9,7 +9,7 @@ export const FORM9_CLASSIFIER = 'form9-classifier';
 
 export function createForm9Classifier(aiService: AiService): RegisteredAgent {
   return new ToolLoopAgent({
-    model: aiService.model(AiModel.ClaudeHaiku45),
+    model: aiService.model(AiModel.CLAUDE_HAIKU_4_5),
     instructions: FORM9_CLASSIFIER_SYSTEM_PROMPT,
     tools: {},
     stopWhen: stepCountIs(1),

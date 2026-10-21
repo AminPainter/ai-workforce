@@ -11,7 +11,7 @@ export function createLeaveRequestClassifier(
   aiService: AiService,
 ): RegisteredAgent {
   return new ToolLoopAgent({
-    model: aiService.model(AiModel.Glm52),
+    model: aiService.model(AiModel.GLM_5_2),
     instructions: LEAVE_REQUEST_CLASSIFIER_SYSTEM_PROMPT,
     tools: {},
     stopWhen: stepCountIs(1),

@@ -37,7 +37,7 @@ const AUTHOR_ID = 'U0AUTHOR01';
 const aiService = new AiService(new ConfigService());
 const classifier = createLeaveRequestClassifier(aiService);
 const judge = new AISDKModel({
-  model: aiService.model(AiModel.KimiK3),
+  model: aiService.model(AiModel.KIMI_K3),
 });
 
 const goldenMetadataSchema = z.object({

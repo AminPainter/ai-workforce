@@ -16,7 +16,7 @@ export function createCustomerSupport(
   alloyDbMcpService: AlloyDbMcpService,
 ): RegisteredAgent {
   return new ToolLoopAgent({
-    model: aiService.model(AiModel.Glm52),
+    model: aiService.model(AiModel.GLM_5_2),
     instructions: CUSTOMER_SUPPORT_SYSTEM_PROMPT,
     tools: {
       ...aiService.webTools(),

@@ -38,7 +38,7 @@ export function createEmployeeAssistant(
   )}`;
 
   return new ToolLoopAgent({
-    model: aiService.model(AiModel.Glm52),
+    model: aiService.model(AiModel.GLM_5_2),
     instructions: `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`,
     tools: {
       ...aiService.webTools(),

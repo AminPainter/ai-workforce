@@ -22,8 +22,8 @@ export function createCodingAgent(configService: ConfigService) {
           api: 'openai-completions',
           models: [
             {
-              id: AiModel.ClaudeOpus55,
-              name: AiModel.ClaudeOpus55,
+              id: AiModel.CLAUDE_OPUS_5_5,
+              name: AiModel.CLAUDE_OPUS_5_5,
               reasoning: false,
               input: ['text'],
               cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -49,7 +49,7 @@ export function createCodingAgent(configService: ConfigService) {
         },
       },
     }),
-    model: `${PROVIDER_ID}/${AiModel.ClaudeOpus55}`,
+    model: `${PROVIDER_ID}/${AiModel.CLAUDE_OPUS_5_5}`,
     instructions: CODING_AGENT_SYSTEM_PROMPT,
     sandboxConfig: { workDir: REPO_DIR },
   });
