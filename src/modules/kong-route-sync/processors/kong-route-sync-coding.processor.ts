@@ -14,9 +14,9 @@ import { LocalSandboxSession } from '../../coding-agent/sandbox/local-sandbox-se
 import { CodingSessionRepository } from '../../coding-agent/services/coding-session.repository';
 import { TARGET_REPO } from '../kong-route-sync.config';
 import {
-  KONG_ROUTE_SYNC_AGENT,
-  type KongRouteSyncAgent,
-} from '../agent/kong-route-sync.agent';
+  KONG_ROUTE_SYNC_CODING_AGENT,
+  type KongRouteSyncCodingAgent,
+} from '../agent/kong-route-sync-coding.agent';
 import {
   SUBMIT_ROUTE_SYNC_RESULT_TOOL,
   submitRouteSyncResultInputSchema,
@@ -38,8 +38,8 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
   private readonly githubToken: string;
 
   constructor(
-    @Inject(KONG_ROUTE_SYNC_AGENT)
-    private readonly kongRouteSyncAgent: KongRouteSyncAgent,
+    @Inject(KONG_ROUTE_SYNC_CODING_AGENT)
+    private readonly kongRouteSyncCodingAgent: KongRouteSyncCodingAgent,
     private readonly codingSessionRepository: CodingSessionRepository,
     @InjectQueue(KONG_ROUTE_SYNC_NOTIFICATION_QUEUE)
     private readonly kongRouteSyncNotificationQueue: Queue<KongRouteSyncNotificationJob>,
@@ -57,12 +57,12 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
     const rootDir = this.codingSessionRepository.getRootDir(sessionId);
     await mkdir(join(rootDir, REPO_DIR), { recursive: true });
 
-    const harnessSession = await this.kongRouteSyncAgent.createSession({
+    const harnessSession = await this.kongRouteSyncCodingAgent.createSession({
       sessionId,
       sandboxSession: new LocalSandboxSession(rootDir, this.githubToken),
     });
     try {
-      const { text, steps } = await this.kongRouteSyncAgent.generate({
+      const { text, steps } = await this.kongRouteSyncCodingAgent.generate({
         session: harnessSession,
         prompt: [
           `Repository: ${TARGET_REPO}`,

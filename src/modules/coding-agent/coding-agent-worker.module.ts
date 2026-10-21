@@ -7,9 +7,9 @@ import { CodingSessionRepository } from './services/coding-session.repository';
 import { CodingTaskProcessor } from './processors/coding-task.processor';
 import { CODING_TASK_SLACK_SUMMARY_QUEUE } from './queues/coding-agent.queue';
 import {
-  KONG_ROUTE_SYNC_AGENT,
-  createKongRouteSyncAgent,
-} from '../kong-route-sync/agent/kong-route-sync.agent';
+  KONG_ROUTE_SYNC_CODING_AGENT,
+  createKongRouteSyncCodingAgent,
+} from '../kong-route-sync/agent/kong-route-sync-coding.agent';
 import { KongRouteSyncCodingProcessor } from '../kong-route-sync/processors/kong-route-sync-coding.processor';
 import { KONG_ROUTE_SYNC_NOTIFICATION_QUEUE } from '../kong-route-sync/queues/kong-route-sync.queue';
 
@@ -29,8 +29,8 @@ import { KONG_ROUTE_SYNC_NOTIFICATION_QUEUE } from '../kong-route-sync/queues/ko
       inject: [ConfigService],
     },
     {
-      provide: KONG_ROUTE_SYNC_AGENT,
-      useFactory: createKongRouteSyncAgent,
+      provide: KONG_ROUTE_SYNC_CODING_AGENT,
+      useFactory: createKongRouteSyncCodingAgent,
       inject: [ConfigService],
     },
     CodingSessionRepository,
