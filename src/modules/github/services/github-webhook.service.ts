@@ -25,12 +25,15 @@ export class GitHubWebhookService {
     this.webhooks.on('pull_request.closed', ({ id, payload }) => {
       const pullRequest = payload.pull_request;
       if (!pullRequest.merged || pullRequest.base.ref !== 'main') {
-        this.logger.debug(
+        this.logger.log(
           `ignored closed PR #${pullRequest.number} (merged=${pullRequest.merged}, base=${pullRequest.base.ref})`,
         );
         return;
       }
 
+      this.logger.log(
+        `${payload.repository.full_name}#${pullRequest.number} merged to main`,
+      );
       const event: GitHubPullRequestMergedToMainEvent = { id, payload };
       this.eventEmitter.emit(GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT, event);
     });
@@ -38,12 +41,15 @@ export class GitHubWebhookService {
     this.webhooks.on('pull_request.opened', ({ id, payload }) => {
       const pullRequest = payload.pull_request;
       if (pullRequest.base.ref !== 'main') {
-        this.logger.debug(
+        this.logger.log(
           `ignored opened PR #${pullRequest.number} (base=${pullRequest.base.ref})`,
         );
         return;
       }
 
+      this.logger.log(
+        `${payload.repository.full_name}#${pullRequest.number} opened against main (draft=${pullRequest.draft})`,
+      );
       const event: GitHubPullRequestOpenedAgainstMainEvent = { id, payload };
       this.eventEmitter.emit(
         GITHUB_PULL_REQUEST_OPENED_AGAINST_MAIN_EVENT,

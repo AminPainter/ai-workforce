@@ -33,12 +33,19 @@ export class KongRouteSyncListener {
     payload,
   }: GitHubPullRequestOpenedAgainstMainEvent): Promise<void> {
     const pullRequestOnRailsApp = payload.pull_request;
-    if (payload.repository.full_name !== SOURCE_REPO) return;
+    const prRef = `${payload.repository.full_name}#${pullRequestOnRailsApp.number}`;
+    this.logger.log(
+      `received opened PR ${prRef} by ${pullRequestOnRailsApp.user.login}`,
+    );
+    if (payload.repository.full_name !== SOURCE_REPO) {
+      this.logger.log(`skipping ${prRef}: not ${SOURCE_REPO}`);
+      return;
+    }
     if (
       this.authorDenylist.has(pullRequestOnRailsApp.user.login.toLowerCase())
     ) {
       this.logger.log(
-        `skipping PR #${pullRequestOnRailsApp.number}: author ${pullRequestOnRailsApp.user.login} is deny-listed`,
+        `skipping ${prRef}: author ${pullRequestOnRailsApp.user.login} is deny-listed`,
       );
       return;
     }
@@ -58,8 +65,9 @@ export class KongRouteSyncListener {
         },
         { jobId: id },
       );
+      this.logger.log(`queued routes detection for ${prRef} (delivery ${id})`);
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error(`failed to queue routes detection for ${prRef}`, error);
     }
   }
 }
