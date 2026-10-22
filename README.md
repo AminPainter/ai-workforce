@@ -3,8 +3,9 @@
 A NestJS Slack bot that answers employee questions using an LLM (via an OpenAI-compatible
 AI gateway), web search (SearXNG), and read-only MCP tools (GitHub, Atlassian/Jira, Sentry).
 
-The app and SearXNG ship in a single Docker image: SearXNG runs on `127.0.0.1:8080` inside the
-container and the app talks to it there. One container runs both processes.
+SearXNG runs as its own container (`searxng/Dockerfile`, pinned upstream image + our
+`settings.yml`) and the app reaches it over the network at `SEARXNG_BASE_URL`. Only
+`SEARXNG_SECRET` is passed to SearXNG; it never sees the app's secrets.
 
 ## Run locally (Docker)
 
@@ -20,8 +21,8 @@ pnpm docker:up            # docker compose up --build
 
 Stop with `pnpm docker:down`.
 
-`docker-compose.yml` bind-mounts `searxng/settings.yml` read-only, so you can edit SearXNG
-config and restart without rebuilding.
+`docker-compose.yml` bind-mounts `searxng/settings.yml` read-only into the `searxng` container,
+so you can edit SearXNG config and `docker compose restart searxng` without rebuilding.
 
 ## Environment variables
 
@@ -83,11 +84,13 @@ at `https://<host>/webhooks/slack/leaves`.
 `pnpm leaves:repl` runs the classifier golden set.
 
 SearXNG:
-- `SEARXNG_SECRET` (required) — SearXNG reads this natively and overrides `secret_key`. If it is
-  unset in production, SearXNG's boot guard exits with an error rather than running with a weak
-  secret, so it must be set.
-- `SEARXNG_BASE_URL` — full URL to the in-container SearXNG. Always `http://127.0.0.1:8080`
-  (set by compose and render.yaml; you don't set it in `.env`).
+- `SEARXNG_SECRET` (required, SearXNG service only) — SearXNG reads this natively and overrides
+  `secret_key`. If it is unset, SearXNG's boot guard exits with an error rather than running with
+  a weak secret. Locally compose reads it from `.env` and passes only this var to the `searxng`
+  container; on Render it is set on the `glomo-ai-workforce-searxng` private service.
+- `SEARXNG_BASE_URL` (app) — full URL to SearXNG. `http://searxng:8080` under compose,
+  `http://glomo-ai-workforce-searxng:8080` on Render (both set for you; you don't set it in
+  `.env`).
 
 `PORT` is injected by the platform (Render) and set to `51515` locally by compose — do not
 hardcode it in code.
@@ -98,14 +101,17 @@ Note: `REDIS_HOST` / `REDIS_PORT` are no longer used — the app connects via `R
 
 ## Deploy to Render
 
-The repo ships a `render.yaml` blueprint: one public Docker web service in Singapore
-(`starter` plan, kept warm for Slack webhooks), running both the app and SearXNG.
+The repo ships a `render.yaml` blueprint in Singapore: the public app web service (`starter`
+plan, kept warm for Slack webhooks), and SearXNG as a private service
+(`glomo-ai-workforce-searxng`, reachable only on Render's private network). SearXNG redeploys only
+when `searxng/**` changes.
 
 1. Push this repo to GitHub.
 2. In Render: New → Blueprint, connect the repo. Render reads `render.yaml`.
-3. At first sync, fill every `sync: false` secret — including `SEARXNG_SECRET`.
+3. At first sync, fill every `sync: false` secret — including `SEARXNG_SECRET` on the SearXNG
+   service.
 4. Deploy. Confirm `/` health passes, then mention the bot in Slack and verify a
-   web-search-backed answer (proves the in-container SearXNG on `127.0.0.1:8080` works).
+   web-search-backed answer (proves the app reaches the SearXNG private service).
 
 ## Non-Docker dev
 
