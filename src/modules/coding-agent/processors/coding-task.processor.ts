@@ -21,7 +21,7 @@ import {
 } from '../queues/coding-agent.queue';
 
 const PREVIEW_LENGTH = 300;
-const GITHUB_TOKEN_PATTERN = /ghs_\w+/g;
+const GITHUB_TOKEN_PATTERN = /ghs_[\w.-]+/g;
 
 @Processor(CODING_AGENT_QUEUE)
 export class CodingTaskProcessor extends WorkerHost {
