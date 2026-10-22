@@ -4,6 +4,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
 import { employeeAssistantToolStatus } from '../../employee-assistant/agent/employee-assistant.tool-status';
+import { SnackTool } from '../../snack-tracker/constants/snack-tools';
+import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools';
 import { formatIstDateTime } from '../../../common/utils/date.util';
 import {
   SLACK_BAKAR_MESSAGE_EVENT,
@@ -116,11 +118,11 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
         messages,
         abortSignal: thread.signal,
         toolsContext: {
-          markSnacksFulfilled: {
+          [SnackTool.MARK_SNACKS_FULFILLED]: {
             channelId: thread.channelId,
             requesterUserId,
           },
-          delegateCodingTask: { threadId: thread.id },
+          [CodingAgentTool.DELEGATE_CODING_TASK]: { threadId: thread.id },
         },
         onToolExecutionStart: async ({ toolCall }) => {
           const next = employeeAssistantToolStatus(toolCall.toolName);

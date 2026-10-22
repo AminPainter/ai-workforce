@@ -11,8 +11,10 @@ import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
 import { createMarkSnacksFulfilledTool } from '../../snack-tracker/tools/mark-snacks-fulfilled.tool';
+import { SnackTool } from '../../snack-tracker/constants/snack-tools';
 import { CodingTaskService } from '../../coding-agent/services/coding-task.service';
 import { createDelegateCodingTaskTool } from '../../coding-agent/tools/delegate-coding-task.tool';
+import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
@@ -54,24 +56,26 @@ export function createEmployeeAssistant(
       ...atlassianMcpService.getTools(),
       ...alloyDbMcpService.getTools(),
       ...skills.tools,
-      snacksLedger: createSnacksLedgerTool(snacksLedgerService),
-      markSnacksFulfilled: createMarkSnacksFulfilledTool(
+      [SnackTool.SNACKS_LEDGER]: createSnacksLedgerTool(snacksLedgerService),
+      [SnackTool.MARK_SNACKS_FULFILLED]: createMarkSnacksFulfilledTool(
         snacksLedgerService,
         bakarChannelId,
       ),
-      delegateCodingTask: createDelegateCodingTaskTool(codingTaskService),
+      [CodingAgentTool.DELEGATE_CODING_TASK]:
+        createDelegateCodingTaskTool(codingTaskService),
     },
     stopWhen: stepCountIs(MAX_STEPS),
-    prepareStep: ({ stepNumber }) =>
-      stepNumber === MAX_STEPS - 1
-        ? {
-            toolChoice: 'none',
-            instructions: `${instructions}\n\n${FINAL_STEP_INSTRUCTIONS}`,
-          }
-        : undefined,
+    prepareStep: ({ stepNumber }) => {
+      if (stepNumber === MAX_STEPS - 1)
+        return {
+          toolChoice: 'none',
+          instructions: `${instructions}\n\n${FINAL_STEP_INSTRUCTIONS}`,
+        };
+      return undefined;
+    },
     toolsContext: {
-      markSnacksFulfilled: { channelId: '', requesterUserId: '' },
-      delegateCodingTask: { threadId: '' },
+      [SnackTool.MARK_SNACKS_FULFILLED]: { channelId: '', requesterUserId: '' },
+      [CodingAgentTool.DELEGATE_CODING_TASK]: { threadId: '' },
     },
   });
 }

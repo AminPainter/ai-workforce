@@ -1,21 +1,29 @@
 import { ATLASSIAN_TOOL_NAMES } from '../../ai/services/atlassian-mcp.service';
 import { GITHUB_TOOL_NAMES } from '../../ai/services/github-mcp.service';
 import { SENTRY_TOOL_NAMES } from '../../ai/services/sentry-mcp.service';
+import { WebTool } from '../../ai/constants/web-tools';
+import { SkillTool } from '../../skills/constants/skill-tools';
+import { SnackTool } from '../../snack-tracker/constants/snack-tools';
+import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools';
 
-const TOOL_STATUSES: Record<string, string> = {
-  webSearch: 'Searching the web…',
-  webFetch: 'Reading a web page…',
-  loadSkill: 'Loading a playbook…',
-  readSkillReference: 'Loading a playbook…',
-  snacksLedger: 'Checking the snacks ledger…',
-  markSnacksFulfilled: 'Settling the snacks pledge…',
-  delegateCodingTask: 'Handing off to the coding agent…',
+type LocalTool = WebTool | SkillTool | SnackTool | CodingAgentTool;
+
+const TOOL_STATUSES: Record<LocalTool, string> = {
+  [WebTool.WEB_SEARCH]: 'Searching the web…',
+  [WebTool.WEB_FETCH]: 'Reading a web page…',
+  [SkillTool.LOAD_SKILL]: 'Loading a playbook…',
+  [SkillTool.READ_SKILL_REFERENCE]: 'Loading a playbook…',
+  [SnackTool.SNACKS_LEDGER]: 'Checking the snacks ledger…',
+  [SnackTool.MARK_SNACKS_FULFILLED]: 'Settling the snacks pledge…',
+  [CodingAgentTool.DELEGATE_CODING_TASK]: 'Handing off to the coding agent…',
 };
 
-// GitHub is checked before Sentry because both expose `search_issues` and the
-// agent spreads the GitHub tools last, so GitHub's wins.
+function isLocalTool(toolName: string): toolName is LocalTool {
+  return Object.hasOwn(TOOL_STATUSES, toolName);
+}
+
 export function employeeAssistantToolStatus(toolName: string): string {
-  if (TOOL_STATUSES[toolName]) return TOOL_STATUSES[toolName];
+  if (isLocalTool(toolName)) return TOOL_STATUSES[toolName];
   if (GITHUB_TOOL_NAMES.has(toolName)) return 'Reading GitHub…';
   if (SENTRY_TOOL_NAMES.has(toolName)) return 'Checking Sentry…';
   if (ATLASSIAN_TOOL_NAMES.has(toolName)) return 'Checking Jira…';
