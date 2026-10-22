@@ -71,7 +71,6 @@ export function createEmployeeAssistant(
           toolChoice: 'none',
           instructions: `${instructions}\n\n${FINAL_STEP_INSTRUCTIONS}`,
         };
-      return undefined;
     },
     toolsContext: {
       [SnackTool.MARK_SNACKS_FULFILLED]: { channelId: '', requesterUserId: '' },
