@@ -1,8 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createAppAuth } from '@octokit/auth-app';
 import { Octokit } from '@octokit/rest';
-import { gitHubAppAuthOptions } from './github-app-auth.options';
 import { GitHubAppAuthService } from './services/github-app-auth.service';
 
 @Module({
@@ -10,12 +7,10 @@ import { GitHubAppAuthService } from './services/github-app-auth.service';
     GitHubAppAuthService,
     {
       provide: Octokit,
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        new Octokit({
-          authStrategy: createAppAuth,
-          auth: gitHubAppAuthOptions(configService),
-        }),
+      inject: [GitHubAppAuthService],
+      // Reuse the service's auth so Octokit and raw token callers share one token cache.
+      useFactory: (gitHubAppAuthService: GitHubAppAuthService) =>
+        new Octokit({ authStrategy: () => gitHubAppAuthService.auth }),
     },
   ],
   exports: [GitHubAppAuthService, Octokit],
