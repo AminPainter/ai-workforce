@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
+import { employeeAssistantToolStatus } from '../../employee-assistant/agent/employee-assistant.tool-status';
 import { formatIstDateTime } from '../../../common/utils/date.util';
 import {
   SLACK_BAKAR_MESSAGE_EVENT,
@@ -78,7 +79,7 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     requesterUserId: string,
   ): Promise<void> {
     await thread.startTyping();
-    const text = await this.streamReply(thread, requesterUserId);
+    const text = await this.generateReply(thread, requesterUserId);
     if (text.trim().length > 0)
       this.logger.log(`answered: ${text.length} chars`);
   }
@@ -103,15 +104,15 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     return messages;
   }
 
-  private async streamReply(
+  private async generateReply(
     thread: import('chat').Thread,
     requesterUserId: string,
   ): Promise<string> {
-    let sentMessage: import('chat').SentMessage | undefined;
     try {
       const history = await this.readThreadHistory(thread);
       const messages = await this.buildModelMessages(history);
-      const result = await this.agentRegistry.get(EMPLOYEE_ASSISTANT).stream({
+      let status = '';
+      const result = await this.agentRegistry.get(EMPLOYEE_ASSISTANT).generate({
         messages,
         abortSignal: thread.signal,
         toolsContext: {
@@ -121,27 +122,34 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
           },
           delegateCodingTask: { threadId: thread.id },
         },
+        onToolExecutionStart: async ({ toolCall }) => {
+          const next = employeeAssistantToolStatus(toolCall.toolName);
+          if (next === status) return;
+          status = next;
+          await thread.startTyping(status);
+        },
       });
-      sentMessage = await thread.post(result.stream);
-      const text = await result.text;
-      if (thread.signal.aborted) {
-        this.logger.log('reply stopped by user');
-        return text;
-      }
-      if (text.trim().length === 0) {
-        this.logger.warn('agent produced an empty response');
-        await sentMessage.edit(GENERATION_FAILED_MESSAGE);
+      if (result.finishReason === 'tool-calls') {
+        this.logger.warn(
+          `agent hit the step limit after ${result.steps.length} steps`,
+        );
+        await thread.post(GENERATION_FAILED_MESSAGE);
         return '';
       }
-      return text;
+      if (result.text.trim().length === 0) {
+        this.logger.warn('agent produced an empty response');
+        await thread.post(GENERATION_FAILED_MESSAGE);
+        return '';
+      }
+      await thread.post({ markdown: result.text });
+      return result.text;
     } catch (error) {
       if (thread.signal.aborted) {
         this.logger.log('reply stopped by user');
         return '';
       }
       this.logger.error(`agent reply failed: ${error}`);
-      if (sentMessage) await sentMessage.edit(GENERATION_FAILED_MESSAGE);
-      else await thread.post(GENERATION_FAILED_MESSAGE);
+      await thread.post(GENERATION_FAILED_MESSAGE);
       return '';
     }
   }

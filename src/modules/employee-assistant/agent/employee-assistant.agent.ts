@@ -18,6 +18,11 @@ import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
 export const EMPLOYEE_ASSISTANT = 'employee-assistant';
 
+const MAX_STEPS = 40;
+
+const FINAL_STEP_INSTRUCTIONS =
+  'You reached the tool-call limit for this request. Answer now with what you found. Say what you could not check.';
+
 export function createEmployeeAssistant(
   aiService: AiService,
   sentryMcpService: SentryMcpService,
@@ -37,9 +42,11 @@ export function createEmployeeAssistant(
     'BAKAR_SLACK_CHANNEL',
   )}`;
 
+  const instructions = `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`;
+
   return new ToolLoopAgent({
     model: aiService.model(AiModel.GROK_4_6),
-    instructions: `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`,
+    instructions,
     tools: {
       ...aiService.webTools(),
       ...sentryMcpService.getTools(),
@@ -54,7 +61,14 @@ export function createEmployeeAssistant(
       ),
       delegateCodingTask: createDelegateCodingTaskTool(codingTaskService),
     },
-    stopWhen: stepCountIs(40),
+    stopWhen: stepCountIs(MAX_STEPS),
+    prepareStep: ({ stepNumber }) =>
+      stepNumber === MAX_STEPS - 1
+        ? {
+            toolChoice: 'none',
+            instructions: `${instructions}\n\n${FINAL_STEP_INSTRUCTIONS}`,
+          }
+        : undefined,
     toolsContext: {
       markSnacksFulfilled: { channelId: '', requesterUserId: '' },
       delegateCodingTask: { threadId: '' },
