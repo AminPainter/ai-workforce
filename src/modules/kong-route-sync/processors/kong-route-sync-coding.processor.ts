@@ -1,5 +1,4 @@
 import { Inject, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   InjectQueue,
   OnWorkerEvent,
@@ -12,10 +11,11 @@ import { join } from 'path';
 import { REPO_DIR } from '../../coding-agent/agent/coding.settings';
 import { LocalSandboxSession } from '../../coding-agent/sandbox/local-sandbox-session';
 import { CodingSessionRepository } from '../../coding-agent/services/coding-session.repository';
+import { GitHubAppAuthService } from '../../github/services/github-app-auth.service';
 import { TARGET_REPO } from '../kong-route-sync.config';
 import {
   KONG_ROUTE_SYNC_CODING_AGENT,
-  type KongRouteSyncCodingAgent,
+  type KongRouteSyncCodingAgentFactory,
 } from '../agent/kong-route-sync-coding.agent';
 import {
   SUBMIT_ROUTE_SYNC_RESULT_TOOL,
@@ -35,18 +35,16 @@ import {
 @Processor(KONG_ROUTE_SYNC_CODING_QUEUE)
 export class KongRouteSyncCodingProcessor extends WorkerHost {
   private readonly logger = new Logger(KongRouteSyncCodingProcessor.name);
-  private readonly githubToken: string;
 
   constructor(
     @Inject(KONG_ROUTE_SYNC_CODING_AGENT)
-    private readonly kongRouteSyncCodingAgent: KongRouteSyncCodingAgent,
+    private readonly kongRouteSyncCodingAgentFactory: KongRouteSyncCodingAgentFactory,
     private readonly codingSessionRepository: CodingSessionRepository,
     @InjectQueue(KONG_ROUTE_SYNC_NOTIFICATION_QUEUE)
     private readonly kongRouteSyncNotificationQueue: Queue<KongRouteSyncNotificationJob>,
-    configService: ConfigService,
+    private readonly gitHubAppAuthService: GitHubAppAuthService,
   ) {
     super();
-    this.githubToken = configService.getOrThrow<string>('GITHUB_PAT');
   }
 
   async process(job: Job<KongRouteSyncCodingJob>): Promise<void> {
@@ -62,12 +60,17 @@ export class KongRouteSyncCodingProcessor extends WorkerHost {
     logger.log(
       `starting coding agent session ${sessionId} to sync ${job.data.routesFiles.map((file) => file.filename).join(', ')} into ${TARGET_REPO}`,
     );
-    const harnessSession = await this.kongRouteSyncCodingAgent.createSession({
+    const kongRouteSyncCodingAgent = this.kongRouteSyncCodingAgentFactory(
+      await this.gitHubAppAuthService.getInstallationToken(),
+    );
+    const harnessSession = await kongRouteSyncCodingAgent.createSession({
       sessionId,
-      sandboxSession: new LocalSandboxSession(rootDir, this.githubToken),
+      sandboxSession: new LocalSandboxSession(rootDir, () =>
+        this.gitHubAppAuthService.getInstallationToken(),
+      ),
     });
     try {
-      const { text, steps } = await this.kongRouteSyncCodingAgent.generate({
+      const { text, steps } = await kongRouteSyncCodingAgent.generate({
         session: harnessSession,
         prompt: [
           `Repository: ${TARGET_REPO}`,

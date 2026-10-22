@@ -10,7 +10,8 @@
  *
  * Reuse the threadId to send a follow-up task into the same session.
  *
- * Env required: AI_GATEWAY_BASE_URL, AI_GATEWAY_API_KEY, GITHUB_PAT.
+ * Env required: AI_GATEWAY_BASE_URL, AI_GATEWAY_API_KEY, GITHUB_APP_ID,
+ * GITHUB_APP_INSTALLATION_ID, GITHUB_APP_PRIVATE_KEY.
  * CODING_AGENT_WORKSPACES_DIR is optional and defaults to $TMPDIR/coding-agent.
  */
 import 'reflect-metadata';
@@ -21,8 +22,9 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import {
   CODING_AGENT,
-  createCodingAgent,
+  createCodingAgentFactory,
 } from '../src/modules/coding-agent/agent/coding.agent';
+import { GitHubAppModule } from '../src/modules/github/github-app.module';
 import { CodingSessionRepository } from '../src/modules/coding-agent/services/coding-session.repository';
 import { CodingTaskProcessor } from '../src/modules/coding-agent/processors/coding-task.processor';
 import {
@@ -32,11 +34,11 @@ import {
 } from '../src/modules/coding-agent/queues/coding-agent.queue';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true })],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), GitHubAppModule],
   providers: [
     {
       provide: CODING_AGENT,
-      useFactory: createCodingAgent,
+      useFactory: createCodingAgentFactory,
       inject: [ConfigService],
     },
     {

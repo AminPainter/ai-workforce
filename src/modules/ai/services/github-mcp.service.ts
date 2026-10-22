@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createMCPClient, type MCPClient } from '@ai-sdk/mcp';
 import { type ToolSet } from 'ai';
+import { GitHubAppAuthService } from '../../github/services/github-app-auth.service';
 
 const DEFAULT_GITHUB_MCP_URL = 'https://api.githubcopilot.com/mcp/readonly';
 
@@ -44,14 +45,15 @@ const READ_ONLY_TOOLS = new Set([
 export class GitHubMcpService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(GitHubMcpService.name);
   private readonly githubMcpUrl: string;
-  private readonly githubToken: string;
   private client?: MCPClient;
   private tools: ToolSet = {};
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly gitHubAppAuthService: GitHubAppAuthService,
+  ) {
     this.githubMcpUrl =
       this.config.get<string>('GITHUB_MCP_URL') ?? DEFAULT_GITHUB_MCP_URL;
-    this.githubToken = this.config.getOrThrow<string>('GITHUB_PAT');
   }
 
   async onModuleInit(): Promise<void> {
@@ -75,7 +77,15 @@ export class GitHubMcpService implements OnModuleInit, OnModuleDestroy {
       transport: {
         type: 'http',
         url: this.githubMcpUrl,
-        headers: { Authorization: `Bearer ${this.githubToken}` },
+        // Installation tokens expire hourly, so each request gets the current one.
+        fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+          const headers = new Headers(init?.headers);
+          headers.set(
+            'Authorization',
+            `Bearer ${await this.gitHubAppAuthService.getInstallationToken()}`,
+          );
+          return fetch(input, { ...init, headers });
+        },
       },
     });
   }

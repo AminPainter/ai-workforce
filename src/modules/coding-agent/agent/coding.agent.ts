@@ -7,9 +7,17 @@ export const CODING_AGENT = 'coding-agent';
 
 export function createCodingAgent(
   configService: ConfigService,
+  githubToken: string,
   tools: ToolSet = {},
 ) {
-  return new HarnessAgent({ ...codingAgentSettings(configService), tools });
+  return new HarnessAgent({
+    ...codingAgentSettings(configService, githubToken),
+    tools,
+  });
 }
 
-export type CodingAgent = ReturnType<typeof createCodingAgent>;
+export function createCodingAgentFactory(configService: ConfigService) {
+  return (githubToken: string) => createCodingAgent(configService, githubToken);
+}
+
+export type CodingAgentFactory = ReturnType<typeof createCodingAgentFactory>;
