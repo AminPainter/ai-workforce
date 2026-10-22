@@ -4,8 +4,10 @@ import { SentryMcpService } from './services/sentry-mcp.service';
 import { GitHubMcpService } from './services/github-mcp.service';
 import { AtlassianMcpService } from './services/atlassian-mcp.service';
 import { AlloyDbMcpService } from './services/alloydb-mcp.service';
+import { GitHubAppModule } from '../github/github-app.module';
 
 @Module({
+  imports: [GitHubAppModule],
   providers: [
     AiService,
     SentryMcpService,

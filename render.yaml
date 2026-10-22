@@ -17,7 +17,11 @@ services:
         sync: false
       - key: AI_GATEWAY_BASE_URL
         sync: false
-      - key: GITHUB_PAT
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_INSTALLATION_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
         sync: false
       - key: GITHUB_WEBHOOK_SECRET
         sync: false
@@ -86,7 +90,11 @@ services:
         sync: false
       - key: AI_GATEWAY_BASE_URL
         sync: false
-      - key: GITHUB_PAT
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_INSTALLATION_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
         sync: false
 
   - type: pserv

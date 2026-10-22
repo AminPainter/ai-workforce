@@ -27,7 +27,7 @@ const GITHUB_CREDENTIAL_HELPER = {
   GIT_CONFIG_COUNT: '1',
   GIT_CONFIG_KEY_0: 'credential.https://github.com.helper',
   GIT_CONFIG_VALUE_0:
-    '!f() { echo username=x-access-token; echo "password=$GITHUB_PAT"; }; f',
+    '!f() { echo username=x-access-token; echo "password=$GITHUB_TOKEN"; }; f',
 };
 
 export class LocalSandboxSession implements SandboxSession {
@@ -37,7 +37,7 @@ export class LocalSandboxSession implements SandboxSession {
 
   constructor(
     private readonly rootDir: string,
-    githubToken: string,
+    private readonly getGithubToken: () => Promise<string>,
   ) {
     this.description = `Host directory ${rootDir}. Commands run directly on the host.`;
     this.env = {
@@ -45,8 +45,6 @@ export class LocalSandboxSession implements SandboxSession {
       HOME: rootDir,
       LANG: 'C.UTF-8',
       GIT_TERMINAL_PROMPT: '0',
-      GITHUB_PAT: githubToken,
-      GH_TOKEN: githubToken,
       ...GIT_IDENTITY,
       ...GITHUB_CREDENTIAL_HELPER,
     };
@@ -100,15 +98,21 @@ export class LocalSandboxSession implements SandboxSession {
     });
   }
 
-  spawn({
+  async spawn({
     command,
     workingDirectory = '.',
     env,
     abortSignal,
   }: ProcessOptions): Promise<Experimental_SandboxProcess> {
+    const githubToken = await this.getGithubToken();
     const child = spawn('bash', ['-c', command], {
       cwd: this.resolvePath(workingDirectory),
-      env: { ...this.env, ...env },
+      env: {
+        ...this.env,
+        GITHUB_TOKEN: githubToken,
+        GH_TOKEN: githubToken,
+        ...env,
+      },
     });
     abortSignal?.addEventListener('abort', () => child.kill());
     const exited = new Promise<{ exitCode: number }>((resolveExit) => {
@@ -119,13 +123,13 @@ export class LocalSandboxSession implements SandboxSession {
       child.on('close', (code) => resolveExit({ exitCode: code ?? 1 }));
     });
 
-    return Promise.resolve({
+    return {
       pid: child.pid,
       stdout: Readable.toWeb(child.stdout) as ReadableStream<Uint8Array>,
       stderr: Readable.toWeb(child.stderr) as ReadableStream<Uint8Array>,
       wait: () => exited,
       kill: () => Promise.resolve(void child.kill()),
-    });
+    };
   }
 
   async run(options: ProcessOptions) {

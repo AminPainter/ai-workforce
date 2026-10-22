@@ -37,8 +37,14 @@ Slack (required — the bot receives events via webhooks, so the service must be
 - `SLACK_SIGNING_SECRET`
 - `SLACK_APP_TOKEN`, `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` — only if your Slack app config needs them
 
+GitHub App (required — every GitHub call, MCP, Octokit and git push, uses its installation tokens):
+- `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`
+- `GITHUB_APP_PRIVATE_KEY` — the PEM; `\n`-escaped single-line values work too
+- Repository permissions: Contents and Pull requests read/write, Issues and Metadata read. Install
+  it on every repo the agents touch (at least `glomopay/glomopay_service` and `glomopay/kong`).
+
 MCP tools (read-only integrations):
-- `GITHUB_PAT` (+ optional `GITHUB_MCP_URL`)
+- optional `GITHUB_MCP_URL`
 - `ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN` (+ optional `ATLASSIAN_MCP_URL`)
 - `SENTRY_AUTH_TOKEN` (+ optional `SENTRY_MCP_URL`)
 
@@ -59,7 +65,7 @@ draft PR on `amin-ka-bot/sync-routes-glomopay-pr-<N>` and DMs the PR author. Rid
 `pull_request` webhook above.
 - `KONG_ROUTE_SYNC_AUTHOR_DENYLIST` (optional) — comma-separated GitHub usernames to skip, e.g.
   `dependabot[bot]`.
-- `GITHUB_PAT` needs Contents + Pull requests read/write on `glomopay/kong`. The main Slack app
+- The GitHub App needs Contents + Pull requests read/write on `glomopay/kong`. The main Slack app
   needs `chat:write`, `users:read.email` and `im:write`.
 
 Leave bot (#leaves → RazorpayX Payroll attendance, `src/modules/leave-tracker`):

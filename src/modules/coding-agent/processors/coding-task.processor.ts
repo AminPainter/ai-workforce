@@ -1,5 +1,4 @@
 import { Inject, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   InjectQueue,
   OnWorkerEvent,
@@ -9,10 +8,11 @@ import {
 import { Job, Queue } from 'bullmq';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
-import { CODING_AGENT, type CodingAgent } from '../agent/coding.agent';
+import { CODING_AGENT, type CodingAgentFactory } from '../agent/coding.agent';
 import { REPO_DIR } from '../agent/coding.settings';
 import { LocalSandboxSession } from '../sandbox/local-sandbox-session';
 import { CodingSessionRepository } from '../services/coding-session.repository';
+import { GitHubAppAuthService } from '../../github/services/github-app-auth.service';
 import {
   CODING_AGENT_QUEUE,
   CODING_TASK_SLACK_SUMMARY_QUEUE,
@@ -21,22 +21,21 @@ import {
 } from '../queues/coding-agent.queue';
 
 const PREVIEW_LENGTH = 300;
+const GITHUB_TOKEN_PATTERN = /ghs_[\w.-]+/g;
 
 @Processor(CODING_AGENT_QUEUE)
 export class CodingTaskProcessor extends WorkerHost {
   private readonly logger = new Logger(CodingTaskProcessor.name);
-  private readonly githubToken: string;
 
   constructor(
     @Inject(CODING_AGENT)
-    private readonly codingAgent: CodingAgent,
+    private readonly codingAgentFactory: CodingAgentFactory,
     private readonly codingSessionRepository: CodingSessionRepository,
     @InjectQueue(CODING_TASK_SLACK_SUMMARY_QUEUE)
     private readonly codingTaskSlackSummaryQueue: Queue<CodingTaskSlackSummaryJob>,
-    configService: ConfigService,
+    private readonly gitHubAppAuthService: GitHubAppAuthService,
   ) {
     super();
-    this.githubToken = configService.getOrThrow<string>('GITHUB_PAT');
   }
 
   async process(job: Job<CodingTaskJob>): Promise<void> {
@@ -52,12 +51,17 @@ export class CodingTaskProcessor extends WorkerHost {
       `${codingSession.resumeState ? 'resuming' : 'starting'} session ${sessionId} for ${repo}: ${this.preview(task)}`,
     );
 
-    const harnessSession = await this.codingAgent.createSession({
+    const codingAgent = this.codingAgentFactory(
+      await this.gitHubAppAuthService.getInstallationToken(),
+    );
+    const harnessSession = await codingAgent.createSession({
       sessionId,
-      sandboxSession: new LocalSandboxSession(rootDir, this.githubToken),
+      sandboxSession: new LocalSandboxSession(rootDir, () =>
+        this.gitHubAppAuthService.getInstallationToken(),
+      ),
       resumeFrom: codingSession.resumeState,
     });
-    const { text, steps } = await this.codingAgent.generate({
+    const { text, steps } = await codingAgent.generate({
       session: harnessSession,
       prompt: [
         `Repository: ${codingSession.repo}`,
@@ -111,6 +115,6 @@ export class CodingTaskProcessor extends WorkerHost {
   }
 
   private redact(text: string): string {
-    return text.split(this.githubToken).join('[redacted]');
+    return text.replace(GITHUB_TOKEN_PATTERN, '[redacted]');
   }
 }

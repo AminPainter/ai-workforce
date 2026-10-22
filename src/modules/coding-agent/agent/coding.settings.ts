@@ -10,7 +10,10 @@ const MODEL_CONTEXT_WINDOW = 1000000;
 const MODEL_MAX_TOKENS = 128000;
 const GITHUB_MCP_URL = 'https://api.githubcopilot.com/mcp/';
 
-export function codingAgentSettings(configService: ConfigService) {
+export function codingAgentSettings(
+  configService: ConfigService,
+  githubToken: string,
+) {
   return {
     harness: createPi({
       providers: {
@@ -38,9 +41,7 @@ export function codingAgentSettings(configService: ConfigService) {
         github: {
           type: 'http',
           url: GITHUB_MCP_URL,
-          headers: {
-            Authorization: `Bearer ${configService.getOrThrow<string>('GITHUB_PAT')}`,
-          },
+          headers: { Authorization: `Bearer ${githubToken}` },
           exposure: 'hidden',
           toolExposure: {
             create_pull_request: 'direct',

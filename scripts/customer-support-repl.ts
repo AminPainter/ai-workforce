@@ -12,8 +12,9 @@
  *   pnpm cs:repl "subject" "customer msg" "j@example.com" # ad-hoc ticket with requester email
  *
  * Env required: AI_GATEWAY_API_KEY, AI_GATEWAY_BASE_URL, SEARXNG_BASE_URL,
- * ALLOYDB_MCP_URL, ALLOYDB_MCP_API_KEY.
- * GITHUB_PAT / SENTRY_AUTH_TOKEN are optional — the MCP services swallow
+ * ALLOYDB_MCP_URL, ALLOYDB_MCP_API_KEY, GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID,
+ * GITHUB_APP_PRIVATE_KEY.
+ * SENTRY_AUTH_TOKEN is optional — the MCP services swallow
  * connection failures and the agent runs with whatever tools connected.
  * The AlloyDB tools hit PRODUCTION. Every SQL query the agent runs is printed.
  */
