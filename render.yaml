@@ -11,10 +11,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: SEARXNG_BASE_URL
-        value: http://127.0.0.1:8080
+        value: http://glomo-ai-workforce-searxng:8080
       # PORT is injected by Render — do not set it.
-      - key: SEARXNG_SECRET
-        sync: false
       - key: AI_GATEWAY_API_KEY
         sync: false
       - key: AI_GATEWAY_BASE_URL
@@ -89,6 +87,21 @@ services:
       - key: AI_GATEWAY_BASE_URL
         sync: false
       - key: GITHUB_PAT
+        sync: false
+
+  - type: pserv
+    name: glomo-ai-workforce-searxng
+    runtime: docker
+    dockerfilePath: ./searxng/Dockerfile
+    dockerContext: ./searxng
+    region: singapore
+    plan: starter
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - searxng/**
+    envVars:
+      - key: SEARXNG_SECRET
         sync: false
 
   - type: keyvalue
