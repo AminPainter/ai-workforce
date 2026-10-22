@@ -10,7 +10,7 @@ import { type ToolSet } from 'ai';
 
 const DEFAULT_SENTRY_MCP_URL = 'https://mcp.sentry.dev/mcp';
 
-export const SENTRY_TOOL_NAMES = new Set([
+const READ_ONLY_TOOLS = new Set([
   'find_organizations',
   'find_projects',
   'search_issues',
@@ -62,12 +62,12 @@ export class SentryMcpService implements OnModuleInit, OnModuleDestroy {
     all: Awaited<ReturnType<MCPClient['tools']>>,
   ): ToolSet {
     const readOnly = Object.fromEntries(
-      Object.entries(all).filter(([name]) => SENTRY_TOOL_NAMES.has(name)),
+      Object.entries(all).filter(([name]) => READ_ONLY_TOOLS.has(name)),
     );
 
     const kept = Object.keys(readOnly);
     const dropped = Object.keys(all).filter(
-      (name) => !SENTRY_TOOL_NAMES.has(name),
+      (name) => !READ_ONLY_TOOLS.has(name),
     );
     this.logger.log(
       `Sentry MCP connected. Loaded ${kept.length} tools: ${kept.join(', ')}`,

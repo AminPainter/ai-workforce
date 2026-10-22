@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgentRegistry } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
-import { employeeAssistantToolStatus } from '../../employee-assistant/agent/employee-assistant.tool-status';
 import { SnackTool } from '../../snack-tracker/constants/snack-tools';
 import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools';
 import { formatIstDateTime } from '../../../common/utils/date.util';
@@ -113,7 +112,6 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     try {
       const history = await this.readThreadHistory(thread);
       const messages = await this.buildModelMessages(history);
-      let status = '';
       const result = await this.agentRegistry.get(EMPLOYEE_ASSISTANT).generate({
         messages,
         abortSignal: thread.signal,
@@ -123,12 +121,6 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
             requesterUserId,
           },
           [CodingAgentTool.DELEGATE_CODING_TASK]: { threadId: thread.id },
-        },
-        onToolExecutionStart: async ({ toolCall }) => {
-          const next = employeeAssistantToolStatus(toolCall.toolName);
-          if (next === status) return;
-          status = next;
-          await thread.startTyping(status);
         },
       });
       if (result.finishReason === 'tool-calls') {
