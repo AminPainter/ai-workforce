@@ -10,7 +10,7 @@ import { type ToolSet } from 'ai';
 
 const DEFAULT_GITHUB_MCP_URL = 'https://api.githubcopilot.com/mcp/readonly';
 
-const READ_ONLY_TOOLS = new Set([
+export const GITHUB_TOOL_NAMES = new Set([
   'get_me',
   'get_file_contents',
   'search_code',
@@ -84,12 +84,12 @@ export class GitHubMcpService implements OnModuleInit, OnModuleDestroy {
     all: Awaited<ReturnType<MCPClient['tools']>>,
   ): ToolSet {
     const readOnly = Object.fromEntries(
-      Object.entries(all).filter(([name]) => READ_ONLY_TOOLS.has(name)),
+      Object.entries(all).filter(([name]) => GITHUB_TOOL_NAMES.has(name)),
     );
 
     const kept = Object.keys(readOnly);
     const dropped = Object.keys(all).filter(
-      (name) => !READ_ONLY_TOOLS.has(name),
+      (name) => !GITHUB_TOOL_NAMES.has(name),
     );
     this.logger.log(
       `GitHub MCP connected. Loaded ${kept.length} tools: ${kept.join(', ')}`,

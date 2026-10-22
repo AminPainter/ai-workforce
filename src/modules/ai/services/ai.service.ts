@@ -8,6 +8,7 @@ import { type LanguageModel } from 'ai';
 import { createWebSearchTool } from '../tools/web-search.tool';
 import { createWebFetchTool } from '../tools/web-fetch.tool';
 import { AiModel } from '../constants/ai-models';
+import { WebTool } from '../constants/web-tools';
 
 @Injectable()
 export class AiService {
@@ -29,8 +30,8 @@ export class AiService {
   webTools() {
     const searxngBaseUrl = this.config.getOrThrow<string>('SEARXNG_BASE_URL');
     return {
-      webSearch: createWebSearchTool(searxngBaseUrl),
-      webFetch: createWebFetchTool(),
+      [WebTool.WEB_SEARCH]: createWebSearchTool(searxngBaseUrl),
+      [WebTool.WEB_FETCH]: createWebFetchTool(),
     };
   }
 }

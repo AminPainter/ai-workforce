@@ -5,6 +5,7 @@ import { buildSkillsPromptSection } from '../prompts/skills.prompt';
 import { createLoadSkillTool } from '../tools/load-skill.tool';
 import { createReadSkillReferenceTool } from '../tools/read-skill-reference.tool';
 import { SkillLoaderService } from './skill-loader.service';
+import { SkillTool } from '../constants/skill-tools';
 
 @Injectable()
 export class SkillsService {
@@ -29,8 +30,9 @@ export class SkillsService {
     skillsRegistry: ReadonlyMap<string, LoadedSkill>,
   ): ToolSet {
     return {
-      loadSkill: createLoadSkillTool(skillsRegistry),
-      readSkillReference: createReadSkillReferenceTool(skillsRegistry),
+      [SkillTool.LOAD_SKILL]: createLoadSkillTool(skillsRegistry),
+      [SkillTool.READ_SKILL_REFERENCE]:
+        createReadSkillReferenceTool(skillsRegistry),
     };
   }
 }

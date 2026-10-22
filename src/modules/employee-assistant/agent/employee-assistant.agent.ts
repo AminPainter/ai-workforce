@@ -11,12 +11,19 @@ import { SkillsService } from '../../skills/services/skills.service';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
 import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
 import { createMarkSnacksFulfilledTool } from '../../snack-tracker/tools/mark-snacks-fulfilled.tool';
+import { SnackTool } from '../../snack-tracker/constants/snack-tools';
 import { CodingTaskService } from '../../coding-agent/services/coding-task.service';
 import { createDelegateCodingTaskTool } from '../../coding-agent/tools/delegate-coding-task.tool';
+import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
 
 export const EMPLOYEE_ASSISTANT = 'employee-assistant';
+
+const MAX_STEPS = 40;
+
+const FINAL_STEP_INSTRUCTIONS =
+  'You reached the tool-call limit for this request. Answer now with what you found. Say what you could not check.';
 
 export function createEmployeeAssistant(
   aiService: AiService,
@@ -37,9 +44,11 @@ export function createEmployeeAssistant(
     'BAKAR_SLACK_CHANNEL',
   )}`;
 
+  const instructions = `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`;
+
   return new ToolLoopAgent({
     model: aiService.model(AiModel.GROK_4_6),
-    instructions: `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`,
+    instructions,
     tools: {
       ...aiService.webTools(),
       ...sentryMcpService.getTools(),
@@ -47,17 +56,25 @@ export function createEmployeeAssistant(
       ...atlassianMcpService.getTools(),
       ...alloyDbMcpService.getTools(),
       ...skills.tools,
-      snacksLedger: createSnacksLedgerTool(snacksLedgerService),
-      markSnacksFulfilled: createMarkSnacksFulfilledTool(
+      [SnackTool.SNACKS_LEDGER]: createSnacksLedgerTool(snacksLedgerService),
+      [SnackTool.MARK_SNACKS_FULFILLED]: createMarkSnacksFulfilledTool(
         snacksLedgerService,
         bakarChannelId,
       ),
-      delegateCodingTask: createDelegateCodingTaskTool(codingTaskService),
+      [CodingAgentTool.DELEGATE_CODING_TASK]:
+        createDelegateCodingTaskTool(codingTaskService),
     },
-    stopWhen: stepCountIs(40),
+    stopWhen: stepCountIs(MAX_STEPS),
+    prepareStep: ({ stepNumber }) => {
+      if (stepNumber === MAX_STEPS - 1)
+        return {
+          toolChoice: 'none',
+          instructions: `${instructions}\n\n${FINAL_STEP_INSTRUCTIONS}`,
+        };
+    },
     toolsContext: {
-      markSnacksFulfilled: { channelId: '', requesterUserId: '' },
-      delegateCodingTask: { threadId: '' },
+      [SnackTool.MARK_SNACKS_FULFILLED]: { channelId: '', requesterUserId: '' },
+      [CodingAgentTool.DELEGATE_CODING_TASK]: { threadId: '' },
     },
   });
 }

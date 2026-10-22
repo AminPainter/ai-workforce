@@ -10,7 +10,7 @@ import { type ToolSet } from 'ai';
 
 const DEFAULT_ATLASSIAN_MCP_URL = 'https://mcp.atlassian.com/v1/mcp';
 
-const ALLOWED_TOOLS = new Set([
+export const ATLASSIAN_TOOL_NAMES = new Set([
   'createJiraIssue',
   'getVisibleJiraProjects',
   'getJiraProjectIssueTypesMetadata',
@@ -76,11 +76,13 @@ export class AtlassianMcpService implements OnModuleInit, OnModuleDestroy {
     all: Awaited<ReturnType<MCPClient['tools']>>,
   ): ToolSet {
     const allowed = Object.fromEntries(
-      Object.entries(all).filter(([name]) => ALLOWED_TOOLS.has(name)),
+      Object.entries(all).filter(([name]) => ATLASSIAN_TOOL_NAMES.has(name)),
     );
 
     const kept = Object.keys(allowed);
-    const dropped = Object.keys(all).filter((name) => !ALLOWED_TOOLS.has(name));
+    const dropped = Object.keys(all).filter(
+      (name) => !ATLASSIAN_TOOL_NAMES.has(name),
+    );
     this.logger.log(
       `Atlassian MCP connected. Loaded ${kept.length} tools: ${kept.join(', ')}`,
     );
