@@ -40,12 +40,6 @@ export function expandDateRange(
   return dates;
 }
 
-function nextWeekday(date: string): string {
-  let next = addDays(date, 1);
-  while (isWeekend(next)) next = addDays(next, 1);
-  return next;
-}
-
 export function formatShortDate(date: string): string {
   return new Intl.DateTimeFormat('en-GB', {
     timeZone: 'UTC',
@@ -60,7 +54,7 @@ export function formatDateRanges(dates: string[]): string {
   const ranges: Array<[string, string]> = [];
   for (const date of sorted) {
     const last = ranges.at(-1);
-    if (last && nextWeekday(last[1]) === date) last[1] = date;
+    if (last && addDays(last[1], 1) === date) last[1] = date;
     else ranges.push([date, date]);
   }
   return ranges
