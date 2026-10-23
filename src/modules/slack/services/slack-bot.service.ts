@@ -15,6 +15,8 @@ import { SlackChatBot } from './slack-chat-bot.base';
 const GENERATION_FAILED_MESSAGE =
   'Having a bad headache. Not able to respond right now. [INTERNAL_SERVER_ERROR]';
 
+const TURN_TIMEOUT_MS = 5 * 60 * 1000;
+
 @Injectable()
 export class SlackBotService extends SlackChatBot implements OnModuleInit {
   protected readonly logger = new Logger(SlackBotService.name);
@@ -112,9 +114,17 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     try {
       const history = await this.readThreadHistory(thread);
       const messages = await this.buildModelMessages(history);
+      const startedAt = Date.now();
       const result = await this.agentRegistry.get(EMPLOYEE_ASSISTANT).generate({
         messages,
         abortSignal: thread.signal,
+        timeout: { totalMs: TURN_TIMEOUT_MS },
+        onStepEnd: (step) => {
+          const tools = step.toolCalls.map((call) => call.toolName).join(', ');
+          this.logger.log(
+            `step ${step.stepNumber} done after ${Date.now() - startedAt}ms${tools ? `: ${tools}` : ''}`,
+          );
+        },
         toolsContext: {
           [SnackTool.MARK_SNACKS_FULFILLED]: {
             channelId: thread.channelId,

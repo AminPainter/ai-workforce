@@ -118,6 +118,10 @@ export abstract class SlackChatBot implements OnModuleDestroy {
     this.bot = new Chat({
       userName,
       adapters: { slack: this.slackAdapter },
+      // The default "drop" strategy holds a per-thread lock for the whole
+      // handler, so one slow agent turn silently drops every other message
+      // in that thread with a LockError.
+      concurrency: 'concurrent',
       state: createRedisState({
         url: this.configService.getOrThrow<string>('REDIS_URL'),
         keyPrefix,
