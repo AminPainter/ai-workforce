@@ -4,7 +4,8 @@ import { type OpenAICompatibleProvider } from '@ai-sdk/openai-compatible';
 import { AiModel } from '../constants/ai-models';
 
 type GatewayModel = ReturnType<OpenAICompatibleProvider>;
-type GatewayResult = { response?: { headers?: Record<string, string> } };
+type GenerateOptions = Parameters<GatewayModel['doGenerate']>[0];
+type GenerateResult = Awaited<ReturnType<GatewayModel['doGenerate']>>;
 
 const COOLDOWN_MS = 5 * 60 * 1000;
 const GATEWAY_FALLBACKS_HEADER = 'x-litellm-attempted-fallbacks';
@@ -22,30 +23,23 @@ export class ModelFallback {
 
   middleware(chain: AiModel[]): LanguageModelMiddleware {
     return {
-      wrapGenerate: ({ params }) =>
-        this.run(chain, params.abortSignal, (model) =>
-          model.doGenerate(params),
-        ),
-      // Only errors raised before the stream opens can fall back.
-      wrapStream: ({ params }) =>
-        this.run(chain, params.abortSignal, (model) => model.doStream(params)),
+      wrapGenerate: ({ params }) => this.generate(chain, params),
     };
   }
 
-  private async run<T extends GatewayResult>(
+  private async generate(
     chain: AiModel[],
-    abortSignal: AbortSignal | undefined,
-    call: (model: GatewayModel) => PromiseLike<T>,
-  ): Promise<T> {
+    params: GenerateOptions,
+  ): Promise<GenerateResult> {
     const ordered = this.availableFirst(chain);
     let lastError: unknown;
     for (const [index, aiModel] of ordered.entries())
       try {
-        const result = await call(this.resolveModel(aiModel));
+        const result = await this.resolveModel(aiModel).doGenerate(params);
         this.recordSuccess(aiModel, result);
         return result;
       } catch (error) {
-        if (abortSignal?.aborted || !shouldFallBack(error)) throw error;
+        if (params.abortSignal?.aborted || !shouldFallBack(error)) throw error;
         if (isModelUnavailable(error)) this.coolDown(aiModel);
         lastError = error;
         const next = ordered[index + 1];
@@ -58,7 +52,7 @@ export class ModelFallback {
 
   // A gateway-side fallback still returns 200, but only after the model's
   // full gateway timeout, so the model is cooled down as if it had failed.
-  private recordSuccess(aiModel: AiModel, result: GatewayResult): void {
+  private recordSuccess(aiModel: AiModel, result: GenerateResult): void {
     const gatewayFallbacks = Number(
       result.response?.headers?.[GATEWAY_FALLBACKS_HEADER] ?? 0,
     );
