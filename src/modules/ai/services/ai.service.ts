@@ -4,15 +4,18 @@ import {
   createOpenAICompatible,
   type OpenAICompatibleProvider,
 } from '@ai-sdk/openai-compatible';
-import { type LanguageModel } from 'ai';
+import { type LanguageModel, wrapLanguageModel } from 'ai';
 import { createWebSearchTool } from '../tools/web-search.tool';
 import { createWebFetchTool } from '../tools/web-fetch.tool';
 import { AiModel } from '../constants/ai-models';
+import { AI_MODEL_FALLBACKS } from '../constants/ai-model-fallbacks';
 import { WebTool } from '../constants/web-tools';
+import { ModelFallback } from '../fallback/model-fallback';
 
 @Injectable()
 export class AiService {
   private readonly provider: OpenAICompatibleProvider;
+  private readonly modelFallback: ModelFallback;
 
   constructor(private readonly config: ConfigService) {
     this.provider = createOpenAICompatible({
@@ -21,10 +24,17 @@ export class AiService {
       baseURL: `${this.config.getOrThrow<string>('AI_GATEWAY_BASE_URL')}/v1`,
       supportsStructuredOutputs: true,
     });
+    this.modelFallback = new ModelFallback((aiModel) => this.provider(aiModel));
   }
 
   model(aiModel: AiModel): LanguageModel {
-    return this.provider(aiModel);
+    return wrapLanguageModel({
+      model: this.provider(aiModel),
+      middleware: this.modelFallback.middleware([
+        aiModel,
+        ...AI_MODEL_FALLBACKS[aiModel],
+      ]),
+    });
   }
 
   webTools() {
