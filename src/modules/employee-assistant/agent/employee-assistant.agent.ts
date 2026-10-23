@@ -47,7 +47,7 @@ export function createEmployeeAssistant(
   const instructions = `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`;
 
   return new ToolLoopAgent({
-    model: aiService.model(AiModel.GROK_4_6),
+    model: aiService.model(AiModel.DEEPSEEK_V4_PRO),
     instructions,
     tools: {
       ...aiService.webTools(),
