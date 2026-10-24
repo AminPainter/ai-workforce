@@ -51,6 +51,9 @@ services:
         sync: false
       - key: BAKAR_SLACK_CHANNEL
         sync: false
+      # Gateway model id for the employee assistant; defaults to grok-4.7 in code.
+      - key: EMPLOYEE_ASSISTANT_MODEL
+        sync: false
       # #leaves → RazorpayX Payroll leave bot.
       - key: LEAVES_SLACK_CHANNEL
         sync: false
