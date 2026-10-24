@@ -44,10 +44,13 @@ export function createEmployeeAssistant(
     'BAKAR_SLACK_CHANNEL',
   )}`;
 
+  const model =
+    configService.get<AiModel>('EMPLOYEE_ASSISTANT_MODEL') || AiModel.GROK_4_7;
+
   const instructions = `${EMPLOYEE_ASSISTANT_SYSTEM_PROMPT}\n\n${skills.promptSection}`;
 
   return new ToolLoopAgent({
-    model: aiService.model(AiModel.DEEPSEEK_V4_PRO),
+    model: aiService.model(model),
     instructions,
     tools: {
       ...aiService.webTools(),
