@@ -8,9 +8,11 @@ services:
       - PORT=51515
       - SEARXNG_BASE_URL=http://searxng:8080
       - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://ai_workforce:ai_workforce@postgres:5432/ai_workforce
     depends_on:
       - searxng
       - redis
+      - postgres
     restart: unless-stopped
 
   searxng:
@@ -28,3 +30,18 @@ services:
     ports:
       - '6379:6379' # debug only
     restart: unless-stopped
+
+  postgres:
+    image: postgres:18-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=ai_workforce
+      - POSTGRES_PASSWORD=ai_workforce
+      - POSTGRES_DB=ai_workforce
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

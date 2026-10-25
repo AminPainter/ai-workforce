@@ -58,6 +58,12 @@ Queue infra (`src/modules/queue`):
 - `QUEUE_JOB_ATTEMPTS` (optional, default 3) — retry attempts per job.
 - `QUEUE_BACKOFF_MS` (optional, default 5000) — exponential backoff base delay.
 
+Database (`src/modules/prisma`):
+- `DATABASE_URL` (required) — Postgres connection string. Compose sets it for the `postgres`
+  container; on Render it comes from the `glomo-ai-workforce-db` database (internal URL). For
+  non-Docker dev against the compose database use
+  `postgresql://ai_workforce:ai_workforce@localhost:5432/ai_workforce`.
+
 Kong route sync (`src/modules/kong-route-sync`): when a `glomopay_service` PR merges to main
 and touches `config/routes.rb` or `config/routes/**/*.rb` (checked deterministically against the
 PR's file list), the coding-agent worker mirrors the route changes into `glomopay/kong`, opens a
@@ -112,6 +118,10 @@ plan, kept warm for Slack webhooks), and SearXNG as a private service
 (`glomo-ai-workforce-searxng`, reachable only on Render's private network). SearXNG redeploys only
 when `searxng/**` changes.
 
+It also creates a private Postgres instance (`glomo-ai-workforce-db`). The web service's
+`preDeployCommand` runs `prisma migrate deploy` against it before each deploy goes live; a failed
+migration fails the deploy.
+
 1. Push this repo to GitHub.
 2. In Render: New → Blueprint, connect the repo. Render reads `render.yaml`.
 3. At first sync, fill every `sync: false` secret — including `SEARXNG_SECRET` on the SearXNG
@@ -123,11 +133,25 @@ when `searxng/**` changes.
 
 ```bash
 pnpm install
+pnpm db:generate          # Prisma client → src/generated/prisma (gitignored)
 pnpm run start:dev
 ```
 
 You'll need a SearXNG reachable at `SEARXNG_BASE_URL` and all env vars above set in your shell
 or `.env`.
+
+## Database (Prisma)
+
+Prisma ORM 7 with the `pg` driver adapter. `PrismaModule` is global, so inject
+`PrismaService` anywhere.
+
+- Prisma is pinned to 7.x: npm's `latest` tag for `prisma` is a Prisma 8 pre-release that has
+  no `migrate` / `generate`. Don't bump with `@latest`.
+- `prisma/schema.prisma` holds the models; `prisma.config.ts` holds the connection URL.
+- After pulling schema changes: `pnpm db:generate`. `pnpm build` regenerates automatically.
+- New migration: edit the schema, then `pnpm db:migrate --name <change>` (needs a dev database,
+  e.g. `docker compose up -d postgres`). Commit `prisma/migrations/**`.
+- Production applies migrations via Render's pre-deploy (`pnpm db:deploy` locally does the same).
 
 ## Tests
 
