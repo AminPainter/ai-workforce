@@ -1,7 +1,7 @@
 /**
  * Standalone REPL harness for the customer-support AI agent loop.
  *
- * Boots a trimmed Nest context (AiModule only — no Redis, no Zoho queue) and
+ * Boots a trimmed Nest context (AiModule + WebModule — no Redis, no Zoho queue) and
  * runs the real `createCustomerSupport` ToolLoopAgent against a fixture ticket,
  * mirroring what CustomerSupportProcessor does: run the agent, read `.text`,
  * and split on the NOT_A_SUPPORT_REQUEST marker.
@@ -27,6 +27,8 @@ import { AiService } from '../src/modules/ai/services/ai.service.js';
 import { GitHubMcpService } from '../src/modules/ai/services/github-mcp.service.js';
 import { SentryMcpService } from '../src/modules/ai/services/sentry-mcp.service.js';
 import { AlloyDbMcpService } from '../src/modules/ai/services/alloydb-mcp.service.js';
+import { WebModule } from '../src/modules/web/web.module.js';
+import { WebToolsService } from '../src/modules/web/services/web-tools.service.js';
 import { createCustomerSupport } from '../src/modules/customer-support/agent/customer-support.agent.js';
 import { CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER } from '../src/modules/customer-support/agent/customer-support.prompt.js';
 import type {
@@ -35,7 +37,7 @@ import type {
 } from '../src/modules/zoho/zoho.types.js';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AiModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), AiModule, WebModule],
 })
 class ReplModule {}
 
@@ -100,6 +102,7 @@ async function main(): Promise<void> {
     app.get(GitHubMcpService),
     app.get(SentryMcpService),
     app.get(AlloyDbMcpService),
+    app.get(WebToolsService),
   );
 
   const task = buildDraftTask(ticket, conversation);

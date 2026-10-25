@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AiModule } from '../ai/ai.module.js';
+import { WebModule } from '../web/web.module.js';
 import { AgentsModule } from '../agents/agents.module.js';
 import { ZohoModule } from '../zoho/zoho.module.js';
 import { CustomerSupportListener } from './customer-support.listener.js';
@@ -11,6 +12,7 @@ import { CUSTOMER_SUPPORT_QUEUE } from './queues/customer-support.queue.js';
 @Module({
   imports: [
     AiModule,
+    WebModule,
     AgentsModule,
     ZohoModule,
     BullModule.registerQueue({ name: CUSTOMER_SUPPORT_QUEUE }),

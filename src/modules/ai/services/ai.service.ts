@@ -5,10 +5,7 @@ import {
   type OpenAICompatibleProvider,
 } from '@ai-sdk/openai-compatible';
 import { type LanguageModel } from 'ai';
-import { createWebSearchTool } from '../tools/web-search.tool.js';
-import { createWebFetchTool } from '../tools/web-fetch.tool.js';
 import { AiModel } from '../constants/ai-models.js';
-import { WebTool } from '../constants/web-tools.js';
 
 @Injectable()
 export class AiService {
@@ -25,13 +22,5 @@ export class AiService {
 
   model(aiModel: AiModel): LanguageModel {
     return this.provider(aiModel);
-  }
-
-  webTools() {
-    const searxngBaseUrl = this.config.getOrThrow<string>('SEARXNG_BASE_URL');
-    return {
-      [WebTool.WEB_SEARCH]: createWebSearchTool(searxngBaseUrl),
-      [WebTool.WEB_FETCH]: createWebFetchTool(),
-    };
   }
 }
