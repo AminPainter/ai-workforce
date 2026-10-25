@@ -34,7 +34,7 @@ services:
   postgres:
     image: postgres:18-alpine
     ports:
-      - '5432:5432' # debug only
+      - '5432:5432'
     environment:
       - POSTGRES_USER=ai_workforce
       - POSTGRES_PASSWORD=ai_workforce
