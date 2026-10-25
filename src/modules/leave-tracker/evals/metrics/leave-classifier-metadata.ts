@@ -1,5 +1,5 @@
 import type { LLMTestCase } from 'deepeval/test-case';
-import type { LeaveRequestClassification } from '../../agents/leave-request-classifier.schema';
+import type { LeaveRequestClassification } from '../../agents/leave-request-classifier.schema.js';
 
 export interface LeaveClassifierResult {
   intent: LeaveRequestClassification['intent'];

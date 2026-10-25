@@ -1,5 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  createRedisState,
+  type RedisStateAdapter,
+} from '@chat-adapter/state-redis';
 
 const ONE_YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000;
 const PLEDGES_KEY = 'bakar:snacksPledges';
@@ -33,12 +37,11 @@ export interface FulfillPledgeResult {
 
 @Injectable()
 export class SnacksLedgerService implements OnModuleInit {
-  private store!: import('@chat-adapter/state-redis').RedisStateAdapter;
+  private store!: RedisStateAdapter;
 
   constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
-    const { createRedisState } = await import('@chat-adapter/state-redis');
     this.store = createRedisState({
       url: this.configService.getOrThrow<string>('REDIS_URL'),
       keyPrefix: 'snacks',

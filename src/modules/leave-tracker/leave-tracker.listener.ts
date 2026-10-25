@@ -5,11 +5,11 @@ import { Queue } from 'bullmq';
 import {
   SLACK_LEAVES_MESSAGE_EVENT,
   type SlackLeavesEvent,
-} from '../slack/slack.events';
+} from '../slack/slack.events.js';
 import {
   LEAVE_TRACKER_QUEUE,
   type LeaveMessageJob,
-} from './queues/leave-tracker.queue';
+} from './queues/leave-tracker.queue.js';
 
 const EMPLOYEES_NOT_ON_RAZORPAYX_PAYROLL = new Set<string>([
   'U09LZ4M5F6J', // Dhruvi Dolia
@@ -47,7 +47,7 @@ export class LeaveTrackerListener {
         { jobId: message.id },
       );
     } catch (error) {
-      this.logger.error(`failed to enqueue leave message: ${error}`);
+      this.logger.error(`failed to enqueue leave message: ${String(error)}`);
     }
   }
 }

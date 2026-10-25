@@ -1,18 +1,18 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AiService } from '../../ai/services/ai.service';
-import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
-import { GitHubMcpService } from '../../ai/services/github-mcp.service';
-import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
-import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service';
-import { SkillsService } from '../../skills/services/skills.service';
-import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
-import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { CodingTaskService } from '../../coding-agent/services/coding-task.service';
+import { AiService } from '../../ai/services/ai.service.js';
+import { SentryMcpService } from '../../ai/services/sentry-mcp.service.js';
+import { GitHubMcpService } from '../../ai/services/github-mcp.service.js';
+import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service.js';
+import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service.js';
+import { SkillsService } from '../../skills/services/skills.service.js';
+import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service.js';
+import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
+import { CodingTaskService } from '../../coding-agent/services/coding-task.service.js';
 import {
   EMPLOYEE_ASSISTANT,
   createEmployeeAssistant,
-} from '../agent/employee-assistant.agent';
+} from '../agent/employee-assistant.agent.js';
 
 @Injectable()
 export class EmployeeAssistantAgentRegistrationService implements OnApplicationBootstrap {

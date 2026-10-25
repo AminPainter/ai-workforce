@@ -1,7 +1,7 @@
 import {
   formatIstDateTime,
   toIstDateString,
-} from '../../../common/utils/date.util';
+} from '../../../common/utils/date.util.js';
 
 export enum ThreadMessageSender {
   Author = 'author',

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { Octokit } from '@octokit/rest';
-import { GitHubAppAuthService } from './services/github-app-auth.service';
+import { GitHubAppAuthService } from './services/github-app-auth.service.js';
 
 @Module({
   providers: [

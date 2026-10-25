@@ -1,16 +1,18 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent';
-import { SnackTool } from '../../snack-tracker/constants/snack-tools';
-import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools';
-import { formatIstDateTime } from '../../../common/utils/date.util';
+import { emoji, type Message, type Thread } from 'chat';
+import { toAiMessages, type AiMessage } from 'chat/ai';
+import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
+import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent.js';
+import { SnackTool } from '../../snack-tracker/constants/snack-tools.js';
+import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools.js';
+import { formatIstDateTime } from '../../../common/utils/date.util.js';
 import {
   SLACK_BAKAR_MESSAGE_EVENT,
   type SlackChannelMessageEvent,
-} from '../slack.events';
-import { SlackChatBot } from './slack-chat-bot.base';
+} from '../slack.events.js';
+import { SlackChatBot } from './slack-chat-bot.base.js';
 
 const GENERATION_FAILED_MESSAGE =
   'Having a bad headache. Not able to respond right now. [INTERNAL_SERVER_ERROR]';
@@ -36,8 +38,8 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     );
   }
 
-  async onModuleInit(): Promise<void> {
-    await this.initChat({
+  onModuleInit(): void {
+    this.initChat({
       userName: 'glomopay-bot',
       botToken: this.configService.getOrThrow<string>('SLACK_BOT_TOKEN'),
       signingSecret: this.configService.getOrThrow<string>(
@@ -57,10 +59,7 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     });
   }
 
-  private emitChannelMessage(
-    thread: import('chat').Thread,
-    message: import('chat').Message,
-  ): void {
+  private emitChannelMessage(thread: Thread, message: Message): void {
     const event = this.channelMessageEvents.get(thread.channelId);
     if (!event) return;
     this.eventEmitter.emit(event, {
@@ -69,34 +68,24 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
     } satisfies SlackChannelMessageEvent);
   }
 
-  private async addSeenReaction(
-    message: import('chat').Message,
-  ): Promise<void> {
-    await this.addReaction(message.threadId, message.id, this.emoji.eyes.name);
+  private async addSeenReaction(message: Message): Promise<void> {
+    await this.addReaction(message.threadId, message.id, emoji.eyes.name);
   }
 
-  private async answer(
-    thread: import('chat').Thread,
-    requesterUserId: string,
-  ): Promise<void> {
+  private async answer(thread: Thread, requesterUserId: string): Promise<void> {
     await thread.startTyping();
     const text = await this.generateReply(thread, requesterUserId);
     if (text.trim().length > 0)
       this.logger.log(`answered: ${text.length} chars`);
   }
 
-  private async readThreadHistory(
-    thread: import('chat').Thread,
-  ): Promise<import('chat').Message[]> {
-    const history: import('chat').Message[] = [];
+  private async readThreadHistory(thread: Thread): Promise<Message[]> {
+    const history: Message[] = [];
     for await (const msg of thread.allMessages) history.push(msg);
     return history;
   }
 
-  private async buildModelMessages(
-    history: import('chat').Message[],
-  ): Promise<import('chat/ai').AiMessage[]> {
-    const { toAiMessages } = await import('chat/ai');
+  private async buildModelMessages(history: Message[]): Promise<AiMessage[]> {
     const messages = await toAiMessages(
       history.slice(-this.maxContextMessages),
       { includeNames: true },
@@ -106,7 +95,7 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
   }
 
   private async generateReply(
-    thread: import('chat').Thread,
+    thread: Thread,
     requesterUserId: string,
   ): Promise<string> {
     try {
@@ -142,7 +131,7 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
         this.logger.log('reply stopped by user');
         return '';
       }
-      this.logger.error(`agent reply failed: ${error}`);
+      this.logger.error(`agent reply failed: ${String(error)}`);
       await thread.post(GENERATION_FAILED_MESSAGE);
       return '';
     }

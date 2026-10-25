@@ -1,4 +1,4 @@
-import type { KongRouteSyncResult } from '../agent/kong-route-sync.schema';
+import type { KongRouteSyncResult } from '../agent/kong-route-sync.schema.js';
 
 export const KONG_ROUTE_SYNC_QUEUE = 'kong-route-sync';
 export const KONG_ROUTE_SYNC_CODING_QUEUE = 'kong-route-sync-coding';

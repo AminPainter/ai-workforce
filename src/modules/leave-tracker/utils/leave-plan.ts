@@ -1,11 +1,11 @@
-import type { LeaveRequestClassification } from '../agents/leave-request-classifier.schema';
-import { LeaveKind, type LeavePortion } from '../constants/leave-kinds';
+import type { LeaveRequestClassification } from '../agents/leave-request-classifier.schema.js';
+import { LeaveKind, type LeavePortion } from '../constants/leave-kinds.js';
 import {
   addDays,
   expandDateRange,
   isValidDateString,
   isWeekend,
-} from './leave-dates';
+} from './leave-dates.js';
 
 const MAX_DAYS_PER_RANGE = 120;
 export const PAST_WINDOW_DAYS = 7;

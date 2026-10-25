@@ -15,18 +15,18 @@ import 'reflect-metadata';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AiModule } from '../src/modules/ai/ai.module';
-import { AiService } from '../src/modules/ai/services/ai.service';
-import { createForm9Classifier } from '../src/modules/form9/agent/form9-classifier.agent';
-import type { Form9Taxonomy } from '../src/modules/form9/agent/form9-classifier.schema';
+import { AiModule } from '../src/modules/ai/ai.module.js';
+import { AiService } from '../src/modules/ai/services/ai.service.js';
+import { createForm9Classifier } from '../src/modules/form9/agent/form9-classifier.agent.js';
+import type { Form9Taxonomy } from '../src/modules/form9/agent/form9-classifier.schema.js';
 import {
   lookupForm9,
   type Form9Derivation,
-} from '../src/modules/form9/mapping/form9-mapping';
+} from '../src/modules/form9/mapping/form9-mapping.js';
 import type {
   ZohoConversationEntry,
   ZohoTicket,
-} from '../src/modules/zoho/zoho.types';
+} from '../src/modules/zoho/zoho.types.js';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), AiModule],

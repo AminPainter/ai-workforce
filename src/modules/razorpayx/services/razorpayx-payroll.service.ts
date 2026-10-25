@@ -8,7 +8,7 @@ import {
   type AttendanceWrite,
   type RazorpayxCompany,
   type RazorpayxFetchResponse,
-} from '../razorpayx.types';
+} from '../razorpayx.types.js';
 
 const PAYROLL_API_BASE_URL = 'https://payroll.razorpay.com/api';
 const REQUEST_TIMEOUT_MS = 15_000;

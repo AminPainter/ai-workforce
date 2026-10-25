@@ -1,22 +1,22 @@
 import { ToolLoopAgent, stepCountIs } from 'ai';
 import { ConfigService } from '@nestjs/config';
 import { resolve } from 'path';
-import { AiService } from '../../ai/services/ai.service';
-import { AiModel } from '../../ai/constants/ai-models';
-import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
-import { GitHubMcpService } from '../../ai/services/github-mcp.service';
-import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service';
-import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service';
-import { SkillsService } from '../../skills/services/skills.service';
-import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service';
-import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool';
-import { createMarkSnacksFulfilledTool } from '../../snack-tracker/tools/mark-snacks-fulfilled.tool';
-import { SnackTool } from '../../snack-tracker/constants/snack-tools';
-import { CodingTaskService } from '../../coding-agent/services/coding-task.service';
-import { createDelegateCodingTaskTool } from '../../coding-agent/tools/delegate-coding-task.tool';
-import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools';
-import { RegisteredAgent } from '../../agents/services/agent-registry.service';
-import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt';
+import { AiService } from '../../ai/services/ai.service.js';
+import { AiModel } from '../../ai/constants/ai-models.js';
+import { SentryMcpService } from '../../ai/services/sentry-mcp.service.js';
+import { GitHubMcpService } from '../../ai/services/github-mcp.service.js';
+import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service.js';
+import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service.js';
+import { SkillsService } from '../../skills/services/skills.service.js';
+import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service.js';
+import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool.js';
+import { createMarkSnacksFulfilledTool } from '../../snack-tracker/tools/mark-snacks-fulfilled.tool.js';
+import { SnackTool } from '../../snack-tracker/constants/snack-tools.js';
+import { CodingTaskService } from '../../coding-agent/services/coding-task.service.js';
+import { createDelegateCodingTaskTool } from '../../coding-agent/tools/delegate-coding-task.tool.js';
+import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools.js';
+import { RegisteredAgent } from '../../agents/services/agent-registry.service.js';
+import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt.js';
 
 export const EMPLOYEE_ASSISTANT = 'employee-assistant';
 
@@ -37,7 +37,7 @@ export function createEmployeeAssistant(
   codingTaskService: CodingTaskService,
 ): RegisteredAgent {
   const skills = skillsService.buildAgentSkills([
-    resolve(__dirname, '../skills/sentry-root-cause'),
+    resolve(import.meta.dirname, '../skills/sentry-root-cause'),
   ]);
 
   const bakarChannelId = `slack:${configService.getOrThrow<string>(

@@ -1,22 +1,27 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { QueueModule } from '../queue/queue.module';
-import { CODING_AGENT, createCodingAgentFactory } from './agent/coding.agent';
-import { CodingSessionRepository } from './services/coding-session.repository';
-import { CodingTaskProcessor } from './processors/coding-task.processor';
-import { CODING_TASK_SLACK_SUMMARY_QUEUE } from './queues/coding-agent.queue';
+import { QueueModule } from '../queue/queue.module.js';
+import { LoggingModule } from '../logging/logging.module.js';
+import {
+  CODING_AGENT,
+  createCodingAgentFactory,
+} from './agent/coding.agent.js';
+import { CodingSessionRepository } from './services/coding-session.repository.js';
+import { CodingTaskProcessor } from './processors/coding-task.processor.js';
+import { CODING_TASK_SLACK_SUMMARY_QUEUE } from './queues/coding-agent.queue.js';
 import {
   KONG_ROUTE_SYNC_CODING_AGENT,
   createKongRouteSyncCodingAgentFactory,
-} from '../kong-route-sync/agent/kong-route-sync-coding.agent';
-import { KongRouteSyncCodingProcessor } from '../kong-route-sync/processors/kong-route-sync-coding.processor';
-import { KONG_ROUTE_SYNC_NOTIFICATION_QUEUE } from '../kong-route-sync/queues/kong-route-sync.queue';
-import { GitHubAppModule } from '../github/github-app.module';
+} from '../kong-route-sync/agent/kong-route-sync-coding.agent.js';
+import { KongRouteSyncCodingProcessor } from '../kong-route-sync/processors/kong-route-sync-coding.processor.js';
+import { KONG_ROUTE_SYNC_NOTIFICATION_QUEUE } from '../kong-route-sync/queues/kong-route-sync.queue.js';
+import { GitHubAppModule } from '../github/github-app.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    LoggingModule,
     QueueModule,
     GitHubAppModule,
     BullModule.registerQueue(

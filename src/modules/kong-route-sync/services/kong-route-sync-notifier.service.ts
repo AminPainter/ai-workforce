@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { SlackBotService } from '../../slack/services/slack-bot.service';
+import { SlackBotService } from '../../slack/services/slack-bot.service.js';
 import {
   buildKongRouteSyncDirectMessage,
   type KongRouteSyncSummary,
-} from '../templates/kong-route-sync.template';
+} from '../templates/kong-route-sync.template.js';
 
 @Injectable()
 export class KongRouteSyncNotifierService {

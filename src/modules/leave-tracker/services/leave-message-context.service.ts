@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { LeavesSlackBotService } from '../../slack/services/leaves-slack-bot.service';
-import type { LeaveMessageJob } from '../queues/leave-tracker.queue';
+import type { Message } from 'chat';
+import { LeavesSlackBotService } from '../../slack/services/leaves-slack-bot.service.js';
+import type { LeaveMessageJob } from '../queues/leave-tracker.queue.js';
 import {
   formatClassifierInput,
   type ThreadMessage,
   ThreadMessageSender,
-} from '../utils/classifier-input';
+} from '../utils/classifier-input.js';
 
 const THREAD_FETCH_LIMIT = 100;
 const MAX_EARLIER_THREAD_REPLIES = 20;
@@ -76,12 +77,12 @@ export class LeaveMessageContextService {
   }
 }
 
-function isFromOtherBot(message: import('chat').Message): boolean {
+function isFromOtherBot(message: Message): boolean {
   return message.author.isBot === true && !message.author.isMe;
 }
 
 function getMessageSenderType(
-  message: import('chat').Message,
+  message: Message,
   authorUserId: string,
 ): ThreadMessageSender {
   if (message.author.isMe) return ThreadMessageSender.Bot;

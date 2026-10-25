@@ -6,12 +6,12 @@ import { Queue } from 'bullmq';
 import {
   GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT,
   type GitHubPullRequestMergedToMainEvent,
-} from '../github/github.events';
+} from '../github/github.events.js';
 import {
   KONG_ROUTE_SYNC_QUEUE,
   type KongRouteSyncJob,
-} from './queues/kong-route-sync.queue';
-import { SOURCE_REPO, authorDenylist } from './kong-route-sync.config';
+} from './queues/kong-route-sync.queue.js';
+import { SOURCE_REPO, authorDenylist } from './kong-route-sync.config.js';
 
 @Injectable()
 export class KongRouteSyncListener {
@@ -66,7 +66,10 @@ export class KongRouteSyncListener {
       );
       this.logger.log(`queued routes detection for ${prRef} (delivery ${id})`);
     } catch (error) {
-      this.logger.error(`failed to queue routes detection for ${prRef}`, error);
+      this.logger.error(
+        `failed to queue routes detection for ${prRef}: ${String(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
     }
   }
 }

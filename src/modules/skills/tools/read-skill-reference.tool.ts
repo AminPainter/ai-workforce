@@ -1,8 +1,8 @@
 import { readFile } from 'fs/promises';
 import { tool } from 'ai';
 import { z } from 'zod';
-import { type LoadedSkill } from '../types/skill.types';
-import { resolveReferencePath } from '../utils/skill-reference-path';
+import { type LoadedSkill } from '../types/skill.types.js';
+import { resolveReferencePath } from '../utils/skill-reference-path.js';
 
 export function createReadSkillReferenceTool(
   skillsRegistry: ReadonlyMap<string, LoadedSkill>,

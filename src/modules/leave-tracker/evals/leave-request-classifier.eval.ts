@@ -7,26 +7,26 @@ import { AISDKModel } from 'deepeval/models';
 import { LLMTestCase } from 'deepeval/test-case';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { toIstDateString } from '../../../common/utils/date.util';
-import { AiService } from '../../ai/services/ai.service';
-import { AiModel } from '../../ai/constants/ai-models';
-import { createLeaveRequestClassifier } from '../agents/leave-request-classifier.agent';
+import { toIstDateString } from '../../../common/utils/date.util.js';
+import { AiService } from '../../ai/services/ai.service.js';
+import { AiModel } from '../../ai/constants/ai-models.js';
+import { createLeaveRequestClassifier } from '../agents/leave-request-classifier.agent.js';
 import {
   leaveRequestClassificationSchema,
   type LeaveRequestClassification,
-} from '../agents/leave-request-classifier.schema';
+} from '../agents/leave-request-classifier.schema.js';
 import {
   formatClassifierInput,
   ThreadMessageSender,
-} from '../utils/classifier-input';
-import { planLeaveRequest } from '../utils/leave-plan';
-import { ClarificationQualityMetric } from './metrics/clarification-quality.metric';
+} from '../utils/classifier-input.js';
+import { planLeaveRequest } from '../utils/leave-plan.js';
+import { ClarificationQualityMetric } from './metrics/clarification-quality.metric.js';
 import {
   type LeaveClassifierMetadata,
   type LeaveClassifierResult,
-} from './metrics/leave-classifier-metadata';
-import { LeaveIntentMetric } from './metrics/leave-intent.metric';
-import { LeaveMarksMetric } from './metrics/leave-marks.metric';
+} from './metrics/leave-classifier-metadata.js';
+import { LeaveIntentMetric } from './metrics/leave-intent.metric.js';
+import { LeaveMarksMetric } from './metrics/leave-marks.metric.js';
 
 process.loadEnvFile();
 
@@ -61,7 +61,7 @@ const goldenMetadataSchema = z.object({
 const goldens = (
   JSON.parse(
     readFileSync(
-      join(__dirname, 'goldens/leave-request-classifier.json'),
+      join(import.meta.dirname, 'goldens/leave-request-classifier.json'),
       'utf8',
     ),
   ) as ConstructorParameters<typeof Golden>[0][]

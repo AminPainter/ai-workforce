@@ -54,3 +54,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # DeepEval local results
 /.deepeval
+
+# TypeScript incremental build info
+*.tsbuildinfo

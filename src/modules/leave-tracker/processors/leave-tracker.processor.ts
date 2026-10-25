@@ -2,19 +2,19 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
-import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { LeavesSlackBotService } from '../../slack/services/leaves-slack-bot.service';
-import { toIstDateString } from '../../../common/utils/date.util';
-import { LEAVE_REQUEST_CLASSIFIER } from '../agents/leave-request-classifier.agent';
-import type { LeaveRequestClassification } from '../agents/leave-request-classifier.schema';
+import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
+import { LeavesSlackBotService } from '../../slack/services/leaves-slack-bot.service.js';
+import { toIstDateString } from '../../../common/utils/date.util.js';
+import { LEAVE_REQUEST_CLASSIFIER } from '../agents/leave-request-classifier.agent.js';
+import type { LeaveRequestClassification } from '../agents/leave-request-classifier.schema.js';
 import {
   LEAVE_TRACKER_QUEUE,
   type LeaveMessageJob,
-} from '../queues/leave-tracker.queue';
-import { LeaveAttendanceService } from '../services/leave-attendance.service';
-import { LeaveMessageContextService } from '../services/leave-message-context.service';
-import { planLeaveRequest } from '../utils/leave-plan';
-import { formatLeaveReply } from '../utils/leave-reply';
+} from '../queues/leave-tracker.queue.js';
+import { LeaveAttendanceService } from '../services/leave-attendance.service.js';
+import { LeaveMessageContextService } from '../services/leave-message-context.service.js';
+import { planLeaveRequest } from '../utils/leave-plan.js';
+import { formatLeaveReply } from '../utils/leave-reply.js';
 
 const SUCCESS_REACTION = 'white_check_mark';
 const PROBLEM_REACTION = 'warning';

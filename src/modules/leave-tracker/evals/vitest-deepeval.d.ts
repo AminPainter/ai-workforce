@@ -1,9 +1,9 @@
 import type { BaseMetric } from 'deepeval/metrics';
 
-// deepeval only adds the toPass type to vitest's ESM types, but this CommonJS project
-// uses vitest's CommonJS types, so TypeScript can't see toPass without this.
+// deepeval/vitest augments vitest's Assertion, which vitest re-exports from
+// @vitest/expect, so the augmentation doesn't merge. Matchers does.
 declare module 'vitest' {
-  interface Assertion<T> {
+  interface Matchers<T = any> {
     toPass(metrics: BaseMetric[]): Promise<T>;
   }
 }

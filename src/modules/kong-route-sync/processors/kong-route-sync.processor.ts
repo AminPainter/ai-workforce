@@ -7,14 +7,14 @@ import {
 } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Octokit } from '@octokit/rest';
-import { isRoutesFile } from '../utils/routes-files';
+import { isRoutesFile } from '../utils/routes-files.js';
 import {
   KONG_ROUTE_SYNC_CODING_QUEUE,
   KONG_ROUTE_SYNC_QUEUE,
   type KongRouteSyncCodingJob,
   type KongRouteSyncJob,
   type RailsAppPullRequest,
-} from '../queues/kong-route-sync.queue';
+} from '../queues/kong-route-sync.queue.js';
 
 @Processor(KONG_ROUTE_SYNC_QUEUE)
 export class KongRouteSyncProcessor extends WorkerHost {

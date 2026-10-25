@@ -4,7 +4,7 @@ import { Queue } from 'bullmq';
 import {
   CODING_AGENT_QUEUE,
   type CodingTaskJob,
-} from '../queues/coding-agent.queue';
+} from '../queues/coding-agent.queue.js';
 
 @Injectable()
 export class CodingTaskService {

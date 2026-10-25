@@ -5,11 +5,11 @@ import { Queue } from 'bullmq';
 import {
   SLACK_BAKAR_MESSAGE_EVENT,
   type SlackBakarEvent,
-} from '../slack/slack.events';
+} from '../slack/slack.events.js';
 import {
   SNACK_TRACKER_QUEUE,
   type SnacksPledgeJob,
-} from './queues/snack-tracker.queue';
+} from './queues/snack-tracker.queue.js';
 
 @Injectable()
 export class SnackTrackerListener {
@@ -40,7 +40,7 @@ export class SnackTrackerListener {
         { jobId: message.id },
       );
     } catch (error) {
-      this.logger.error(`failed to enqueue snacks pledge: ${error}`);
+      this.logger.error(`failed to enqueue snacks pledge: ${String(error)}`);
     }
   }
 }

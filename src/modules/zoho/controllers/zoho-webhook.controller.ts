@@ -7,8 +7,8 @@ import {
   Req,
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
-import type { Request as ExpressRequest } from 'express';
-import { ZohoWebhookService } from '../services/zoho-webhook.service';
+import type { FastifyRequest } from 'fastify';
+import { ZohoWebhookService } from '../services/zoho-webhook.service.js';
 
 @Controller('webhooks')
 export class ZohoWebhookController {
@@ -19,7 +19,7 @@ export class ZohoWebhookController {
   @Post('zoho')
   @HttpCode(200)
   async handleZohoWebhook(
-    @Req() req: RawBodyRequest<ExpressRequest>,
+    @Req() req: RawBodyRequest<FastifyRequest>,
     @Headers('x-zdesk-jwt') token: string | undefined,
   ): Promise<{ ok: true }> {
     // Zoho sends an unsigned setup/validation request (no X-ZDesk-JWT) when the

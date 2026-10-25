@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { createPi } from '@ai-sdk/harness-pi';
-import { AiModel } from '../../ai/constants/ai-models';
-import { CODING_AGENT_SYSTEM_PROMPT } from './coding.prompt';
+import { AiModel } from '../../ai/constants/ai-models.js';
+import { CODING_AGENT_SYSTEM_PROMPT } from './coding.prompt.js';
 
 export const REPO_DIR = 'repo';
 

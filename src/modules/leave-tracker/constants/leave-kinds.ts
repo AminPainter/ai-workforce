@@ -1,4 +1,4 @@
-import type { AttendanceStatus } from '../../razorpayx/razorpayx.types';
+import type { AttendanceStatus } from '../../razorpayx/razorpayx.types.js';
 
 export enum LeaveKind {
   Earned = 'earned',

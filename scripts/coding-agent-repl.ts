@@ -23,15 +23,15 @@ import { Job } from 'bullmq';
 import {
   CODING_AGENT,
   createCodingAgentFactory,
-} from '../src/modules/coding-agent/agent/coding.agent';
-import { GitHubAppModule } from '../src/modules/github/github-app.module';
-import { CodingSessionRepository } from '../src/modules/coding-agent/services/coding-session.repository';
-import { CodingTaskProcessor } from '../src/modules/coding-agent/processors/coding-task.processor';
+} from '../src/modules/coding-agent/agent/coding.agent.js';
+import { GitHubAppModule } from '../src/modules/github/github-app.module.js';
+import { CodingSessionRepository } from '../src/modules/coding-agent/services/coding-session.repository.js';
+import { CodingTaskProcessor } from '../src/modules/coding-agent/processors/coding-task.processor.js';
 import {
   CODING_TASK_SLACK_SUMMARY_QUEUE,
   type CodingTaskSlackSummaryJob,
   type CodingTaskJob,
-} from '../src/modules/coding-agent/queues/coding-agent.queue';
+} from '../src/modules/coding-agent/queues/coding-agent.queue.js';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), GitHubAppModule],

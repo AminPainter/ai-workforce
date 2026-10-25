@@ -1,9 +1,9 @@
 import { ConfigService } from '@nestjs/config';
-import { createCodingAgent } from '../../coding-agent/agent/coding.agent';
+import { createCodingAgent } from '../../coding-agent/agent/coding.agent.js';
 import {
   SUBMIT_ROUTE_SYNC_RESULT_TOOL,
   submitRouteSyncResultTool,
-} from '../tools/submit-route-sync-result.tool';
+} from '../tools/submit-route-sync-result.tool.js';
 
 export const KONG_ROUTE_SYNC_CODING_AGENT = 'kong-route-sync-coding-agent';
 

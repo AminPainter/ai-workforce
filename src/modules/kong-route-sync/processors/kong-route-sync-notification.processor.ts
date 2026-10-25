@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { KongRouteSyncNotifierService } from '../services/kong-route-sync-notifier.service';
+import { KongRouteSyncNotifierService } from '../services/kong-route-sync-notifier.service.js';
 import {
   KONG_ROUTE_SYNC_NOTIFICATION_QUEUE,
   type KongRouteSyncNotificationJob,
-} from '../queues/kong-route-sync.queue';
+} from '../queues/kong-route-sync.queue.js';
 
 @Processor(KONG_ROUTE_SYNC_NOTIFICATION_QUEUE)
 export class KongRouteSyncNotificationProcessor extends WorkerHost {

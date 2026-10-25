@@ -1,7 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { formatIstDate } from '../../../common/utils/date.util';
-import { type SnacksLedgerService } from '../services/snacks-ledger.service';
+import { formatIstDate } from '../../../common/utils/date.util.js';
+import { type SnacksLedgerService } from '../services/snacks-ledger.service.js';
 
 export function createMarkSnacksFulfilledTool(
   snacksLedgerService: SnacksLedgerService,

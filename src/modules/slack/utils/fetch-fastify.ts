@@ -1,11 +1,8 @@
 import type { RawBodyRequest } from '@nestjs/common';
-import type {
-  Request as ExpressRequest,
-  Response as ExpressResponse,
-} from 'express';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
-export function toWebRequest(req: RawBodyRequest<ExpressRequest>): Request {
-  const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+export function toWebRequest(req: RawBodyRequest<FastifyRequest>): Request {
+  const url = `${req.protocol}://${req.host}${req.originalUrl}`;
   const headers = new Headers();
   for (const [key, value] of Object.entries(req.headers))
     if (Array.isArray(value)) value.forEach((v) => headers.append(key, v));
@@ -19,11 +16,11 @@ export function toWebRequest(req: RawBodyRequest<ExpressRequest>): Request {
 }
 
 export async function sendWebResponse(
-  res: ExpressResponse,
+  reply: FastifyReply,
   webResponse: Response,
 ): Promise<void> {
-  res.status(webResponse.status);
-  webResponse.headers.forEach((value, key) => res.setHeader(key, value));
+  reply.status(webResponse.status);
+  for (const [key, value] of webResponse.headers) reply.header(key, value);
   const body = await webResponse.arrayBuffer();
-  res.send(Buffer.from(body));
+  await reply.send(Buffer.from(body));
 }
