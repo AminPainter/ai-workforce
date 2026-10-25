@@ -7,6 +7,7 @@ import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
 import { EMPLOYEE_ASSISTANT } from '../../employee-assistant/agent/employee-assistant.agent.js';
 import { SnackTool } from '../../snack-tracker/constants/snack-tools.js';
 import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools.js';
+import { ArtifactTool } from '../../artifacts/constants/artifact-tools.js';
 import { formatIstDateTime } from '../../../common/utils/date.util.js';
 import {
   SLACK_BAKAR_MESSAGE_EVENT,
@@ -110,6 +111,10 @@ export class SlackBotService extends SlackChatBot implements OnModuleInit {
             requesterUserId,
           },
           [CodingAgentTool.DELEGATE_CODING_TASK]: { threadId: thread.id },
+          [ArtifactTool.REQUEST_ARTIFACT]: {
+            threadId: thread.id,
+            requesterUserId,
+          },
         },
       });
       if (result.finishReason === 'tool-calls') {

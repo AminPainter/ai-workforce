@@ -16,6 +16,10 @@ import { SnackTool } from '../../snack-tracker/constants/snack-tools.js';
 import { CodingTaskService } from '../../coding-agent/services/coding-task.service.js';
 import { createDelegateCodingTaskTool } from '../../coding-agent/tools/delegate-coding-task.tool.js';
 import { CodingAgentTool } from '../../coding-agent/constants/coding-agent-tools.js';
+import { ArtifactRequestService } from '../../artifacts/services/artifact-request.service.js';
+import { ArtifactScannerService } from '../../artifacts/services/artifact-scanner.service.js';
+import { createRequestArtifactTool } from '../../artifacts/tools/request-artifact.tool.js';
+import { ArtifactTool } from '../../artifacts/constants/artifact-tools.js';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service.js';
 import { EMPLOYEE_ASSISTANT_SYSTEM_PROMPT } from './employee-assistant.prompt.js';
 
@@ -37,6 +41,8 @@ export function createEmployeeAssistant(
   snacksLedgerService: SnacksLedgerService,
   configService: ConfigService,
   codingTaskService: CodingTaskService,
+  artifactRequestService: ArtifactRequestService,
+  artifactScannerService: ArtifactScannerService,
 ): RegisteredAgent {
   const skills = skillsService.buildAgentSkills([
     resolve(import.meta.dirname, '../skills/sentry-root-cause'),
@@ -68,6 +74,10 @@ export function createEmployeeAssistant(
       ),
       [CodingAgentTool.DELEGATE_CODING_TASK]:
         createDelegateCodingTaskTool(codingTaskService),
+      [ArtifactTool.REQUEST_ARTIFACT]: createRequestArtifactTool(
+        artifactRequestService,
+        artifactScannerService,
+      ),
     },
     stopWhen: stepCountIs(MAX_STEPS),
     prepareStep: ({ stepNumber }) => {
@@ -80,6 +90,7 @@ export function createEmployeeAssistant(
     toolsContext: {
       [SnackTool.MARK_SNACKS_FULFILLED]: { channelId: '', requesterUserId: '' },
       [CodingAgentTool.DELEGATE_CODING_TASK]: { threadId: '' },
+      [ArtifactTool.REQUEST_ARTIFACT]: { threadId: '', requesterUserId: '' },
     },
   });
 }

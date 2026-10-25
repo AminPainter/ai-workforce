@@ -59,6 +59,12 @@ services:
       # Gateway model id for the employee assistant; defaults to grok-4.7 in code.
       - key: EMPLOYEE_ASSISTANT_MODEL
         sync: false
+      # Public origin of this web service, used in artifact links posted to Slack.
+      - key: SERVICE_URL
+        sync: false
+      # Gateway model id for the artifact generator; defaults to claude-opus-5-5 in code.
+      - key: ARTIFACT_GENERATOR_MODEL
+        sync: false
       # #leaves → RazorpayX Payroll leave bot.
       - key: LEAVES_SLACK_CHANNEL
         sync: false

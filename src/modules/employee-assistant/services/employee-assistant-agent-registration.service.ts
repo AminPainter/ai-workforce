@@ -10,6 +10,8 @@ import { SkillsService } from '../../skills/services/skills.service.js';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service.js';
 import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
 import { CodingTaskService } from '../../coding-agent/services/coding-task.service.js';
+import { ArtifactRequestService } from '../../artifacts/services/artifact-request.service.js';
+import { ArtifactScannerService } from '../../artifacts/services/artifact-scanner.service.js';
 import {
   EMPLOYEE_ASSISTANT,
   createEmployeeAssistant,
@@ -29,6 +31,8 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
     private readonly configService: ConfigService,
     private readonly agentRegistry: AgentRegistry,
     private readonly codingTaskService: CodingTaskService,
+    private readonly artifactRequestService: ArtifactRequestService,
+    private readonly artifactScannerService: ArtifactScannerService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -45,6 +49,8 @@ export class EmployeeAssistantAgentRegistrationService implements OnApplicationB
         this.snacksLedgerService,
         this.configService,
         this.codingTaskService,
+        this.artifactRequestService,
+        this.artifactScannerService,
       ),
     );
   }
