@@ -10,7 +10,7 @@ import type {
   ZohoTicket,
   ZohoTicketResponse,
   ZohoThreadResponse,
-} from '../zoho.types';
+} from '../zoho.types.js';
 
 const ACCOUNTS_URL = 'https://accounts.zoho.in';
 const DESK_BASE_URL = 'https://desk.zoho.in';

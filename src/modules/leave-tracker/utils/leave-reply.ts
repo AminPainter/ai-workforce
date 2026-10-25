@@ -1,10 +1,10 @@
-import { describeEntry } from '../constants/leave-kinds';
+import { describeEntry } from '../constants/leave-kinds.js';
 import type {
   DateOutcome,
   DateOutcomeStatus,
-} from '../services/leave-attendance.service';
-import { PAST_WINDOW_DAYS, type SkippedDate } from './leave-plan';
-import { formatDateRanges, formatShortDate } from './leave-dates';
+} from '../services/leave-attendance.service.js';
+import { PAST_WINDOW_DAYS, type SkippedDate } from './leave-plan.js';
+import { formatDateRanges, formatShortDate } from './leave-dates.js';
 
 export interface LeaveReplyInput {
   addressee: string;

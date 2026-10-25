@@ -1,18 +1,18 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { ZohoDeskService } from '../../zoho/services/zoho-desk.service';
+import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
+import { ZohoDeskService } from '../../zoho/services/zoho-desk.service.js';
 import type {
   ZohoConversationEntry,
   ZohoCustomFields,
   ZohoTicket,
-} from '../../zoho/zoho.types';
-import { FORM9_CLASSIFIER } from '../agent/form9-classifier.agent';
-import type { Form9Taxonomy } from '../agent/form9-classifier.schema';
-import { lookupForm9, type Form9Derivation } from '../mapping/form9-mapping';
-import { FORM9_QUEUE } from '../queues/form9.queue';
-import type { Form9Job } from '../form9.types';
+} from '../../zoho/zoho.types.js';
+import { FORM9_CLASSIFIER } from '../agent/form9-classifier.agent.js';
+import type { Form9Taxonomy } from '../agent/form9-classifier.schema.js';
+import { lookupForm9, type Form9Derivation } from '../mapping/form9-mapping.js';
+import { FORM9_QUEUE } from '../queues/form9.queue.js';
+import type { Form9Job } from '../form9.types.js';
 
 @Processor(FORM9_QUEUE, { concurrency: 1 })
 export class Form9Processor extends WorkerHost {

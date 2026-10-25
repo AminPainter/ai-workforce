@@ -1,4 +1,4 @@
-import { type LoadedSkill } from '../types/skill.types';
+import { type LoadedSkill } from '../types/skill.types.js';
 
 export function buildSkillsPromptSection(skills: LoadedSkill[]): string {
   if (!skills.length) return '';

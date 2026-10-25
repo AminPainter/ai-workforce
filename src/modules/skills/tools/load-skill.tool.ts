@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { type LoadedSkill } from '../types/skill.types';
+import { type LoadedSkill } from '../types/skill.types.js';
 
 export function createLoadSkillTool(
   skillsRegistry: ReadonlyMap<string, LoadedSkill>,

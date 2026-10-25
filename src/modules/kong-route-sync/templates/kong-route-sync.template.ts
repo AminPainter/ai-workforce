@@ -1,4 +1,4 @@
-import type { RailsAppPullRequest } from '../queues/kong-route-sync.queue';
+import type { RailsAppPullRequest } from '../queues/kong-route-sync.queue.js';
 
 const OPT_OUT_SLACK_USER_ID = 'U0857R1RB9Q';
 

@@ -1,9 +1,9 @@
-import { SUBMIT_ROUTE_SYNC_RESULT_TOOL } from '../tools/submit-route-sync-result.tool';
-import { TARGET_REPO } from '../kong-route-sync.config';
+import { SUBMIT_ROUTE_SYNC_RESULT_TOOL } from '../tools/submit-route-sync-result.tool.js';
+import { TARGET_REPO } from '../kong-route-sync.config.js';
 import type {
   KongRouteSyncCodingJob,
   RoutesFileChange,
-} from '../queues/kong-route-sync.queue';
+} from '../queues/kong-route-sync.queue.js';
 
 export function kongRouteSyncBranch(prNumber: number): string {
   return `amin-ka-bot/sync-routes-glomopay-pr-${prNumber}`;

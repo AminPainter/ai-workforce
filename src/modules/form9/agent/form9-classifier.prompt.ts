@@ -1,4 +1,4 @@
-import { renderTaxonomy } from '../mapping/form9-mapping';
+import { renderTaxonomy } from '../mapping/form9-mapping.js';
 
 export const FORM9_CLASSIFIER_SYSTEM_PROMPT = `You classify a single Glomo customer-support ticket into a support taxonomy node
 (L1 > L2 > L3). You are given the ticket subject and the conversation. Return the

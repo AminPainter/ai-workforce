@@ -1,12 +1,16 @@
-import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { CodingAgentWorkerModule } from './modules/coding-agent/coding-agent-worker.module';
+import { Logger } from 'nestjs-pino';
+import { CodingAgentWorkerModule } from './modules/coding-agent/coding-agent-worker.module.js';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(
     CodingAgentWorkerModule,
+    { bufferLogs: true },
   );
+  const logger = app.get(Logger);
+  app.useLogger(logger);
+  app.flushLogs();
   app.enableShutdownHooks();
-  new Logger('Worker').log('coding agent worker started');
+  logger.log('coding agent worker started', 'Worker');
 }
-bootstrap();
+await bootstrap();

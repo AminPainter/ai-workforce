@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RazorpayxPayrollService } from '../../razorpayx/services/razorpayx-payroll.service';
+import { RazorpayxPayrollService } from '../../razorpayx/services/razorpayx-payroll.service.js';
 import {
   EmployeeNotFoundError,
   type AttendanceRecord,
   type AttendanceWrite,
-} from '../../razorpayx/razorpayx.types';
+} from '../../razorpayx/razorpayx.types.js';
 import {
   RAZORPAYX_STATUS_CODE_BY_STATUS,
   describeEntry,
@@ -12,8 +12,8 @@ import {
   type AttendanceTarget,
   type LeaveKind,
   type LeavePortion,
-} from '../constants/leave-kinds';
-import type { PlannedMark } from '../utils/leave-plan';
+} from '../constants/leave-kinds.js';
+import type { PlannedMark } from '../utils/leave-plan.js';
 
 const MARK_REMARKS_SUFFIX = 'Applied by leave bot v2';
 

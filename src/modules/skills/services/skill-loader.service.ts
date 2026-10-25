@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { basename, resolve } from 'path';
 import { parse as parseYaml } from 'yaml';
-import { skillFrontmatterSchema } from '../schema/skill.schema';
-import { type LoadedSkill } from '../types/skill.types';
+import { skillFrontmatterSchema } from '../schema/skill.schema.js';
+import { type LoadedSkill } from '../types/skill.types.js';
 
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 

@@ -1,11 +1,12 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import type { Message, Thread } from 'chat';
 import {
   SLACK_LEAVES_MESSAGE_EVENT,
   type SlackLeavesEvent,
-} from '../slack.events';
-import { SlackChatBot } from './slack-chat-bot.base';
+} from '../slack.events.js';
+import { SlackChatBot } from './slack-chat-bot.base.js';
 
 // Separate state namespace so dedupe/locks don't collide with the main bot,
 // which can see the same #leaves messages while it is still in the channel.
@@ -30,13 +31,13 @@ export class LeavesSlackBotService
     if (leavesChannel) this.leavesChannelId = `slack:${leavesChannel}`;
   }
 
-  async onModuleInit(): Promise<void> {
+  onModuleInit(): void {
     if (!this.leavesChannelId) {
       this.logger.log('LEAVES_SLACK_CHANNEL is not set; leaves bot disabled');
       return;
     }
 
-    await this.initChat({
+    this.initChat({
       userName: 'leaves-bot',
       botToken: this.configService.getOrThrow<string>('LEAVES_SLACK_BOT_TOKEN'),
       signingSecret: this.configService.getOrThrow<string>(
@@ -60,10 +61,7 @@ export class LeavesSlackBotService
     return this.bot.webhooks.slack;
   }
 
-  private emitLeavesMessage(
-    thread: import('chat').Thread,
-    message: import('chat').Message,
-  ): void {
+  private emitLeavesMessage(thread: Thread, message: Message): void {
     if (thread.channelId !== this.leavesChannelId) return;
     this.eventEmitter.emit(SLACK_LEAVES_MESSAGE_EVENT, {
       thread,

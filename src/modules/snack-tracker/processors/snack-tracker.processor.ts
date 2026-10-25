@@ -1,15 +1,15 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { SlackBotService } from '../../slack/services/slack-bot.service';
-import { SnacksLedgerService } from '../services/snacks-ledger.service';
-import { SNACKS_PLEDGE_CLASSIFIER } from '../agents/snacks-pledge-classifier.agent';
-import type { SnacksPledgeClassification } from '../agents/snacks-pledge-classifier.schema';
+import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
+import { SlackBotService } from '../../slack/services/slack-bot.service.js';
+import { SnacksLedgerService } from '../services/snacks-ledger.service.js';
+import { SNACKS_PLEDGE_CLASSIFIER } from '../agents/snacks-pledge-classifier.agent.js';
+import type { SnacksPledgeClassification } from '../agents/snacks-pledge-classifier.schema.js';
 import {
   SNACK_TRACKER_QUEUE,
   type SnacksPledgeJob,
-} from '../queues/snack-tracker.queue';
+} from '../queues/snack-tracker.queue.js';
 
 const CONFIRMATION_MESSAGE =
   'Hehe 😈 noted — snacks are officially pending on you.';

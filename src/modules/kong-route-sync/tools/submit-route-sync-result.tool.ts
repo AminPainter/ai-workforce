@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { kongRouteSyncResultSchema } from '../agent/kong-route-sync.schema';
+import { kongRouteSyncResultSchema } from '../agent/kong-route-sync.schema.js';
 
 export const SUBMIT_ROUTE_SYNC_RESULT_TOOL = 'submitRouteSyncResult';
 

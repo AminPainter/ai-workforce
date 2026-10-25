@@ -1,6 +1,6 @@
 import { BaseMetric } from 'deepeval/metrics';
 import type { LLMTestCase } from 'deepeval/test-case';
-import { metadataOf } from './leave-classifier-metadata';
+import { metadataOf } from './leave-classifier-metadata.js';
 
 export class LeaveMarksMetric extends BaseMetric {
   constructor() {

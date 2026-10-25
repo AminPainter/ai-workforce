@@ -3,12 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import jwt from 'jsonwebtoken';
 import { JwksClient } from 'jwks-rsa';
-import { ZOHO_TICKET_CREATED, ZOHO_TICKET_THREAD_ADDED } from '../zoho.events';
+import {
+  ZOHO_TICKET_CREATED,
+  ZOHO_TICKET_THREAD_ADDED,
+} from '../zoho.events.js';
 import type {
   ZohoTicketCreatedEvent,
   ZohoTicketThreadAddedEvent,
   ZohoWebhookEvent,
-} from '../zoho.types';
+} from '../zoho.types.js';
 
 const TICKET_THREAD_ADD = 'Ticket_Thread_Add';
 const TICKET_ADD = 'Ticket_Add';

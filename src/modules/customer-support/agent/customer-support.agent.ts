@@ -1,11 +1,11 @@
 import { ToolLoopAgent, stepCountIs } from 'ai';
-import { AiService } from '../../ai/services/ai.service';
-import { AiModel } from '../../ai/constants/ai-models';
-import { GitHubMcpService } from '../../ai/services/github-mcp.service';
-import { SentryMcpService } from '../../ai/services/sentry-mcp.service';
-import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service';
-import { RegisteredAgent } from '../../agents/services/agent-registry.service';
-import { CUSTOMER_SUPPORT_SYSTEM_PROMPT } from './customer-support.prompt';
+import { AiService } from '../../ai/services/ai.service.js';
+import { AiModel } from '../../ai/constants/ai-models.js';
+import { GitHubMcpService } from '../../ai/services/github-mcp.service.js';
+import { SentryMcpService } from '../../ai/services/sentry-mcp.service.js';
+import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service.js';
+import { RegisteredAgent } from '../../agents/services/agent-registry.service.js';
+import { CUSTOMER_SUPPORT_SYSTEM_PROMPT } from './customer-support.prompt.js';
 
 export const CUSTOMER_SUPPORT = 'customer-support';
 

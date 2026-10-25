@@ -5,10 +5,10 @@ import {
   type OpenAICompatibleProvider,
 } from '@ai-sdk/openai-compatible';
 import { type LanguageModel } from 'ai';
-import { createWebSearchTool } from '../tools/web-search.tool';
-import { createWebFetchTool } from '../tools/web-fetch.tool';
-import { AiModel } from '../constants/ai-models';
-import { WebTool } from '../constants/web-tools';
+import { createWebSearchTool } from '../tools/web-search.tool.js';
+import { createWebFetchTool } from '../tools/web-fetch.tool.js';
+import { AiModel } from '../constants/ai-models.js';
+import { WebTool } from '../constants/web-tools.js';
 
 @Injectable()
 export class AiService {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FORM9_L1_VALUES } from '../mapping/form9-mapping';
+import { FORM9_L1_VALUES } from '../mapping/form9-mapping.js';
 
 // The agent classifies the taxonomy only. Form 9 is DERIVED from it by
 // form9-mapping (a rule, not a judgement), so a regulator query is answered with

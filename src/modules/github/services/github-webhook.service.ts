@@ -5,7 +5,7 @@ import { Webhooks } from '@octokit/webhooks';
 import {
   GITHUB_PULL_REQUEST_MERGED_TO_MAIN_EVENT,
   type GitHubPullRequestMergedToMainEvent,
-} from '../github.events';
+} from '../github.events.js';
 
 @Injectable()
 export class GitHubWebhookService {

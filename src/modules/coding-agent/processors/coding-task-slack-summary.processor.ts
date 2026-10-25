@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { SlackBotService } from '../../slack/services/slack-bot.service';
+import { SlackBotService } from '../../slack/services/slack-bot.service.js';
 import {
   CODING_TASK_SLACK_SUMMARY_QUEUE,
   type CodingTaskSlackSummaryJob,
-} from '../queues/coding-agent.queue';
+} from '../queues/coding-agent.queue.js';
 
 @Processor(CODING_TASK_SLACK_SUMMARY_QUEUE)
 export class CodingTaskSlackSummaryProcessor extends WorkerHost {

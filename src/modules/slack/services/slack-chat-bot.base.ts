@@ -1,5 +1,8 @@
 import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Chat, type ChatElement, type Message } from 'chat';
+import { createSlackAdapter, type SlackAdapter } from '@chat-adapter/slack';
+import { createRedisState } from '@chat-adapter/state-redis';
 
 export interface SlackChatOptions {
   userName: string;
@@ -11,9 +14,8 @@ export interface SlackChatOptions {
 
 export abstract class SlackChatBot implements OnModuleDestroy {
   protected abstract readonly logger: Logger;
-  protected bot!: import('chat').Chat;
-  protected slackAdapter!: import('@chat-adapter/slack').SlackAdapter;
-  protected emoji!: typeof import('chat').emoji;
+  protected bot!: Chat;
+  protected slackAdapter!: SlackAdapter;
 
   protected constructor(protected readonly configService: ConfigService) {}
 
@@ -27,14 +29,14 @@ export abstract class SlackChatBot implements OnModuleDestroy {
 
   async postToThread(
     threadId: string,
-    message: string | import('chat').ChatElement,
+    message: string | ChatElement,
   ): Promise<void> {
     await this.bot.thread(threadId).post(message);
   }
 
   async postDirectMessage(
     userId: string,
-    message: string | import('chat').ChatElement,
+    message: string | ChatElement,
   ): Promise<void> {
     const thread = await this.bot.openDM(userId);
     await thread.post(message);
@@ -55,7 +57,7 @@ export abstract class SlackChatBot implements OnModuleDestroy {
     try {
       await this.slackAdapter.addReaction(threadId, messageId, emojiName);
     } catch (error) {
-      this.logger.warn(`failed to add ${emojiName} reaction: ${error}`);
+      this.logger.warn(`failed to add ${emojiName} reaction: ${String(error)}`);
     }
   }
 
@@ -84,7 +86,7 @@ export abstract class SlackChatBot implements OnModuleDestroy {
     threadId: string,
     messageId: string,
     limit: number,
-  ): Promise<import('chat').Message[]> {
+  ): Promise<Message[]> {
     try {
       const { messages } = await this.slackAdapter.fetchMessages(threadId, {
         direction: 'backward',
@@ -93,23 +95,20 @@ export abstract class SlackChatBot implements OnModuleDestroy {
       });
       return messages;
     } catch (error) {
-      this.logger.warn(`failed to fetch messages in ${threadId}: ${error}`);
+      this.logger.warn(
+        `failed to fetch messages in ${threadId}: ${String(error)}`,
+      );
       return [];
     }
   }
 
-  protected async initChat({
+  protected initChat({
     userName,
     botToken,
     signingSecret,
     keyPrefix,
     agentView,
-  }: SlackChatOptions): Promise<void> {
-    const { Chat, emoji } = await import('chat');
-    const { createSlackAdapter } = await import('@chat-adapter/slack');
-    const { createRedisState } = await import('@chat-adapter/state-redis');
-
-    this.emoji = emoji;
+  }: SlackChatOptions): void {
     this.slackAdapter = createSlackAdapter({
       botToken,
       signingSecret,

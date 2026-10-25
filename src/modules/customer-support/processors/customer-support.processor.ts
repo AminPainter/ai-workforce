@@ -1,13 +1,16 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { AgentRegistry } from '../../agents/services/agent-registry.service';
-import { ZohoDeskService } from '../../zoho/services/zoho-desk.service';
-import type { ZohoConversationEntry, ZohoTicket } from '../../zoho/zoho.types';
-import { CUSTOMER_SUPPORT } from '../agent/customer-support.agent';
-import { CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER } from '../agent/customer-support.prompt';
-import { CUSTOMER_SUPPORT_QUEUE } from '../queues/customer-support.queue';
-import type { CustomerSupportJob } from '../customer-support.types';
+import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
+import { ZohoDeskService } from '../../zoho/services/zoho-desk.service.js';
+import type {
+  ZohoConversationEntry,
+  ZohoTicket,
+} from '../../zoho/zoho.types.js';
+import { CUSTOMER_SUPPORT } from '../agent/customer-support.agent.js';
+import { CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER } from '../agent/customer-support.prompt.js';
+import { CUSTOMER_SUPPORT_QUEUE } from '../queues/customer-support.queue.js';
+import type { CustomerSupportJob } from '../customer-support.types.js';
 
 @Processor(CUSTOMER_SUPPORT_QUEUE, {
   concurrency: 1,

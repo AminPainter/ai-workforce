@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LEAVE_PORTIONS, LeaveKind } from '../constants/leave-kinds';
+import { LEAVE_PORTIONS, LeaveKind } from '../constants/leave-kinds.js';
 
 const dateField = z
   .string()

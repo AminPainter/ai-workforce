@@ -1,9 +1,9 @@
 import { ToolLoopAgent, stepCountIs, Output } from 'ai';
-import { AiService } from '../../ai/services/ai.service';
-import { AiModel } from '../../ai/constants/ai-models';
-import { RegisteredAgent } from '../../agents/services/agent-registry.service';
-import { FORM9_CLASSIFIER_SYSTEM_PROMPT } from './form9-classifier.prompt';
-import { form9TaxonomySchema } from './form9-classifier.schema';
+import { AiService } from '../../ai/services/ai.service.js';
+import { AiModel } from '../../ai/constants/ai-models.js';
+import { RegisteredAgent } from '../../agents/services/agent-registry.service.js';
+import { FORM9_CLASSIFIER_SYSTEM_PROMPT } from './form9-classifier.prompt.js';
+import { form9TaxonomySchema } from './form9-classifier.schema.js';
 
 export const FORM9_CLASSIFIER = 'form9-classifier';
 

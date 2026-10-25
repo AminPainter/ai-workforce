@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createMCPClient, type MCPClient } from '@ai-sdk/mcp';
 import { type ToolSet } from 'ai';
-import { GitHubAppAuthService } from '../../github/services/github-app-auth.service';
+import { GitHubAppAuthService } from '../../github/services/github-app-auth.service.js';
 
 const DEFAULT_GITHUB_MCP_URL = 'https://api.githubcopilot.com/mcp/readonly';
 

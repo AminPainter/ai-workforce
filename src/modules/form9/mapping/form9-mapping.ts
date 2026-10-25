@@ -1,4 +1,4 @@
-import { FORM9_MAPPING_CSV } from './form9-mapping.data';
+import { FORM9_MAPPING_CSV } from './form9-mapping.data.js';
 import {
   FORM9_COMPLAINT_TYPE_VALUES,
   FORM9_REPORTABLE_VALUES,
@@ -6,7 +6,7 @@ import {
   type Form9ComplaintType,
   type Form9Reportable,
   type Form9ServiceType,
-} from './form9-values';
+} from './form9-values.js';
 
 export interface Form9Derivation {
   reportable: Form9Reportable;

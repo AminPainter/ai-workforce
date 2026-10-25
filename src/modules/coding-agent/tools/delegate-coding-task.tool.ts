@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { type CodingTaskService } from '../services/coding-task.service';
+import { type CodingTaskService } from '../services/coding-task.service.js';
 
 export function createDelegateCodingTaskTool(
   codingTaskService: CodingTaskService,

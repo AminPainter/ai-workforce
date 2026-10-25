@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { HarnessAgent } from '@ai-sdk/harness/agent';
 import type { ToolSet } from 'ai';
-import { codingAgentSettings } from './coding.settings';
+import { codingAgentSettings } from './coding.settings.js';
 
 export const CODING_AGENT = 'coding-agent';
 

@@ -1,11 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { type ToolSet } from 'ai';
-import { type AgentSkillBundle, type LoadedSkill } from '../types/skill.types';
-import { buildSkillsPromptSection } from '../prompts/skills.prompt';
-import { createLoadSkillTool } from '../tools/load-skill.tool';
-import { createReadSkillReferenceTool } from '../tools/read-skill-reference.tool';
-import { SkillLoaderService } from './skill-loader.service';
-import { SkillTool } from '../constants/skill-tools';
+import {
+  type AgentSkillBundle,
+  type LoadedSkill,
+} from '../types/skill.types.js';
+import { buildSkillsPromptSection } from '../prompts/skills.prompt.js';
+import { createLoadSkillTool } from '../tools/load-skill.tool.js';
+import { createReadSkillReferenceTool } from '../tools/read-skill-reference.tool.js';
+import { SkillLoaderService } from './skill-loader.service.js';
+import { SkillTool } from '../constants/skill-tools.js';
 
 @Injectable()
 export class SkillsService {

@@ -8,17 +8,20 @@ import {
 import { Job, Queue } from 'bullmq';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
-import { CODING_AGENT, type CodingAgentFactory } from '../agent/coding.agent';
-import { REPO_DIR } from '../agent/coding.settings';
-import { LocalSandboxSession } from '../sandbox/local-sandbox-session';
-import { CodingSessionRepository } from '../services/coding-session.repository';
-import { GitHubAppAuthService } from '../../github/services/github-app-auth.service';
+import {
+  CODING_AGENT,
+  type CodingAgentFactory,
+} from '../agent/coding.agent.js';
+import { REPO_DIR } from '../agent/coding.settings.js';
+import { LocalSandboxSession } from '../sandbox/local-sandbox-session.js';
+import { CodingSessionRepository } from '../services/coding-session.repository.js';
+import { GitHubAppAuthService } from '../../github/services/github-app-auth.service.js';
 import {
   CODING_AGENT_QUEUE,
   CODING_TASK_SLACK_SUMMARY_QUEUE,
   type CodingTaskSlackSummaryJob,
   type CodingTaskJob,
-} from '../queues/coding-agent.queue';
+} from '../queues/coding-agent.queue.js';
 
 const PREVIEW_LENGTH = 300;
 const GITHUB_TOKEN_PATTERN = /ghs_[\w.-]+/g;

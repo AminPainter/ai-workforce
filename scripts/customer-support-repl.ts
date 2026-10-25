@@ -22,17 +22,17 @@ import 'reflect-metadata';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AiModule } from '../src/modules/ai/ai.module';
-import { AiService } from '../src/modules/ai/services/ai.service';
-import { GitHubMcpService } from '../src/modules/ai/services/github-mcp.service';
-import { SentryMcpService } from '../src/modules/ai/services/sentry-mcp.service';
-import { AlloyDbMcpService } from '../src/modules/ai/services/alloydb-mcp.service';
-import { createCustomerSupport } from '../src/modules/customer-support/agent/customer-support.agent';
-import { CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER } from '../src/modules/customer-support/agent/customer-support.prompt';
+import { AiModule } from '../src/modules/ai/ai.module.js';
+import { AiService } from '../src/modules/ai/services/ai.service.js';
+import { GitHubMcpService } from '../src/modules/ai/services/github-mcp.service.js';
+import { SentryMcpService } from '../src/modules/ai/services/sentry-mcp.service.js';
+import { AlloyDbMcpService } from '../src/modules/ai/services/alloydb-mcp.service.js';
+import { createCustomerSupport } from '../src/modules/customer-support/agent/customer-support.agent.js';
+import { CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER } from '../src/modules/customer-support/agent/customer-support.prompt.js';
 import type {
   ZohoConversationEntry,
   ZohoTicket,
-} from '../src/modules/zoho/zoho.types';
+} from '../src/modules/zoho/zoho.types.js';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), AiModule],
@@ -114,27 +114,24 @@ async function main(): Promise<void> {
     }) => {
       const calls = (step.toolCalls ?? []).map((c) => c.toolName).join(', ');
       console.log(`[step] tools=[${calls}] textLen=${step.text?.length ?? 0}`);
-      for (const call of step.toolCalls ?? []) {
-        if (call.toolName === 'teleport_postgres_query') {
+      for (const call of step.toolCalls ?? [])
+        if (call.toolName === 'teleport_postgres_query')
           console.log(`[sql] ${JSON.stringify(call.input)}`);
-        }
-      }
     },
-  } as Parameters<typeof agent.generate>[0])) as {
+  })) as {
     text: string;
     steps?: unknown[];
   };
 
   const reply = result.text.trim();
   console.log('\n===== OUTPUT =====');
-  if (reply.startsWith(CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER)) {
+  if (reply.startsWith(CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER))
     console.log(
       'DISQUALIFIED:',
       reply.slice(CUSTOMER_SUPPORT_NOT_A_REQUEST_MARKER.length).trim(),
     );
-  } else {
-    console.log(reply);
-  }
+  else console.log(reply);
+
   console.log(
     `\nsteps: ${result.steps?.length ?? '?'}  |  ${(
       (Date.now() - started) /

@@ -1,7 +1,7 @@
 import { Controller, Headers, HttpCode, Post, Req } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
-import type { Request as ExpressRequest } from 'express';
-import { GitHubWebhookService } from '../services/github-webhook.service';
+import type { FastifyRequest } from 'fastify';
+import { GitHubWebhookService } from '../services/github-webhook.service.js';
 
 @Controller('webhooks')
 export class GitHubWebhookController {
@@ -10,7 +10,7 @@ export class GitHubWebhookController {
   @Post('github')
   @HttpCode(200)
   handleGitHubWebhook(
-    @Req() req: RawBodyRequest<ExpressRequest>,
+    @Req() req: RawBodyRequest<FastifyRequest>,
     @Headers('x-hub-signature-256') signature: string | undefined,
     @Headers('x-github-event') event: string | undefined,
     @Headers('x-github-delivery') deliveryId: string | undefined,

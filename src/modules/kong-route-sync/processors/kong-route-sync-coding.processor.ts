@@ -8,29 +8,29 @@ import {
 import { Job, Queue } from 'bullmq';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
-import { REPO_DIR } from '../../coding-agent/agent/coding.settings';
-import { LocalSandboxSession } from '../../coding-agent/sandbox/local-sandbox-session';
-import { CodingSessionRepository } from '../../coding-agent/services/coding-session.repository';
-import { GitHubAppAuthService } from '../../github/services/github-app-auth.service';
-import { TARGET_REPO } from '../kong-route-sync.config';
+import { REPO_DIR } from '../../coding-agent/agent/coding.settings.js';
+import { LocalSandboxSession } from '../../coding-agent/sandbox/local-sandbox-session.js';
+import { CodingSessionRepository } from '../../coding-agent/services/coding-session.repository.js';
+import { GitHubAppAuthService } from '../../github/services/github-app-auth.service.js';
+import { TARGET_REPO } from '../kong-route-sync.config.js';
 import {
   KONG_ROUTE_SYNC_CODING_AGENT,
   type KongRouteSyncCodingAgentFactory,
-} from '../agent/kong-route-sync-coding.agent';
+} from '../agent/kong-route-sync-coding.agent.js';
 import {
   SUBMIT_ROUTE_SYNC_RESULT_TOOL,
   submitRouteSyncResultInputSchema,
-} from '../tools/submit-route-sync-result.tool';
+} from '../tools/submit-route-sync-result.tool.js';
 import {
   buildKongRouteSyncTask,
   kongRouteSyncBranch,
-} from '../agent/kong-route-sync.prompt';
+} from '../agent/kong-route-sync.prompt.js';
 import {
   KONG_ROUTE_SYNC_CODING_QUEUE,
   KONG_ROUTE_SYNC_NOTIFICATION_QUEUE,
   type KongRouteSyncCodingJob,
   type KongRouteSyncNotificationJob,
-} from '../queues/kong-route-sync.queue';
+} from '../queues/kong-route-sync.queue.js';
 
 @Processor(KONG_ROUTE_SYNC_CODING_QUEUE)
 export class KongRouteSyncCodingProcessor extends WorkerHost {
