@@ -7,9 +7,14 @@ services:
     plan: starter # 'free' cold-starts; Slack webhooks need it warm
     healthCheckPath: /
     autoDeployTrigger: commit
+    preDeployCommand: npx prisma migrate deploy
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: glomo-ai-workforce-db
+          property: connectionString
       - key: SEARXNG_BASE_URL
         value: http://glomo-ai-workforce-searxng:8080
       # PORT is injected by Render — do not set it.
@@ -141,3 +146,13 @@ services:
         sync: false
       - key: TBOT_BOUND_KEYPAIR_STATIC_KEY
         sync: false
+
+databases:
+  - name: glomo-ai-workforce-db
+    databaseName: ai_workforce
+    user: ai_workforce
+    region: singapore # match the web service region; immutable after creation
+    plan: 0.1c-256mb
+    postgresMajorVersion: "18"
+    diskSizeGB: 5
+    ipAllowList: [] # empty = private (internal Render network only)

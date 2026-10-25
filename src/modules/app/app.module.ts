@@ -15,6 +15,7 @@ import { ZohoModule } from '../zoho/zoho.module.js';
 import { CustomerSupportModule } from '../customer-support/customer-support.module.js';
 import { Form9Module } from '../form9/form9.module.js';
 import { QueueModule } from '../queue/queue.module.js';
+import { PrismaModule } from '../prisma/prisma.module.js';
 import { LoggingModule } from '../logging/logging.module.js';
 
 @Module({
@@ -23,6 +24,7 @@ import { LoggingModule } from '../logging/logging.module.js';
     LoggingModule,
     EventEmitterModule.forRoot(),
     QueueModule,
+    PrismaModule,
     AiModule,
     AgentsModule,
     SlackModule,
