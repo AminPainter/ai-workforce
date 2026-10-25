@@ -13,13 +13,9 @@ export class RedisHealthIndicator implements OnModuleDestroy {
     private readonly healthIndicatorService: HealthIndicatorService,
     configService: ConfigService,
   ) {
-    // Without the offline queue a ping fails fast while Redis is unreachable
-    // instead of waiting for a reconnect.
     this.redis = new Redis(configService.getOrThrow<string>('REDIS_URL'), {
       enableOfflineQueue: false,
     });
-    // Connection errors surface as a failed health check; don't log every reconnect.
-    this.redis.on('error', () => {});
   }
 
   isHealthy(key: string) {
