@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AiModule } from '../ai/ai.module.js';
+import { WebModule } from '../web/web.module.js';
 import { AgentsModule } from '../agents/agents.module.js';
 import { SkillsModule } from '../skills/skills.module.js';
 import { SnacksLedgerModule } from '../snack-tracker/snacks-ledger.module.js';
@@ -9,6 +10,7 @@ import { EmployeeAssistantAgentRegistrationService } from './services/employee-a
 @Module({
   imports: [
     AiModule,
+    WebModule,
     AgentsModule,
     SkillsModule,
     SnacksLedgerModule,

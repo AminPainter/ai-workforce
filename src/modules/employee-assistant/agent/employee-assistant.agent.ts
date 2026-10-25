@@ -7,6 +7,7 @@ import { SentryMcpService } from '../../ai/services/sentry-mcp.service.js';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service.js';
 import { AtlassianMcpService } from '../../ai/services/atlassian-mcp.service.js';
 import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service.js';
+import { WebToolsService } from '../../web/services/web-tools.service.js';
 import { SkillsService } from '../../skills/services/skills.service.js';
 import { SnacksLedgerService } from '../../snack-tracker/services/snacks-ledger.service.js';
 import { createSnacksLedgerTool } from '../../snack-tracker/tools/snacks-ledger.tool.js';
@@ -31,6 +32,7 @@ export function createEmployeeAssistant(
   gitHubMcpService: GitHubMcpService,
   atlassianMcpService: AtlassianMcpService,
   alloyDbMcpService: AlloyDbMcpService,
+  webToolsService: WebToolsService,
   skillsService: SkillsService,
   snacksLedgerService: SnacksLedgerService,
   configService: ConfigService,
@@ -53,7 +55,7 @@ export function createEmployeeAssistant(
     model: aiService.model(model),
     instructions,
     tools: {
-      ...aiService.webTools(),
+      ...webToolsService.getTools(),
       ...sentryMcpService.getTools(),
       ...gitHubMcpService.getTools(),
       ...atlassianMcpService.getTools(),

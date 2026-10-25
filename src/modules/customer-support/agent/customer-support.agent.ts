@@ -4,6 +4,7 @@ import { AiModel } from '../../ai/constants/ai-models.js';
 import { GitHubMcpService } from '../../ai/services/github-mcp.service.js';
 import { SentryMcpService } from '../../ai/services/sentry-mcp.service.js';
 import { AlloyDbMcpService } from '../../ai/services/alloydb-mcp.service.js';
+import { WebToolsService } from '../../web/services/web-tools.service.js';
 import { RegisteredAgent } from '../../agents/services/agent-registry.service.js';
 import { CUSTOMER_SUPPORT_SYSTEM_PROMPT } from './customer-support.prompt.js';
 
@@ -14,12 +15,13 @@ export function createCustomerSupport(
   gitHubMcpService: GitHubMcpService,
   sentryMcpService: SentryMcpService,
   alloyDbMcpService: AlloyDbMcpService,
+  webToolsService: WebToolsService,
 ): RegisteredAgent {
   return new ToolLoopAgent({
     model: aiService.model(AiModel.GLM_5_2),
     instructions: CUSTOMER_SUPPORT_SYSTEM_PROMPT,
     tools: {
-      ...aiService.webTools(),
+      ...webToolsService.getTools(),
       ...gitHubMcpService.getTools(),
       ...sentryMcpService.getTools(),
       ...alloyDbMcpService.getTools(),
