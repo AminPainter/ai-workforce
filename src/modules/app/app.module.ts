@@ -17,11 +17,13 @@ import { Form9Module } from '../form9/form9.module.js';
 import { QueueModule } from '../queue/queue.module.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { LoggingModule } from '../logging/logging.module.js';
+import { HealthModule } from '../health/health.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     LoggingModule,
+    HealthModule,
     EventEmitterModule.forRoot(),
     QueueModule,
     PrismaModule,
