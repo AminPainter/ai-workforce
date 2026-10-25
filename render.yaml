@@ -5,7 +5,7 @@ services:
     dockerfilePath: ./Dockerfile
     region: singapore
     plan: starter # 'free' cold-starts; Slack webhooks need it warm
-    healthCheckPath: /
+    healthCheckPath: /health
     autoDeployTrigger: commit
     preDeployCommand: npx prisma migrate deploy
     envVars:

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { QueueModule } from '../queue/queue.module.js';
-import { LoggingModule } from '../logging/logging.module.js';
+import { LoggerModule } from '../logger/logger.module.js';
 import {
   CODING_AGENT,
   createCodingAgentFactory,
@@ -21,7 +21,7 @@ import { GitHubAppModule } from '../github/github-app.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    LoggingModule,
+    LoggerModule,
     QueueModule,
     GitHubAppModule,
     BullModule.registerQueue(

@@ -16,7 +16,7 @@ cp .env.example .env      # then fill in the values below, INCLUDING SEARXNG_SEC
 pnpm docker:up            # docker compose up --build
 ```
 
-- App: http://localhost:51515 (`GET /` returns a hello string — also the health check path)
+- App: http://localhost:51515 (`GET /` returns a hello string; `GET /health` is the health check and pings Postgres and Redis)
 - SearXNG JSON API: http://localhost:8080/search?q=test&format=json (exposed for debugging only)
 
 Stop with `pnpm docker:down`.
@@ -126,7 +126,7 @@ migration fails the deploy.
 2. In Render: New → Blueprint, connect the repo. Render reads `render.yaml`.
 3. At first sync, fill every `sync: false` secret — including `SEARXNG_SECRET` on the SearXNG
    service.
-4. Deploy. Confirm `/` health passes, then mention the bot in Slack and verify a
+4. Deploy. Confirm `/health` passes, then mention the bot in Slack and verify a
    web-search-backed answer (proves the app reaches the SearXNG private service).
 
 ## Non-Docker dev

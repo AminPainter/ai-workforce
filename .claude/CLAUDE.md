@@ -1,4 +1,4 @@
-Don't write comments for self-explanatory code.
+Write no code comments by default. Add one only when explicitly asked.
 Don't write test specs unless explicitly asked.
 Name injected private class members after their type in camelCase (e.g. `private readonly gmailIngestionService: GmailIngestionService`).
 

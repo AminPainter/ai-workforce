@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LoggerModule } from 'nestjs-pino';
+import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
-    LoggerModule.forRootAsync({
+    PinoLoggerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         pinoHttp: {
@@ -20,13 +20,13 @@ import { LoggerModule } from 'nestjs-pino';
             'req.headers["x-hub-signature-256"]',
             'req.headers["x-slack-signature"]',
           ],
-          // Render's health check hits GET / every few seconds.
+          // Render's health check hits GET /health every few seconds.
           autoLogging: {
-            ignore: (req) => req.method === 'GET' && req.url === '/',
+            ignore: (req) => req.method === 'GET' && req.url === '/health',
           },
         },
       }),
     }),
   ],
 })
-export class LoggingModule {}
+export class LoggerModule {}
