@@ -20,7 +20,6 @@ CREATE TABLE "artifact_versions" (
     "sha256" TEXT NOT NULL,
     "size_bytes" INTEGER NOT NULL,
     "model" TEXT NOT NULL,
-    "scan_warnings" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "artifact_versions_pkey" PRIMARY KEY ("artifact_id","version")

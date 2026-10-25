@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/services/prisma.service.js';
-import type { Prisma } from '../../../generated/prisma/client.js';
 
 export interface NewArtifact {
   title: string;
@@ -13,7 +12,6 @@ export interface NewArtifactVersion {
   sha256: string;
   sizeBytes: number;
   model: string;
-  scanWarnings?: Prisma.InputJsonValue;
 }
 
 @Injectable()
@@ -36,12 +34,14 @@ export class ArtifactRepository {
     });
   }
 
-  async findLatestHtml(id: string): Promise<string | undefined> {
+  async findLatestHtml(id: string): Promise<string> {
     const artifactVersion = await this.prismaService.artifactVersion.findFirst({
       where: { artifactId: id, artifact: { deletedAt: null } },
       orderBy: { version: 'desc' },
       select: { html: true },
     });
-    return artifactVersion?.html;
+    if (!artifactVersion)
+      throw new NotFoundException(`artifact ${id} not found`);
+    return artifactVersion.html;
   }
 }

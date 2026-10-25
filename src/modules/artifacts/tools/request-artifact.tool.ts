@@ -1,17 +1,12 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { type ArtifactRequestService } from '../services/artifact-request.service.js';
-import {
-  type ArtifactScanFinding,
-  type ArtifactScannerService,
-} from '../services/artifact-scanner.service.js';
 
 const MAX_TITLE_LENGTH = 120;
 const MAX_BRIEF_LENGTH = 100_000;
 
 export function createRequestArtifactTool(
   artifactRequestService: ArtifactRequestService,
-  artifactScannerService: ArtifactScannerService,
 ) {
   return tool({
     description:
@@ -38,19 +33,6 @@ export function createRequestArtifactTool(
       { title, brief }: { title: string; brief: string },
       { context }: { context: { threadId: string; requesterUserId: string } },
     ): Promise<string> => {
-      const blocked = [
-        ...describeFindings(
-          'the title',
-          artifactScannerService.scan(title).blocked,
-        ),
-        ...describeFindings(
-          'the brief',
-          artifactScannerService.scan(brief).blocked,
-        ),
-      ];
-      if (blocked.length > 0)
-        return `Blocked. Nothing was queued. Found: ${blocked.join(', ')}. Remove these values, use aggregates only, and call requestArtifact again.`;
-
       await artifactRequestService.request({
         threadId: context.threadId,
         requesterUserId: context.requesterUserId,
@@ -60,15 +42,4 @@ export function createRequestArtifactTool(
       return 'Queued. The artifact will be posted in this thread.';
     },
   });
-}
-
-function describeFindings(
-  source: string,
-  findings: ArtifactScanFinding[],
-): string[] {
-  return [
-    ...new Set(
-      findings.map(({ type, line }) => `${type} at line ${line} of ${source}`),
-    ),
-  ];
 }

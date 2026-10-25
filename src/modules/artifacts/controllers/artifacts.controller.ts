@@ -1,15 +1,21 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Res,
+  UseFilters,
+} from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
+import { z } from 'zod';
 import { ArtifactRepository } from '../services/artifact.repository.js';
 import { ARTIFACT_RESPONSE_HEADERS } from '../constants/artifact-response-headers.js';
+import { ArtifactNotFoundFilter } from '../filters/artifact-not-found.filter.js';
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const NOT_FOUND_HTML =
-  '<!doctype html><html><head><title>Not found</title></head><body><p>Not found</p></body></html>';
+const artifactIdSchema = z.uuidv4();
 
 @Controller('artifacts')
+@UseFilters(ArtifactNotFoundFilter)
 export class ArtifactsController {
   constructor(private readonly artifactRepository: ArtifactRepository) {}
 
@@ -18,11 +24,9 @@ export class ArtifactsController {
     @Param('id') id: string,
     @Res() reply: FastifyReply,
   ): Promise<void> {
-    const html = UUID_PATTERN.test(id)
-      ? await this.artifactRepository.findLatestHtml(id)
-      : undefined;
-    reply.headers(ARTIFACT_RESPONSE_HEADERS);
-    if (html === undefined) await reply.code(404).send(NOT_FOUND_HTML);
-    else await reply.code(200).send(html);
+    if (!artifactIdSchema.safeParse(id).success)
+      throw new NotFoundException('invalid artifact id');
+    const html = await this.artifactRepository.findLatestHtml(id);
+    await reply.headers(ARTIFACT_RESPONSE_HEADERS).code(200).send(html);
   }
 }

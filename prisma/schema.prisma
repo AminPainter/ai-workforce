@@ -29,7 +29,6 @@ model ArtifactVersion {
   sha256       String
   sizeBytes    Int      @map("size_bytes")
   model        String
-  scanWarnings Json?    @map("scan_warnings")
   createdAt    DateTime @default(now()) @map("created_at")
   artifact     Artifact @relation(fields: [artifactId], references: [id])
 
