@@ -15,6 +15,11 @@ import {
 import { REPO_DIR } from '../agent/coding.settings.js';
 import { LocalSandboxSession } from '../sandbox/local-sandbox-session.js';
 import { CodingSessionRepository } from '../services/coding-session.repository.js';
+import {
+  harnessStepLogging,
+  previewForLog,
+  redactSecrets,
+} from '../utils/harness-step-logger.js';
 import { GitHubAppAuthService } from '../../github/services/github-app-auth.service.js';
 import {
   CODING_AGENT_QUEUE,
@@ -22,9 +27,6 @@ import {
   type CodingTaskSlackSummaryJob,
   type CodingTaskJob,
 } from '../queues/coding-agent.queue.js';
-
-const PREVIEW_LENGTH = 300;
-const GITHUB_TOKEN_PATTERN = /ghs_[\w.-]+/g;
 
 @Processor(CODING_AGENT_QUEUE)
 export class CodingTaskProcessor extends WorkerHost {
@@ -51,7 +53,7 @@ export class CodingTaskProcessor extends WorkerHost {
       sessionId,
     )) ?? { repo };
     logger.log(
-      `${codingSession.resumeState ? 'resuming' : 'starting'} session ${sessionId} for ${repo}: ${this.preview(task)}`,
+      `${codingSession.resumeState ? 'resuming' : 'starting'} session ${sessionId} for ${repo}: ${previewForLog(task)}`,
     );
 
     const codingAgent = this.codingAgentFactory(
@@ -72,20 +74,7 @@ export class CodingTaskProcessor extends WorkerHost {
         '',
         task,
       ].join('\n'),
-      onStepStart: ({ stepNumber }) =>
-        logger.log(`step ${stepNumber}: waiting for the model`),
-      onStepEnd: ({ stepNumber, finishReason, text: stepText }) =>
-        logger.log(
-          `step ${stepNumber} done (${finishReason}): ${this.preview(stepText)}`,
-        ),
-      onToolExecutionStart: ({ toolCall }) =>
-        logger.log(
-          `${toolCall.toolName} started: ${this.preview(toolCall.input)}`,
-        ),
-      onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) =>
-        logger.log(
-          `${toolCall.toolName} ${toolOutput.type === 'tool-error' ? 'failed' : 'done'} in ${toolExecutionMs}ms: ${this.preview(toolOutput.type === 'tool-error' ? String(toolOutput.error) : toolOutput.output)}`,
-        ),
+      ...harnessStepLogging(logger),
     });
     logger.log(`agent finished after ${steps.length} steps`);
 
@@ -100,24 +89,13 @@ export class CodingTaskProcessor extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job<CodingTaskJob> | undefined, error: Error): void {
     this.logger.error(
-      `job ${job?.id} failed: ${this.redact(error.message)}`,
-      error.stack && this.redact(error.stack),
+      `job ${job?.id} failed: ${redactSecrets(error.message)}`,
+      error.stack && redactSecrets(error.stack),
     );
   }
 
   @OnWorkerEvent('stalled')
   onStalled(jobId: string): void {
     this.logger.warn(`job ${jobId} stalled and will be retried`);
-  }
-
-  private preview(value: unknown): string {
-    const text = typeof value === 'string' ? value : JSON.stringify(value);
-    return this.redact(text ?? '')
-      .replace(/\s+/g, ' ')
-      .slice(0, PREVIEW_LENGTH);
-  }
-
-  private redact(text: string): string {
-    return text.replace(GITHUB_TOKEN_PATTERN, '[redacted]');
   }
 }

@@ -62,9 +62,6 @@ services:
       # Public origin of this web service, used in artifact links posted to Slack.
       - key: SERVICE_URL
         sync: false
-      # Gateway model id for the artifact generator; defaults to claude-opus-5-5 in code.
-      - key: ARTIFACT_GENERATOR_MODEL
-        sync: false
       # #leaves → RazorpayX Payroll leave bot.
       - key: LEAVES_SLACK_CHANNEL
         sync: false

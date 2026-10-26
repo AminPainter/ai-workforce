@@ -17,6 +17,13 @@ import {
 import { KongRouteSyncCodingProcessor } from '../kong-route-sync/processors/kong-route-sync-coding.processor.js';
 import { KONG_ROUTE_SYNC_NOTIFICATION_QUEUE } from '../kong-route-sync/queues/kong-route-sync.queue.js';
 import { GitHubAppModule } from '../github/github-app.module.js';
+import {
+  ARTIFACT_BUILDER_AGENT,
+  createArtifactBuilderAgentFactory,
+} from '../artifacts/agent/artifact-builder.agent.js';
+import { ArtifactSessionRepository } from '../artifacts/services/artifact-session.repository.js';
+import { ArtifactBuildProcessor } from '../artifacts/processors/artifact-build.processor.js';
+import { ARTIFACT_PUBLISH_QUEUE } from '../artifacts/queues/artifact.queue.js';
 
 @Module({
   imports: [
@@ -27,6 +34,7 @@ import { GitHubAppModule } from '../github/github-app.module.js';
     BullModule.registerQueue(
       { name: CODING_TASK_SLACK_SUMMARY_QUEUE },
       { name: KONG_ROUTE_SYNC_NOTIFICATION_QUEUE },
+      { name: ARTIFACT_PUBLISH_QUEUE },
     ),
   ],
   providers: [
@@ -40,9 +48,16 @@ import { GitHubAppModule } from '../github/github-app.module.js';
       useFactory: createKongRouteSyncCodingAgentFactory,
       inject: [ConfigService],
     },
+    {
+      provide: ARTIFACT_BUILDER_AGENT,
+      useFactory: createArtifactBuilderAgentFactory,
+      inject: [ConfigService],
+    },
     CodingSessionRepository,
     CodingTaskProcessor,
     KongRouteSyncCodingProcessor,
+    ArtifactSessionRepository,
+    ArtifactBuildProcessor,
   ],
 })
 export class CodingAgentWorkerModule {}
