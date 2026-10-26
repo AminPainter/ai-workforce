@@ -14,6 +14,7 @@ import { LeaveTrackerModule } from '../leave-tracker/leave-tracker.module.js';
 import { ZohoModule } from '../zoho/zoho.module.js';
 import { CustomerSupportModule } from '../customer-support/customer-support.module.js';
 import { Form9Module } from '../form9/form9.module.js';
+import { ArtifactsModule } from '../artifacts/artifacts.module.js';
 import { QueueModule } from '../queue/queue.module.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { LoggerModule } from '../logger/logger.module.js';
@@ -38,6 +39,7 @@ import { HealthModule } from '../health/health.module.js';
     ZohoModule,
     CustomerSupportModule,
     Form9Module,
+    ArtifactsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

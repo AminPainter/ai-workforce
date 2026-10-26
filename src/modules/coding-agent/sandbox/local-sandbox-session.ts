@@ -37,7 +37,7 @@ export class LocalSandboxSession implements SandboxSession {
 
   constructor(
     private readonly rootDir: string,
-    private readonly getGithubToken: () => Promise<string>,
+    private readonly getGithubToken?: () => Promise<string>,
   ) {
     this.description = `Host directory ${rootDir}. Commands run directly on the host.`;
     this.env = {
@@ -46,7 +46,7 @@ export class LocalSandboxSession implements SandboxSession {
       LANG: 'C.UTF-8',
       GIT_TERMINAL_PROMPT: '0',
       ...GIT_IDENTITY,
-      ...GITHUB_CREDENTIAL_HELPER,
+      ...(getGithubToken && GITHUB_CREDENTIAL_HELPER),
     };
   }
 
@@ -104,15 +104,9 @@ export class LocalSandboxSession implements SandboxSession {
     env,
     abortSignal,
   }: ProcessOptions): Promise<Experimental_SandboxProcess> {
-    const githubToken = await this.getGithubToken();
     const child = spawn('bash', ['-c', command], {
       cwd: this.resolvePath(workingDirectory),
-      env: {
-        ...this.env,
-        GITHUB_TOKEN: githubToken,
-        GH_TOKEN: githubToken,
-        ...env,
-      },
+      env: { ...this.env, ...(await this.githubTokenEnv()), ...env },
     });
     abortSignal?.addEventListener('abort', () => child.kill());
     const exited = new Promise<{ exitCode: number }>((resolveExit) => {
@@ -140,6 +134,12 @@ export class LocalSandboxSession implements SandboxSession {
       child.wait(),
     ]);
     return { exitCode, stdout, stderr };
+  }
+
+  private async githubTokenEnv(): Promise<Record<string, string>> {
+    if (!this.getGithubToken) return {};
+    const githubToken = await this.getGithubToken();
+    return { GITHUB_TOKEN: githubToken, GH_TOKEN: githubToken };
   }
 
   private resolvePath(path: string): string {

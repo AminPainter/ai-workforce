@@ -7,3 +7,31 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Artifact {
+  id                     String            @id @default(uuid(4)) @db.Uuid
+  title                  String
+  slackThreadId          String            @map("slack_thread_id")
+  requestedBySlackUserId String            @map("requested_by_slack_user_id")
+  latestVersion          Int               @default(1) @map("latest_version")
+  deletedAt              DateTime?         @map("deleted_at")
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+  versions               ArtifactVersion[]
+
+  @@map("artifacts")
+}
+
+model ArtifactVersion {
+  artifactId   String   @map("artifact_id") @db.Uuid
+  version      Int
+  html         String
+  sha256       String
+  sizeBytes    Int      @map("size_bytes")
+  model        String
+  createdAt    DateTime @default(now()) @map("created_at")
+  artifact     Artifact @relation(fields: [artifactId], references: [id])
+
+  @@id([artifactId, version])
+  @@map("artifact_versions")
+}
