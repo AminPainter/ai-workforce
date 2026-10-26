@@ -3,10 +3,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { z } from 'zod';
 import { ArtifactTool } from '../constants/artifact-tools.js';
-import {
-  ARTIFACT_FILE,
-  checkArtifactHtml,
-} from '../utils/check-artifact-html.js';
+import { ARTIFACT_FILE } from '../constants/artifact-file.js';
 
 export function createArtifactFileTools(siteDir: string) {
   const artifactPath = join(siteDir, ARTIFACT_FILE);
@@ -67,20 +64,6 @@ export function createArtifactFileTools(siteDir: string) {
           );
           await writeFile(artifactPath, updated);
           return `Applied ${edits.length} edit(s) to ${ARTIFACT_FILE}.`;
-        }),
-    }),
-    [ArtifactTool.CHECK_ARTIFACT]: tool({
-      description: `Check ${ARTIFACT_FILE} against the page's Content Security Policy and publishing rules. Call it after your changes, and fix everything it reports before you finish.`,
-      inputSchema: z.object({}),
-      execute: (): Promise<string> =>
-        inOrder(async () => {
-          const html = await readArtifact();
-          if (html === undefined)
-            return `${ARTIFACT_FILE} does not exist yet. Use ${ArtifactTool.WRITE_ARTIFACT} first.`;
-          const problems = checkArtifactHtml(html);
-          return problems.length > 0
-            ? `Fix these problems:\n${problems.map((problem) => `- ${problem}`).join('\n')}`
-            : 'No problems found.';
         }),
     }),
   };

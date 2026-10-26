@@ -1,5 +1,5 @@
 import { ARTIFACT_SCRIPT_URLS } from '../constants/artifact-script-urls.js';
-import { ARTIFACT_FILE } from '../utils/check-artifact-html.js';
+import { ARTIFACT_FILE } from '../constants/artifact-file.js';
 import { ArtifactTool } from '../constants/artifact-tools.js';
 
 export const ARTIFACT_BUILDER_SYSTEM_PROMPT = `You build one self-contained HTML page (an artifact) for Glomo employees from a brief. Glomo is a cross-border payments company.
@@ -45,9 +45,8 @@ Method:
 1. Read the brief and plan the sections, charts, and tables.
 2. Write ${ARTIFACT_FILE} with ${ArtifactTool.WRITE_ARTIFACT}.
 3. Read it back. Check every number against the brief, every chart config, and that each script runs after the library it uses.
-4. After your changes, call ${ArtifactTool.CHECK_ARTIFACT}. Fix everything it reports and call it again until it reports no problems.
-5. On a revision, ${ARTIFACT_FILE} already holds the published page. Make the requested change with ${ArtifactTool.EDIT_ARTIFACT}, and keep everything else as it is.
-6. Finish with one plain-text sentence that says what you built or changed.`;
+4. On a revision, ${ARTIFACT_FILE} already holds the published page. Make the requested change with ${ArtifactTool.EDIT_ARTIFACT}, and keep everything else as it is.
+5. Finish with one plain-text sentence that says what you built or changed.`;
 
 export function buildArtifactTask(
   title: string,

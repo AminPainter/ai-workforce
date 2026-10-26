@@ -25,10 +25,7 @@ import {
 } from '../agent/artifact-builder.agent.js';
 import { buildArtifactTask } from '../agent/artifact-builder.prompt.js';
 import { ArtifactSessionRepository } from '../services/artifact-session.repository.js';
-import {
-  ARTIFACT_FILE,
-  checkArtifactHtml,
-} from '../utils/check-artifact-html.js';
+import { ARTIFACT_FILE } from '../constants/artifact-file.js';
 import {
   ARTIFACT_BUILD_QUEUE,
   ARTIFACT_PUBLISH_QUEUE,
@@ -94,11 +91,6 @@ export class ArtifactBuildProcessor extends WorkerHost {
     );
     if (html === undefined)
       throw new Error(`agent finished without writing ${ARTIFACT_FILE}`);
-    const problems = checkArtifactHtml(html);
-    if (problems.length > 0)
-      throw new Error(
-        `${ARTIFACT_FILE} still has problems: ${problems.join('; ')}`,
-      );
 
     await this.artifactSessionRepository.save(sessionId, { resumeState });
     await this.artifactPublishQueue.add(
