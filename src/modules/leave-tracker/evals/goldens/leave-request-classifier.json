@@ -39,7 +39,7 @@
       "postedAt": "2026-10-07T05:51:00+05:30",
       "expected": {
         "intent": "mark",
-        "marks": ["2026-10-07 * full"]
+        "marks": ["2026-10-07 sick full"]
       }
     }
   },
@@ -139,7 +139,18 @@
       "postedAt": "2026-10-07T08:52:00+05:30",
       "expected": {
         "intent": "mark",
-        "marks": ["2026-10-07 * first_half"]
+        "marks": ["2026-10-07 sick first_half"]
+      }
+    }
+  },
+  {
+    "name": "could not sleep, logging in second half",
+    "input": "could not sleep properly yesterday,will login in second half and work intermittently.\n\navailable on call for anything urgent.",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T08:41:00+05:30",
+      "expected": {
+        "intent": "mark",
+        "marks": ["2026-10-07 sick first_half"]
       }
     }
   },

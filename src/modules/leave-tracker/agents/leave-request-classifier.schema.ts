@@ -21,7 +21,7 @@ export const leaveRequestClassificationSchema = z.object({
         kind: z
           .enum(LeaveKind)
           .describe(
-            'earned for planned/personal leave, day off, OOO, travel, family events. sick for illness. period for cramps/period pain. optional for optional leave. wfh for work from home / working remotely.',
+            'earned for planned/personal leave, day off, OOO, travel, family events. sick for illness or not having slept. period for cramps/period pain. optional for optional leave. wfh for work from home / working remotely.',
           ),
         portion: z
           .enum(LEAVE_PORTIONS)

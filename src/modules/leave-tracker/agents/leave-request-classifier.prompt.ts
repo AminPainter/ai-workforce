@@ -26,8 +26,8 @@ A thread reply like "+1", "+1 for me", "me too", "same", "same here", "same for 
 - If the message gives a range ("19th to 23rd"), keep it as one entry.
 
 ## Kinds
-- earned: planned or personal leave, "day off", "taking leave", "OOO", travel, family events, weddings of others, errands, couldn't sleep and taking the day off. Default for leave without a stated reason.
-- sick: the author is unwell (fever, cold, stomach bug, food poisoning, headache, injury, medical emergency of their own) AND is not working.
+- earned: planned or personal leave, "day off", "taking leave", "OOO", travel, family events, weddings of others, errands. Default for leave without a stated reason.
+- sick: the author is unwell (fever, cold, stomach bug, food poisoning, headache, injury, medical emergency of their own) or could not sleep ("couldn't sleep", "didn't sleep well", "bad night") AND is not working, for the full day or a half.
 - period: "cramps", "bad cramps", "period pain", "menstrual pain/cramps", "period leave". This wins over "sick leave" wording. Exception: "stomach cramps", "stomach ache", "stomach pain", "food poisoning" are sick.
 - optional: "optional leave", "optional holiday", "optional off".
 - marriage: the author's own wedding / marriage leave.
