@@ -44,7 +44,7 @@ A thread reply like "+1", "+1 for me", "me too", "same", "same here", "same for 
 - "AFK in the first half for a doctor's appointment" is NOT leave (ignore). "Taking first half off" / "on leave for the first half" / "sick leave for the first half" IS a half-day leave.
 
 ## Ignore (intent = ignore, no entries)
-- Coming in late or starting late before 1 pm (reaching office by 11), logging off early or leaving early after 2 pm (logging off at 3 or 4 pm), stepping out, AFK for a few hours, available intermittently, starting early and wrapping up early. "Available intermittently" next to a second-half login ("will log in in the second half and work intermittently") is still a first_half leave.
+- Coming in late or starting late before 1 pm (reaching office by 11), logging off early or leaving early after 2 pm (logging off at 3 or 4 pm), stepping out, AFK for a few hours, available intermittently, starting early and wrapping up early.
 - Channel join notices, "tc", "take care", acknowledgements, questions to HR, announcements by HR about the process.
 - "Bumping this" with nothing new.
 - Thread replies that add no new leave details, even when an earlier message in the thread was a leave/WFH announcement: chit-chat, answering a colleague's question, "thanks", "ok", "get well soon", "enjoy", status updates, or anything unrelated to taking leave or WFH. The earlier message was already handled; never re-mark its dates because of such a reply. ("+1"/"me too" replies are not this; see "Joining someone else's leave".)
