@@ -1,4 +1,7 @@
-import type { AttendanceStatus } from '../../razorpayx/razorpayx.types.js';
+import type {
+  AttendanceRecord,
+  AttendanceStatus,
+} from '../../razorpayx/razorpayx.types.js';
 
 export enum LeaveKind {
   Earned = 'earned',
@@ -66,6 +69,11 @@ export const RAZORPAYX_STATUS_CODE_BY_STATUS: Partial<
   'half-day': 25,
 };
 
+const LEAVE_STATUS_CODES = new Set(
+  Object.values(RAZORPAYX_STATUS_CODE_BY_STATUS),
+);
+const PRESENT_STATUS_PATTERN = /^present$/i;
+
 export interface AttendanceTarget {
   status: AttendanceStatus;
   leaveType: number;
@@ -95,4 +103,40 @@ export function describeEntry(kind: LeaveKind, portion: LeavePortion): string {
     return kind === LeaveKind.Wfh ? `${label} (full day)` : label;
   const half = portion === 'first_half' ? '1st half' : '2nd half';
   return `${label} (half day, ${half})`;
+}
+
+export function isLeaveRecord(record: AttendanceRecord): boolean {
+  if (record.statusCode !== null && LEAVE_STATUS_CODES.has(record.statusCode))
+    return true;
+  return (
+    record.statusDescription !== null &&
+    !PRESENT_STATUS_PATTERN.test(record.statusDescription)
+  );
+}
+
+export function kindFromLeaveTypeCode(
+  companyId: number,
+  leaveTypeCode: number | null,
+): LeaveKind | null {
+  const codes = LEAVE_TYPE_CODES_BY_COMPANY[companyId];
+  if (!codes || leaveTypeCode === null) return null;
+  if (leaveTypeCode === codes.wfhFullDay || leaveTypeCode === codes.wfhHalfDay)
+    return LeaveKind.Wfh;
+  const match = Object.entries(codes.leave).find(
+    ([, code]) => code === leaveTypeCode,
+  );
+  return match ? (match[0] as LeaveKind) : null;
+}
+
+export function matchesCancelKind(
+  companyId: number,
+  record: AttendanceRecord,
+  kind: LeaveKind | null,
+): boolean {
+  const recordKind = kindFromLeaveTypeCode(companyId, record.leaveTypeCode);
+  return recordKind !== null && (kind === null || recordKind === kind);
+}
+
+export function describeCancelled(kind: LeaveKind | null): string {
+  return kind ? LEAVE_KIND_LABELS[kind] : 'Leave';
 }

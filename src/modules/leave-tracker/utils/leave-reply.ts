@@ -1,4 +1,4 @@
-import { describeEntry } from '../constants/leave-kinds.js';
+import { describeCancelled, describeEntry } from '../constants/leave-kinds.js';
 import type {
   DateOutcome,
   DateOutcomeStatus,
@@ -38,15 +38,23 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
   const problems = input.outcomes.filter(({ status }) => isProblem(status));
 
   const lines: string[] = [];
-  const pushMarkSection = (heading: string, status: DateOutcomeStatus) => {
-    const section = groupMarks(
-      input.outcomes.filter((mark) => mark.status === status),
+  const pushSection = (
+    heading: string,
+    action: DateOutcome['action'],
+    status: DateOutcomeStatus,
+  ) => {
+    const section = groupOutcomes(
+      input.outcomes.filter(
+        (outcome) => outcome.action === action && outcome.status === status,
+      ),
     );
     if (section.length > 0) lines.push(heading, ...section);
   };
 
-  pushMarkSection('Marked in RazorpayX:', 'done');
-  pushMarkSection('Already marked:', 'already_done');
+  pushSection('Marked in RazorpayX:', 'mark', 'done');
+  pushSection('Already marked:', 'mark', 'already_done');
+  pushSection('Cancelled in RazorpayX:', 'cancel', 'done');
+  pushSection('Nothing to cancel:', 'cancel', 'already_done');
 
   const skippedByReason = new Map<SkippedDate['reason'], string[]>();
   for (const { date, reason } of input.skipped)
@@ -60,7 +68,7 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
     lines.push(`:warning: Could not update RazorpayX:`);
     for (const problem of problems)
       lines.push(
-        `• ${formatShortDate(problem.date)} (${describeEntry(problem.kind, problem.portion)}): ${problem.detail ?? problem.status}`,
+        `• ${formatShortDate(problem.date)} (${describeProblem(problem)}): ${problem.detail ?? problem.status}`,
       );
     if (input.invalidRanges.length > 0)
       lines.push(`• I couldn't read some of the dates in this message.`);
@@ -76,11 +84,11 @@ export function formatLeaveReply(input: LeaveReplyInput): LeaveReply {
   };
 }
 
-function groupMarks(marks: DateOutcome[]): string[] {
+function groupOutcomes(outcomes: DateOutcome[]): string[] {
   const datesByLabel = new Map<string, string[]>();
-  for (const mark of marks) {
-    const label = describeEntry(mark.kind, mark.portion);
-    datesByLabel.set(label, [...(datesByLabel.get(label) ?? []), mark.date]);
+  for (const outcome of outcomes) {
+    const label = describeOutcome(outcome);
+    datesByLabel.set(label, [...(datesByLabel.get(label) ?? []), outcome.date]);
   }
   return [...datesByLabel].map(
     ([label, dates]) => `• ${label}: ${formatDateRanges(dates)}`,
@@ -89,4 +97,17 @@ function groupMarks(marks: DateOutcome[]): string[] {
 
 function isProblem(status: DateOutcomeStatus): boolean {
   return status === 'failed' || status === 'mismatch';
+}
+
+function describeOutcome(outcome: DateOutcome): string {
+  return outcome.action === 'mark'
+    ? describeEntry(outcome.kind, outcome.portion)
+    : describeCancelled(outcome.kind);
+}
+
+function describeProblem(outcome: DateOutcome): string {
+  const description = describeOutcome(outcome);
+  return outcome.action === 'cancel'
+    ? `cancelling ${description}`
+    : description;
 }

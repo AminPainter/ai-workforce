@@ -322,19 +322,21 @@
     "additionalMetadata": {
       "postedAt": "2026-10-07T09:20:00+05:30",
       "expected": {
-        "intent": "ignore",
-        "marks": []
+        "intent": "cancel",
+        "marks": [],
+        "cancels": ["2026-10-07 wfh"]
       }
     }
   },
   {
-    "name": "cancel and replace marks only the new dates",
+    "name": "cancel and replace cancels the old dates and marks the new ones",
     "input": "There's a change of plan, something came up, so I'll cancel my leave on the 15th and 16th and instead take leave on 21st and 22nd.",
     "additionalMetadata": {
       "postedAt": "2026-10-06T19:39:00+05:30",
       "expected": {
         "intent": "mark",
-        "marks": ["2026-10-21 earned full", "2026-10-22 earned full"]
+        "marks": ["2026-10-21 earned full", "2026-10-22 earned full"],
+        "cancels": ["2026-10-15 *", "2026-10-16 *"]
       }
     }
   },
@@ -406,8 +408,9 @@
         }
       ],
       "expected": {
-        "intent": "ignore",
-        "marks": []
+        "intent": "cancel",
+        "marks": [],
+        "cancels": ["2026-10-07 *"]
       }
     }
   },
@@ -649,6 +652,118 @@
       "expected": {
         "intent": "ignore",
         "marks": []
+      }
+    }
+  },
+  {
+    "name": "cancel tomorrow's leave, coming to office",
+    "input": "Not taking leave tomorrow after all, will be in office.",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T09:10:00+05:30",
+      "expected": {
+        "intent": "cancel",
+        "marks": [],
+        "cancels": ["2026-10-08 *"]
+      }
+    }
+  },
+  {
+    "name": "cancel a leave range",
+    "input": "Cancelling my leave from 12th to 14th Oct, plans changed.",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T09:00:00+05:30",
+      "expected": {
+        "intent": "cancel",
+        "marks": [],
+        "cancels": ["2026-10-12 *", "2026-10-13 *", "2026-10-14 *"]
+      }
+    }
+  },
+  {
+    "name": "cancel half-day leave",
+    "input": "Cancelling my second half leave today, will work the full day.",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T09:15:00+05:30",
+      "expected": {
+        "intent": "cancel",
+        "marks": [],
+        "cancels": ["2026-10-07 *"]
+      }
+    }
+  },
+  {
+    "name": "thread reply cancels own wfh after the bot marked it",
+    "input": "cancelling this, coming to office",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T08:05:00+05:30",
+      "thread": [
+        {
+          "sender": "author",
+          "text": "WFH tomorrow",
+          "postedAt": "2026-10-06T18:00:00+05:30"
+        },
+        {
+          "sender": "bot",
+          "text": "@Employee Marked in RazorpayX:\n• WFH (full day): Wed 7 Oct",
+          "postedAt": "2026-10-06T18:00:30+05:30"
+        }
+      ],
+      "expected": {
+        "intent": "cancel",
+        "marks": [],
+        "cancels": ["2026-10-07 wfh"]
+      }
+    }
+  },
+  {
+    "name": "cancelling someone else's leave is ignored",
+    "input": "Please cancel @Colleague's leave for tomorrow",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T09:05:00+05:30",
+      "expected": {
+        "intent": "ignore",
+        "marks": []
+      }
+    }
+  },
+  {
+    "name": "tentative cancellation is ignored",
+    "input": "I might cancel my leave on Friday, will confirm.",
+    "additionalMetadata": {
+      "postedAt": "2026-10-07T09:05:00+05:30",
+      "expected": {
+        "intent": "ignore",
+        "marks": []
+      }
+    }
+  },
+  {
+    "name": "cancel reply under someone else's leave is not theirs",
+    "input": "Ah, then let's cancel tomorrow's sync",
+    "additionalMetadata": {
+      "postedAt": "2026-10-06T19:00:00+05:30",
+      "thread": [
+        {
+          "sender": "other",
+          "name": "Rohan Mehta",
+          "text": "Taking leave tomorrow.",
+          "postedAt": "2026-10-06T18:30:00+05:30"
+        }
+      ],
+      "expected": {
+        "intent": "ignore",
+        "marks": []
+      }
+    }
+  },
+  {
+    "name": "wfh instead of leave replaces without cancelling",
+    "input": "Change of plan: WFH tomorrow instead of leave.",
+    "additionalMetadata": {
+      "postedAt": "2026-10-06T20:00:00+05:30",
+      "expected": {
+        "intent": "mark",
+        "marks": ["2026-10-07 wfh full"]
       }
     }
   }

@@ -17,6 +17,11 @@ export interface PlannedMark {
   portion: LeavePortion;
 }
 
+export interface PlannedCancel {
+  date: string;
+  kind: LeaveKind | null;
+}
+
 export interface SkippedDate {
   date: string;
   reason: 'weekend' | 'too_far_back' | 'too_far_ahead';
@@ -24,6 +29,7 @@ export interface SkippedDate {
 
 export interface LeavePlan {
   marks: PlannedMark[];
+  cancels: PlannedCancel[];
   skipped: SkippedDate[];
   invalidRanges: string[];
 }
@@ -34,7 +40,7 @@ interface DateRange {
 }
 
 export function planLeaveRequest(
-  classification: Pick<LeaveRequestClassification, 'entries'>,
+  classification: Pick<LeaveRequestClassification, 'entries' | 'cancellations'>,
   today: string,
 ): LeavePlan {
   const earliest = addDays(today, -PAST_WINDOW_DAYS);
@@ -83,10 +89,25 @@ export function planLeaveRequest(
         marksByDate.set(date, candidate);
     }
 
+  const cancelsByDate = new Map<string, PlannedCancel>();
+  for (const cancellation of classification.cancellations)
+    for (const date of usableDates(cancellation)) {
+      if (marksByDate.has(date)) continue;
+      const current = cancelsByDate.get(date);
+      cancelsByDate.set(date, {
+        date,
+        kind:
+          current && current.kind !== cancellation.kind
+            ? null
+            : cancellation.kind,
+      });
+    }
+
   const byDate = <T extends { date: string }>(a: T, b: T) =>
     a.date.localeCompare(b.date);
   return {
     marks: [...marksByDate.values()].sort(byDate),
+    cancels: [...cancelsByDate.values()].sort(byDate),
     skipped: [...skipped.values()].sort(byDate),
     invalidRanges,
   };

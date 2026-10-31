@@ -25,6 +25,7 @@ import {
   type LeaveClassifierMetadata,
   type LeaveClassifierResult,
 } from './metrics/leave-classifier-metadata.js';
+import { LeaveCancelsMetric } from './metrics/leave-cancels.metric.js';
 import { LeaveIntentMetric } from './metrics/leave-intent.metric.js';
 import { LeaveMarksMetric } from './metrics/leave-marks.metric.js';
 
@@ -55,6 +56,7 @@ const goldenMetadataSchema = z.object({
   expected: z.object({
     intent: leaveRequestClassificationSchema.shape.intent,
     marks: z.array(z.string()),
+    cancels: z.array(z.string()).default([]),
   }),
 });
 
@@ -71,6 +73,7 @@ function metricsFor(expected: LeaveClassifierResult): BaseMetric[] {
   const metrics: BaseMetric[] = [
     new LeaveIntentMetric(),
     new LeaveMarksMetric(),
+    new LeaveCancelsMetric(),
   ];
   if (expected.intent === 'clarify')
     metrics.push(new ClarificationQualityMetric(judge));
@@ -102,6 +105,7 @@ async function runClassifier(
     marks: plan.marks.map(
       ({ date, kind, portion }) => `${date} ${kind} ${portion}`,
     ),
+    cancels: plan.cancels.map(({ date, kind }) => `${date} ${kind ?? 'any'}`),
   };
   const metadata: LeaveClassifierMetadata = { actual, expected };
   return new LLMTestCase({

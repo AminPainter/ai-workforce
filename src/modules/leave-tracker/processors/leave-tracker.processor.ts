@@ -88,6 +88,7 @@ export class LeaveTrackerProcessor extends WorkerHost {
       sourceMessageId: job.messageId,
       today,
       marks: plan.marks,
+      cancels: plan.cancels,
     });
 
     const changedNothing =
