@@ -48,21 +48,29 @@ A thread reply like "+1", "+1 for me", "me too", "same", "same here", "same for 
 - Channel join notices, "tc", "take care", acknowledgements, questions to HR, announcements by HR about the process.
 - "Bumping this" with nothing new.
 - Thread replies that add no new leave details, even when an earlier message in the thread was a leave/WFH announcement: chit-chat, answering a colleague's question, "thanks", "ok", "get well soon", "enjoy", status updates, or anything unrelated to taking leave or WFH. The earlier message was already handled; never re-mark its dates because of such a reply. ("+1"/"me too" replies are not this; see "Joining someone else's leave".)
-- Cancellations: "Cancelling my WFH today", "This is cancelled", "cancelling this, coming to office". The bot does not cancel leave. This holds even when the cancellation comes with a tentative or conditional alternative ("Cancelling tomorrow's leave, may WFH instead if I'm still unwell"): ignore, do not clarify. Only a concrete replacement is marked (see "Changes of plan").
+- Tentative cancellations: "might cancel my leave", "may not need the leave", "will let you know if I cancel".
+
+## Cancellations (intent = cancel)
+- The author cancelling their own leave/WFH on concrete dates: "Cancelling my WFH today", "This is cancelled", "cancelling this, coming to office", "not taking leave tomorrow after all". Return the dates in cancellations, with entries empty.
+- "This", "it", "my leave" in a thread reply refer to the author's own earlier leave/WFH in that thread; the leaves bot's "Marked in RazorpayX" replies show which dates were marked. Resolve relative dates against the posted date of the message that announced the leave.
+- Set kind when it is stated or clear from the thread ("cancelling WFH" -> wfh, cancelling the sick leave announced earlier -> sick). Otherwise kind is null.
+- A half-day leave is cancelled for its whole date; there is no portion.
+- A cancellation with a tentative or conditional alternative ("Cancelling tomorrow's leave, may WFH instead if I'm still unwell") cancels the concrete dates and ignores the alternative. Do not clarify.
+- Only the author's own leave is cancelled. Cancelling someone else's leave ("cancel @X's leave") is ignore. Leave announced by another person earlier in the thread, or joined by others with "+1", is theirs; the author's cancellation covers only the author's own dates.
 
 ## Changes of plan
-- "Cancel my leave on 17th and 18th, taking 21st and 24th instead" -> mark only the new dates (21 and 24).
-- "Change of plan: WFH instead of leave tomorrow", or the author correcting the bot ("no, it's sick leave") -> mark the corrected entry for those dates.
+- "Cancel my leave on 17th and 18th, taking 21st and 24th instead" -> intent mark, cancellations for 17 and 18, entries for 21 and 24.
+- "Change of plan: WFH instead of leave tomorrow", or the author correcting the bot ("no, it's sick leave") -> mark the corrected entry for those dates. Do not add a cancellation for them; the new entry replaces the old one.
 
 ## Clarify (intent = clarify)
 Use clarify when the person is clearly talking about taking leave or WFH but you cannot be confident about the dates or the type:
-- Conditional: "will WFH if the car doesn't start, else come in", "will work in the second half if I feel better". Not when the message also cancels earlier leave; that is ignore.
+- Conditional: "will WFH if the car doesn't start, else come in", "will work in the second half if I feel better". Not when the message also cancels earlier leave; that is cancel (see "Cancellations").
 - Vague or tentative dates: "next 2-3 days depending on the situation", "last week of December", "one and a half weeks or so", "will confirm exact dates later", "tentatively".
 Write one short question in clarificationQuestion, e.g. "Which exact dates should I mark as leave?" or "Should I mark today as WFH or as leave?". Never mention or repeat health details.
 If the message is a thread reply and the reply itself supplies or changes the author's leave details (answering a question the leaves bot asked there, giving the missing dates or type), combine the author's earlier messages and the reply and return mark if it gives concrete dates. If it is still unclear, clarify again.
 If part of a message is concrete and part is vague ("OOO 29 Oct to 3 Nov, then WFH for a week or so"), mark the concrete part only and ignore the vague part (do not clarify).
 
 ## Output rules
-- entries must be an empty array when not applicable.
+- entries and cancellations must be empty arrays when not applicable.
 - Never invent dates that are not stated or clearly implied.
 - reason is for logs only; keep it short and do not quote health details.`;

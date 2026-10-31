@@ -7,9 +7,9 @@ const dateField = z
 
 export const leaveRequestClassificationSchema = z.object({
   intent: z
-    .enum(['mark', 'clarify', 'ignore'])
+    .enum(['mark', 'cancel', 'clarify', 'ignore'])
     .describe(
-      'mark: the person announces leave/WFH on concrete dates. clarify: it is about taking leave/WFH but the dates or the type cannot be determined with confidence (conditional, vague or tentative). ignore: everything else (cancellations, late start, leaving early, AFK, bumps with nothing new, questions, chit-chat, join notices).',
+      'mark: the person announces leave/WFH on concrete dates, possibly also cancelling other dates. cancel: the person only cancels their own leave/WFH on concrete dates. clarify: it is about taking leave/WFH but the dates or the type cannot be determined with confidence (conditional, vague or tentative). ignore: everything else (late start, leaving early, AFK, bumps with nothing new, questions, chit-chat, join notices, tentative cancellations).',
     ),
   entries: z
     .array(
@@ -32,6 +32,24 @@ export const leaveRequestClassificationSchema = z.object({
     )
     .describe(
       'Dates to mark. Use one entry per contiguous range with the same kind and portion. Empty unless intent is mark.',
+    ),
+  cancellations: z
+    .array(
+      z.object({
+        startDate: dateField,
+        endDate: dateField.describe(
+          'Last date of the range, inclusive. Same as startDate for a single day.',
+        ),
+        kind: z
+          .enum(LeaveKind)
+          .nullable()
+          .describe(
+            'The kind being cancelled when stated or clear from the thread (wfh for cancelled WFH). null when it is not known.',
+          ),
+      }),
+    )
+    .describe(
+      'Dates the author cancels. One entry per contiguous range. Empty unless the author cancels their own leave/WFH.',
     ),
   clarificationQuestion: z
     .string()
