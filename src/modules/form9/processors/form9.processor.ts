@@ -3,12 +3,9 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { AgentRegistry } from '../../agents/services/agent-registry.service.js';
 import { ZohoDeskService } from '../../zoho/services/zoho-desk.service.js';
-import type {
-  ZohoConversationEntry,
-  ZohoCustomFields,
-  ZohoTicket,
-} from '../../zoho/zoho.types.js';
+import type { ZohoCustomFields } from '../../zoho/zoho.types.js';
 import { FORM9_CLASSIFIER } from '../agent/form9-classifier.agent.js';
+import { buildForm9ClassifyTask } from '../agent/form9-classify-task.js';
 import type { Form9Taxonomy } from '../agent/form9-classifier.schema.js';
 import { lookupForm9, type Form9Derivation } from '../mapping/form9-mapping.js';
 import { FORM9_QUEUE } from '../queues/form9.queue.js';
@@ -38,7 +35,7 @@ export class Form9Processor extends WorkerHost {
         messages: [
           {
             role: 'user',
-            content: this.buildClassifyTask(ticket, conversation),
+            content: buildForm9ClassifyTask(ticket, conversation, new Date()),
           },
         ],
       })) as { output: Form9Taxonomy };
@@ -47,6 +44,7 @@ export class Form9Processor extends WorkerHost {
       taxonomy.issueType1,
       taxonomy.issueType2,
       taxonomy.issueType3,
+      taxonomy.escalated,
     );
     if (!derivation) {
       this.logger.error(
@@ -60,6 +58,10 @@ export class Form9Processor extends WorkerHost {
     this.logger.log(
       `ticket ${ticketId} classified: ${taxonomy.issueType1} > ${taxonomy.issueType2} > ${taxonomy.issueType3} => ${derivation.reportable} / ${derivation.serviceType} / ${derivation.complaintType}`,
     );
+    if (derivation.convertedToComplaint)
+      this.logger.log(
+        `ticket ${ticketId} converted from service request to complaint, triggered at ${taxonomy.escalatedAt || 'unknown time'}`,
+      );
   }
 
   @OnWorkerEvent('completed')
@@ -73,46 +75,11 @@ export class Form9Processor extends WorkerHost {
   }
 
   private buildCustomFields(derivation: Form9Derivation): ZohoCustomFields {
-    const othersDetail =
-      derivation.complaintType === '13 Others'
-        ? [derivation.matchedIssueType2, derivation.matchedIssueType3]
-            .filter((part) => part.length > 0)
-            .join(' > ')
-        : '';
     return {
       cf_form9_reportable: derivation.reportable,
       cf_form9_service_type: derivation.serviceType,
       cf_form9_complaint_type: derivation.complaintType,
-      cf_form9_others_detail: othersDetail || null,
+      cf_form9_others_detail: derivation.othersDetail || null,
     };
-  }
-
-  private buildClassifyTask(
-    ticket: ZohoTicket,
-    conversation: ZohoConversationEntry[],
-  ): string {
-    const transcript = conversation
-      .map((entry) => {
-        const who =
-          entry.direction === 'in'
-            ? 'Customer'
-            : entry.direction === 'out'
-              ? 'Support'
-              : (entry.author ?? entry.type);
-        return `${who}: ${entry.content}`;
-      })
-      .join('\n\n');
-
-    const body =
-      transcript ||
-      (ticket.description ? `Customer: ${ticket.description}` : '') ||
-      '(no conversation content available)';
-
-    return `Ticket subject: ${ticket.subject}
-
-Conversation (oldest to newest):
-${body}
-
-Classify this ticket into a taxonomy node (L1 > L2 > L3).`;
   }
 }

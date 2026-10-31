@@ -7,16 +7,26 @@ import { FORM9_L1_VALUES } from '../mapping/form9-mapping.js';
 export const form9TaxonomySchema = z.object({
   issueType1: z
     .enum(FORM9_L1_VALUES as [string, ...string[]])
-    .describe('The L1 rail the ticket arose under. Pick from the taxonomy.'),
+    .describe('Issue Type 1: the product. Pick from the taxonomy.'),
   issueType2: z
     .string()
     .describe(
-      'The L2 category, copied EXACTLY from the taxonomy tree under the chosen L1. Empty string only if no L2 fits.',
+      'Issue Type 2, copied EXACTLY from the taxonomy tree under the chosen Issue Type 1.',
     ),
   issueType3: z
     .string()
     .describe(
-      'The L3 leaf, copied EXACTLY from the taxonomy tree under the chosen L2. Empty string if no specific L3 fits — the mapping will fall back to the L2 or L1 default. Choosing the L3 chooses the Form 9 treatment, so pick the closest genuine fit.',
+      'Issue Type 3, copied EXACTLY from the taxonomy tree under the chosen Issue Type 2. Every ticket needs one; pick the closest genuine fit for the latest state of the ticket.',
+    ),
+  escalated: z
+    .boolean()
+    .describe(
+      'True when the customer has expressed dissatisfaction (still waiting, repeated reminders, asks to escalate) or more than 48 business hours have passed since the debit or request with the matter still unresolved. False otherwise.',
+    ),
+  escalatedAt: z
+    .string()
+    .describe(
+      'When escalated is true: the timestamp of the message that triggered it, copied from the conversation. Empty string otherwise or when unknown.',
     ),
   reasoning: z
     .string()
