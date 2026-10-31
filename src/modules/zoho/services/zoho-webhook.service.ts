@@ -3,12 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import jwt from 'jsonwebtoken';
 import { JwksClient } from 'jwks-rsa';
-import {
-  ZOHO_TICKET_CREATED,
-  ZOHO_TICKET_THREAD_ADDED,
-} from '../zoho.events.js';
+import { ZOHO_TICKET_THREAD_ADDED } from '../zoho.events.js';
 import type {
-  ZohoTicketCreatedEvent,
   ZohoTicketThreadAddedEvent,
   ZohoWebhookEvent,
 } from '../zoho.types.js';
@@ -133,7 +129,7 @@ export class ZohoWebhookService {
     }
 
     this.logger.log(
-      `incoming thread ${threadId} on ticket ${ticketId}, enqueuing draft`,
+      `incoming thread ${threadId} on ticket ${ticketId}, enqueuing draft and Form 9 classification`,
     );
     const emitted: ZohoTicketThreadAddedEvent = { ticketId, threadId, orgId };
     this.eventEmitter.emit(ZOHO_TICKET_THREAD_ADDED, emitted);
@@ -153,7 +149,5 @@ export class ZohoWebhookService {
     );
     const emitted: ZohoTicketThreadAddedEvent = { ticketId, orgId };
     this.eventEmitter.emit(ZOHO_TICKET_THREAD_ADDED, emitted);
-    const created: ZohoTicketCreatedEvent = { ticketId, orgId };
-    this.eventEmitter.emit(ZOHO_TICKET_CREATED, created);
   }
 }

@@ -1,5 +1,5 @@
-// Exact Form 9 picklist strings, straight from form9_mapping.csv. These are the
-// values the deterministic lookup returns and that get written to Zoho.
+// Exact Form 9 picklist strings. These are the values the deterministic lookup
+// returns and that get written to Zoho.
 export const FORM9_REPORTABLE_VALUES = [
   'Complaint',
   'Service request',

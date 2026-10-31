@@ -99,6 +99,7 @@ export class ZohoDeskService {
         direction: entry.direction,
         author: entry.author?.name,
         content: content ? convert(content) : '',
+        createdTime: entry.createdTime,
       };
     });
   }

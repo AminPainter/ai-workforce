@@ -18,50 +18,17 @@ import { NestFactory } from '@nestjs/core';
 import { AiModule } from '../src/modules/ai/ai.module.js';
 import { AiService } from '../src/modules/ai/services/ai.service.js';
 import { createForm9Classifier } from '../src/modules/form9/agent/form9-classifier.agent.js';
+import { buildForm9ClassifyTask } from '../src/modules/form9/agent/form9-classify-task.js';
 import type { Form9Taxonomy } from '../src/modules/form9/agent/form9-classifier.schema.js';
 import {
   lookupForm9,
   type Form9Derivation,
 } from '../src/modules/form9/mapping/form9-mapping.js';
-import type {
-  ZohoConversationEntry,
-  ZohoTicket,
-} from '../src/modules/zoho/zoho.types.js';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), AiModule],
 })
 class ReplModule {}
-
-// Same shape Form9Processor.buildClassifyTask produces.
-function buildClassifyTask(
-  ticket: ZohoTicket,
-  conversation: ZohoConversationEntry[],
-): string {
-  const transcript = conversation
-    .map((entry) => {
-      const who =
-        entry.direction === 'in'
-          ? 'Customer'
-          : entry.direction === 'out'
-            ? 'Support'
-            : (entry.author ?? entry.type);
-      return `${who}: ${entry.content}`;
-    })
-    .join('\n\n');
-
-  const body =
-    transcript ||
-    (ticket.description ? `Customer: ${ticket.description}` : '') ||
-    '(no conversation content available)';
-
-  return `Ticket subject: ${ticket.subject}
-
-Conversation (oldest to newest):
-${body}
-
-Classify this ticket into a taxonomy node (L1 > L2 > L3).`;
-}
 
 interface Fixture {
   name: string;
@@ -71,15 +38,16 @@ interface Fixture {
     reportable: string;
     serviceType: string;
     complaintType: string;
+    othersDetail?: string;
   };
 }
 
 const FIXTURES: Fixture[] = [
   {
-    name: 'funds debited not credited',
+    name: 'not credited beyond TAT',
     subject: 'Money sent but not received',
     message:
-      'I initiated a remittance two days ago, the money left my bank account, but the beneficiary abroad has still not received anything.',
+      'I initiated a remittance five working days ago, the money left my bank account, but it has still not been credited.',
     expect: {
       reportable: 'Complaint',
       serviceType: 'Cross border money transfer',
@@ -103,9 +71,9 @@ const FIXTURES: Fixture[] = [
     message:
       'I tried to pay in but it failed. My bank said there were insufficient funds in my account at the time.',
     expect: {
-      reportable: 'Not applicable',
+      reportable: 'Complaint',
       serviceType: 'Cross border money transfer',
-      complaintType: 'NA Not applicable',
+      complaintType: '02 Transaction drop',
     },
   },
   {
@@ -114,52 +82,73 @@ const FIXTURES: Fixture[] = [
     message:
       'My CKYC record still has my old mobile number so the OTP never reaches me and I cannot proceed. Please update it.',
     expect: {
-      reportable: 'Complaint',
+      reportable: 'Service request',
       serviceType: 'Cross border money transfer',
-      complaintType: '04 Non-updation of mobile number/address',
+      complaintType: 'NA Not applicable',
     },
   },
   {
-    name: 'partner bank maintenance page (Others)',
+    name: 'partner bank maintenance page',
     subject: 'Cannot authenticate payin',
     message:
       'When I try to authenticate the payin on my bank’s page, it just shows a "site under maintenance" screen. Nothing is wrong with my credentials.',
     expect: {
       reportable: 'Complaint',
       serviceType: 'Cross border money transfer',
-      complaintType: '13 Others',
+      complaintType: '02 Transaction drop',
     },
   },
   {
-    name: 'duplicate card debit on subscription',
+    name: 'duplicate card debit on subscription (Others)',
     subject: 'Charged twice',
     message:
       'My card was charged twice for the same subscription cycle this month. Please reverse the extra charge.',
     expect: {
       reportable: 'Complaint',
       serviceType: 'Merchant acquisition',
-      complaintType: '05 Amount not credited back to source',
+      complaintType: '13 Others',
+      othersDetail: 'Duplicate debit',
     },
   },
   {
     name: 'folio not allotted after payment',
     subject: 'No folio after payment',
     message:
-      'I completed the investment payment but no folio has been allotted to me yet.',
+      'I completed the investment payment this morning but no folio has been allotted to me yet.',
+    expect: {
+      reportable: 'Service request',
+      serviceType: 'Cross border money transfer',
+      complaintType: 'NA Not applicable',
+    },
+  },
+  {
+    name: 'folio not allotted, customer escalating',
+    subject: 'Still no folio - escalate',
+    message:
+      'This is my third reminder. I paid over a week ago and there is still no folio. I am very unhappy, please escalate this to your manager.',
     expect: {
       reportable: 'Complaint',
       serviceType: 'Cross border money transfer',
-      complaintType: '12 Non-delivery of goods/services from merchant',
+      complaintType: '11 Delay in loading/crediting',
+    },
+  },
+  {
+    name: 'out-of-office auto-reply',
+    subject: 'Automatic reply: Settlement report',
+    message:
+      'I am out of the office until Monday with limited access to email. For urgent matters please contact my colleague.',
+    expect: {
+      reportable: 'Not applicable',
+      serviceType: 'Not applicable',
+      complaintType: 'NA Not applicable',
     },
   },
 ];
 
 function fmtDerivation(d: Form9Derivation): string {
-  const others =
-    d.complaintType === '13 Others'
-      ? ` [${[d.matchedIssueType2, d.matchedIssueType3].filter(Boolean).join(' > ')}]`
-      : '';
-  return `${d.reportable} / ${d.serviceType} / ${d.complaintType}${others}`;
+  const others = d.othersDetail ? ` [${d.othersDetail}]` : '';
+  const converted = d.convertedToComplaint ? ' (converted)' : '';
+  return `${d.reportable} / ${d.serviceType} / ${d.complaintType}${others}${converted}`;
 }
 
 async function main(): Promise<void> {
@@ -174,7 +163,7 @@ async function main(): Promise<void> {
     subject: string,
     message: string,
   ): Promise<{ taxonomy: Form9Taxonomy; derivation?: Form9Derivation }> => {
-    const task = buildClassifyTask(
+    const task = buildForm9ClassifyTask(
       { id: 'repl-1', subject, description: message, email: '' },
       [
         {
@@ -184,6 +173,7 @@ async function main(): Promise<void> {
           content: message,
         },
       ],
+      new Date(),
     );
     const { output: taxonomy } = (await agent.generate({
       messages: [{ role: 'user', content: task }],
@@ -192,6 +182,7 @@ async function main(): Promise<void> {
       taxonomy.issueType1,
       taxonomy.issueType2,
       taxonomy.issueType3,
+      taxonomy.escalated,
     );
     return { taxonomy, derivation };
   };
@@ -206,6 +197,7 @@ async function main(): Promise<void> {
       'form9:   ',
       derivation ? fmtDerivation(derivation) : '(no mapping match)',
     );
+    console.log('escalated:', taxonomy.escalated, taxonomy.escalatedAt);
     console.log('reasoning:', taxonomy.reasoning);
     await app.close();
     return;
@@ -218,7 +210,9 @@ async function main(): Promise<void> {
       derivation !== undefined &&
       derivation.reportable === f.expect.reportable &&
       derivation.serviceType === f.expect.serviceType &&
-      derivation.complaintType === f.expect.complaintType;
+      derivation.complaintType === f.expect.complaintType &&
+      (f.expect.othersDetail === undefined ||
+        derivation.othersDetail === f.expect.othersDetail);
     if (ok) passed++;
     console.log(`\n[${ok ? 'PASS' : 'FAIL'}] ${f.name}`);
     console.log(`  taxonomy: ${taxoStr(taxonomy)}`);
@@ -227,7 +221,7 @@ async function main(): Promise<void> {
     );
     if (!ok)
       console.log(
-        `  expected: ${f.expect.reportable} / ${f.expect.serviceType} / ${f.expect.complaintType}`,
+        `  expected: ${f.expect.reportable} / ${f.expect.serviceType} / ${f.expect.complaintType}${f.expect.othersDetail ? ` [${f.expect.othersDetail}]` : ''}`,
       );
   }
   console.log(`\n${passed}/${FIXTURES.length} matched`);

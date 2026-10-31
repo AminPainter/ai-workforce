@@ -4,11 +4,6 @@ export interface ZohoTicketThreadAddedEvent {
   orgId: string;
 }
 
-export interface ZohoTicketCreatedEvent {
-  ticketId: string;
-  orgId: string;
-}
-
 export type ZohoCustomFields = Record<string, string | null>;
 
 export interface ZohoTicketResponse {
@@ -39,6 +34,7 @@ export interface ZohoConversationEntry {
   direction?: string;
   author?: string;
   content: string;
+  createdTime?: string;
 }
 
 export interface ZohoCommentInput {
